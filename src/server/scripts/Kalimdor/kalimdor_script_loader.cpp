@@ -92,6 +92,7 @@ void AddSC_boss_earthrager_ptah();
 void AddSC_boss_anraphet();
 void AddSC_instance_firelands();
 void AddSC_boss_alysrazor();
+void AddSC_boss_ragnaros_firelands();
 
 void AddSC_ashenvale();
 void AddSC_azshara();
@@ -219,4 +220,5 @@ void AddKalimdorScripts()
 
     AddSC_instance_firelands();
     AddSC_boss_alysrazor();
+    AddSC_boss_ragnaros_firelands();
 }

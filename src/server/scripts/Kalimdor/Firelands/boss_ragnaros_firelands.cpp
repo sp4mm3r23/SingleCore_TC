@@ -56,9 +56,6 @@ enum Spells
     SPELL_RAGE_OF_RAGNAROS                  = 101107,
     SPELL_MAGMA_BLAST                       = 98313,
     SPELL_WRATH_OF_RAGNAROS                 = 98259,
-    SPELL_WRATH_OF_RAGNAROS_10H             = 100110,
-    SPELL_WRATH_OF_RAGNAROS_25N             = 98260,
-    SPELL_WRATH_OF_RAGNAROS_25H             = 100111,
     SPELL_HAND_OF_RAGNAROS                  = 98237,
 
     SPELL_MAGMA_TRAP                        = 98159,
@@ -66,7 +63,6 @@ enum Spells
     SPELL_MAGMA_TRAP_ERUPTION               = 98175,
     SPELL_MAGMA_TRAP_PLAYER_TRIGGER         = 98172,
     SPELL_MAGMA_TRAP_VULNERABILITY          = 100238,
-    SPELL_MAGMA_TRAP_VULNERABILITY_25N      = 100239,
 
     SPELL_SULFURAS_SMASH                    = 98710,
     SPELL_SULFURAS_SMASH_DAMAGE             = 98708,
@@ -82,17 +78,8 @@ enum Spells
     SPELL_SUBMERGE                          = 100051,
     SPELL_SUBMERGE_PERIODIC_AURA            = 98982,
     SPELL_SPLITTING_BLOW_WEST               = 98951,
-    SPELL_SPLITTING_BLOW_WEST_25N           = 100883,
-    SPELL_SPLITTING_BLOW_WEST_10H           = 100884,
-    SPELL_SPLITTING_BLOW_WEST_25H           = 100885,
     SPELL_SPLITTING_BLOW_MIDDLE             = 98952,
-    SPELL_SPLITTING_BLOW_MIDDLE_25N         = 100877,
-    SPELL_SPLITTING_BLOW_MIDDLE_10H         = 100878,
-    SPELL_SPLITTING_BLOW_MIDDLE_25H         = 100879,
     SPELL_SPLITTING_BLOW_EAST               = 98953,
-    SPELL_SPLITTING_BLOW_EAST_25N           = 100880,
-    SPELL_SPLITTING_BLOW_EAST_10H           = 100881,
-    SPELL_SPLITTING_BLOW_EAST_25H           = 100882,
     SPELL_SPLITTING_BLOW_TRIGGERED          = 99012,
     SPELL_INVOKE_SONS_MISSLE                = 99050,
     SPELL_INVOKE_SONS                       = 99051,
@@ -109,21 +96,12 @@ enum Spells
     SPELL_WORLD_IN_FLAMES                   = 100171,
 
     SPELL_ENGULFING_FLAMES_NEAR             = 99172,
-    SPELL_ENGULFING_FLAMES_NEAR_25N         = 100175,
-    SPELL_ENGULFING_FLAMES_NEAR_10H         = 100176,
-    SPELL_ENGULFING_FLAMES_NEAR_25H         = 100177,
     SPELL_ENGULFING_FLAMES_NEAR_VISUAL      = 99216,
 
     SPELL_ENGULFING_FLAMES_MIDDLE           = 99235,
-    SPELL_ENGULFING_FLAMES_MIDDLE_25N       = 100178,
-    SPELL_ENGULFING_FLAMES_MIDDLE_10H       = 100179,
-    SPELL_ENGULFING_FLAMES_MIDDLE_25H       = 100180,
     SPELL_ENGULFING_FLAMES_MIDDLE_VISUAL    = 99217,
 
     SPELL_ENGULFING_FLAMES_FAR              = 99236,
-    SPELL_ENGULFING_FLAMES_FAR_25N          = 100181,
-    SPELL_ENGULFING_FLAMES_FAR_10H          = 100182,
-    SPELL_ENGULFING_FLAMES_FAR_25H          = 100183,
     SPELL_ENGULFING_FLAMES_FAR_VISUAL       = 99218,
 
     SPELL_AWARD_REPUTATION                  = 101620,
@@ -1051,15 +1029,7 @@ class npc_ragnaros_dreadflame : public CreatureScript
 
         void EnterEvadeMode(EvadeReason reason) override { }
 
-        void InitializeAI() override
-        {
-            if (!me->IsAlive())
-                return;
-
-            JustRespawned();
-        }
-
-        void JustRespawned() override
+        void Reset() override
         {
             for (int i = 0; i < DreadFlamesMax; i++)
             {
@@ -1073,15 +1043,15 @@ class npc_ragnaros_dreadflame : public CreatureScript
             me->CastSpell(me, SPELL_DREADFLAME_DAMAGE_CONTROL_AURA, true);
         }
 
-        //void JustSummonedDynObj(DynamicObject* dynObj) override
-        //{
-        //    RegisterDreadflame(dynObj);
-        //}
+        void JustRegisteredDynObject(DynamicObject* dynObj) override
+        {
+            RegisterDreadflame(dynObj);
+        }
 
-        //void SummonedDynObjDespawn(DynamicObject* dynObj) override
-        //{
-        //    UnregisterDreadflame(dynObj);
-        //}
+        void JustUnregisteredDynObject(DynamicObject* dynObj) override
+        {
+            UnregisterDreadflame(dynObj);
+        }
 
         void RegisterDreadflame(DynamicObject* dynObj)
         {
@@ -1172,11 +1142,9 @@ class npc_ragnaros_dreadflame : public CreatureScript
         std::list<ObjectGuid> FindNearbyDreadflames(WorldObject* source, float distance)
         {
             std::list<ObjectGuid> dynObjs;
-            std::list<DynamicObject*> _dynObjs;
-            //me->GetAllDynObjects(_dynObjs, SPELL_DREADFLAME_SPAWN);
+            std::vector<DynamicObject*> _dynObjs = me->GetDynObjects(SPELL_DREADFLAME_SPAWN);
             for (auto dynobj : _dynObjs)
             {
-
                 if (!source->IsInDist2d(dynobj, distance))
                     continue;
 
@@ -1187,7 +1155,7 @@ class npc_ragnaros_dreadflame : public CreatureScript
         }
 
         private:
-        DreadflameInfo Dreadflames[DreadFlamesMax];
+            DreadflameInfo Dreadflames[DreadFlamesMax];
     };
 
     CreatureAI* GetAI(Creature* creature) const override
@@ -1208,15 +1176,7 @@ class boss_ragnaros_firelands : public CreatureScript
         {
             boss_ragnaros_firelandsAI(Creature* creature) : BossAI(creature, DATA_RAGNAROS) { }
 
-            void InitializeAI() override
-            {
-                if (!me->IsAlive())
-                    return;
-
-                JustRespawned();
-            }
-
-            void JustRespawned() override
+            void Reset() override
             {
                 _newPhase = PHASE_NONE;
                 _canYell = true;
@@ -1225,13 +1185,12 @@ class boss_ragnaros_firelands : public CreatureScript
                 _lastEngulfingFlame = 0;
                 _engulfedPositions.clear();
 
+                me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
                 me->SetByteFlag(UNIT_FIELD_BYTES_1, 3, UNIT_BYTE1_FLAG_ALWAYS_STAND | UNIT_BYTE1_FLAG_HOVER);
+
                 SetCombatMovement(false);
                 me->SetReactState(REACT_DEFENSIVE);
                 PrepareEncounterArea();
-
-                if (me->IsInPhase(PHASE_DUNGEON_ALTERNATE))
-                    return;
 
                 me->PlayOneShotAnimKitId(ANIM_KIT_EMERGE);
                 events.ScheduleEvent(EVENT_BASE_VISUAL, 1.2 * IN_MILLISECONDS);
@@ -1252,7 +1211,7 @@ class boss_ragnaros_firelands : public CreatureScript
                 _EnterCombat();
                 Talk(SAY_RAGNAROS_AGGRO);
 
-                PreparePhase(PHASE_ONE);
+                PreparePhase(PHASE_SUBMERGE);
             }
 
             void JustDied(Unit* killer) override
@@ -1266,19 +1225,21 @@ class boss_ragnaros_firelands : public CreatureScript
                 DoCastAOE(SPELL_AWARD_REPUTATION, true);
             }
 
-            void EnterEvadeMode(EvadeReason reason) override
+            void EnterEvadeMode(EvadeReason why) override
             {
                 if (events.IsInPhase(PHASE_SUBMERGE) && !me->GetMap()->IsHeroic())
                     return;
 
-                BossAI::EnterEvadeMode(reason);
+                if (!_EnterEvadeMode(why))
+                    return;
 
-                SetCombatMovement(false);
-                CombatCleanup();
-                _newPhase = PHASE_NONE;
                 events.Reset();
-                me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
-                me->SetByteFlag(UNIT_FIELD_BYTES_1, 3, UNIT_BYTE1_FLAG_ALWAYS_STAND | UNIT_BYTE1_FLAG_HOVER);
+                CombatCleanup();
+                PreparePhase(PHASE_NONE);
+
+                TC_LOG_DEBUG("entities.unit", "Creature %u enters evade mode.", me->GetEntry());
+                me->AddUnitState(UNIT_STATE_EVADE);
+                me->GetMotionMaster()->MoveTargetedHome();
 
                 if (instance)
                 {
@@ -1288,8 +1249,7 @@ class boss_ragnaros_firelands : public CreatureScript
                         platform->SetDestructibleState(GO_DESTRUCTIBLE_INTACT);
                 }
 
-                me->NearTeleportTo(me->GetHomePosition().GetPositionX(), me->GetHomePosition().GetPositionY(), me->GetHomePosition().GetPositionZ(), false);
-                JustRespawned();
+                _DespawnAtEvade();
             }
 
             void CombatCleanup(bool wipe = true)
@@ -1321,20 +1281,18 @@ class boss_ragnaros_firelands : public CreatureScript
                 }
 
                 if (me->GetMap()->IsHeroic())
-                {
                     DoCastAOE(SPELL_DELUGE_AURA_CANCEL, true);
-                }
             }
 
             void DamageTaken(Unit* who, uint32& damage) override
             {
+                if (damage > me->GetHealth() && !_canDie)
+                    damage = me->GetHealth() - 1;
+
                 if (me->HealthBelowPctDamaged(11, damage) && events.IsInPhase(PHASE_THREE))
                     _newPhase = PHASE_SUBMERGE;
                 else if (((me->HealthBelowPctDamaged(71, damage) && events.IsInPhase(PHASE_ONE)) || (me->HealthBelowPctDamaged(41, damage) && events.IsInPhase(PHASE_TWO))) && _newPhase != PHASE_INTERMISSION)
                     _newPhase = PHASE_INTERMISSION;
-
-                if (damage > me->GetHealth() && !(me->GetMap()->IsHeroic() && events.IsInPhase(PHASE_FOUR)))
-                    damage = me->GetHealth() - 1;
             }
 
             void JustSummoned(Creature* summon) override
@@ -1921,6 +1879,7 @@ class boss_ragnaros_firelands : public CreatureScript
             }
 
             private:
+                bool _canDie;
                 ObjectGuid _splittingBlowWest, _splittingBlowMiddle, _splittingBlowEast;
                 Phases _newPhase;
                 Phases _currentPhase;
@@ -2102,7 +2061,7 @@ class npc_ragnaros_sulfuras_smash : public CreatureScript
         }
 };
 
-// http://www.wowhead.com/npc=53266/sulfuras-smash
+// http://www.wowhead.com/npc=53363/lava-wave
 class npc_ragnaros_lava_wave : public CreatureScript
 {
     public:
@@ -2819,21 +2778,12 @@ class spell_ragnaros_splitting_blow : public SpellScriptLoader
                 switch (GetSpellInfo()->Id)
                 {
                     case SPELL_SPLITTING_BLOW_WEST:
-                    case SPELL_SPLITTING_BLOW_WEST_25N:
-                    case SPELL_SPLITTING_BLOW_WEST_10H:
-                    case SPELL_SPLITTING_BLOW_WEST_25H:
                         target = ObjectAccessor::GetCreature(*ragnaros, ragnaros->AI()->GetGUID(DATA_SPLITTING_BLOW_WEST));
                         break;
                     case SPELL_SPLITTING_BLOW_MIDDLE:
-                    case SPELL_SPLITTING_BLOW_MIDDLE_25N:
-                    case SPELL_SPLITTING_BLOW_MIDDLE_10H:
-                    case SPELL_SPLITTING_BLOW_MIDDLE_25H:
                         target = ObjectAccessor::GetCreature(*ragnaros, ragnaros->AI()->GetGUID(DATA_SPLITTING_BLOW_MIDDLE));
                         break;
                     case SPELL_SPLITTING_BLOW_EAST:
-                    case SPELL_SPLITTING_BLOW_EAST_25N:
-                    case SPELL_SPLITTING_BLOW_EAST_10H:
-                    case SPELL_SPLITTING_BLOW_EAST_25H:
                         target = ObjectAccessor::GetCreature(*ragnaros, ragnaros->AI()->GetGUID(DATA_SPLITTING_BLOW_EAST));
                         break;
                     default:
@@ -3069,21 +3019,12 @@ class spell_engulfing_flames : public SpellScriptLoader
                     switch (spellId)
                     {
                         case SPELL_ENGULFING_FLAMES_NEAR:
-                        case SPELL_ENGULFING_FLAMES_NEAR_25N:
-                        case SPELL_ENGULFING_FLAMES_NEAR_10H:
-                        case SPELL_ENGULFING_FLAMES_NEAR_25H:
                         case SPELL_ENGULFING_FLAMES_NEAR_VISUAL:
                             return engulfingId != DATA_ENGULFING_FLAMES_NEAR;
                         case SPELL_ENGULFING_FLAMES_MIDDLE:
-                        case SPELL_ENGULFING_FLAMES_MIDDLE_25N:
-                        case SPELL_ENGULFING_FLAMES_MIDDLE_10H:
-                        case SPELL_ENGULFING_FLAMES_MIDDLE_25H:
                         case SPELL_ENGULFING_FLAMES_MIDDLE_VISUAL:
                             return engulfingId != DATA_ENGULFING_FLAMES_MIDDLE;
                         case SPELL_ENGULFING_FLAMES_FAR:
-                        case SPELL_ENGULFING_FLAMES_FAR_25N:
-                        case SPELL_ENGULFING_FLAMES_FAR_10H:
-                        case SPELL_ENGULFING_FLAMES_FAR_25H:
                         case SPELL_ENGULFING_FLAMES_FAR_VISUAL:
                             return engulfingId != DATA_ENGULFING_FLAMES_FAR;
                         default:
@@ -3513,21 +3454,13 @@ class spell_ragnaros_magma_trap_eruption : public SpellScriptLoader
             {
                 if (!sSpellMgr->GetSpellInfo(SPELL_MAGMA_TRAP_VULNERABILITY))
                     return false;
-                if (!sSpellMgr->GetSpellInfo(SPELL_MAGMA_TRAP_VULNERABILITY_25N))
-                    return false;
                 return true;
             }
 
             void ChangeDamage()
             {
                 int32 damage = GetHitDamage();
-                Aura* vulnerability;
-                if (GetCaster()->GetMap()->Is25ManRaid())
-                    vulnerability = GetHitUnit()->GetAura(SPELL_MAGMA_TRAP_VULNERABILITY_25N);
-                else
-                    vulnerability = GetHitUnit()->GetAura(SPELL_MAGMA_TRAP_VULNERABILITY);
-
-                if (vulnerability)
+                if (Aura* vulnerability = GetHitUnit()->GetAura(SPELL_MAGMA_TRAP_VULNERABILITY))
                     SetHitDamage(GetHitDamage() * CalculatePct(1.0f, vulnerability->GetEffect(EFFECT_0)->GetAmount()));
             }
 
@@ -3563,21 +3496,7 @@ class spell_ragnaros_wrath_of_ragnaros : public SpellScriptLoader
 
             void FilterTargets(std::list<WorldObject*>& targets)
             {
-                switch (GetSpellInfo()->Id)
-                {
-                    case SPELL_WRATH_OF_RAGNAROS:
-                    case SPELL_WRATH_OF_RAGNAROS_10H:
-                        if (targets.size() > 1)
-                            Trinity::Containers::RandomResizeList(targets, 1);
-                        break;
-                    case SPELL_WRATH_OF_RAGNAROS_25N:
-                    case SPELL_WRATH_OF_RAGNAROS_25H:
-                        if (targets.size() > 3)
-                            Trinity::Containers::RandomResizeList(targets, 3);
-                        break;
-                    default:
-                        break;
-                }
+                Trinity::Containers::RandomResizeList(targets, GetCaster()->GetMap()->Is25ManRaid() ? 3 : 1);
             }
 
             void Register() override
@@ -3629,8 +3548,8 @@ class spell_dreadflame_deluge_control_aura : public SpellScriptLoader
 
                 targets.remove_if([](WorldObject* target)
                 {
-                    if (Player* player = target->ToPlayer())
-                        return !player->HasAura(SPELL_DELUGE_AURA);
+                    if (target->GetTypeId() == TYPEID_PLAYER)
+                        return !target->ToPlayer()->HasAura(SPELL_DELUGE_AURA);
 
                     return true;
                 });
@@ -3781,9 +3700,7 @@ class spell_dreadflame_spread_control_aura : public SpellScriptLoader
                 if (!ai)
                     return;
 
-                std::list<DynamicObject*> dreadflames;
-
-                //GetCaster()->GetAllDynObjects(dreadflames, SPELL_DREADFLAME_SPAWN);
+                std::vector<DynamicObject*> dreadflames = GetCaster()->GetDynObjects(SPELL_DREADFLAME_SPAWN);
 
                 for (auto dreadFlame : dreadflames)
                 {
