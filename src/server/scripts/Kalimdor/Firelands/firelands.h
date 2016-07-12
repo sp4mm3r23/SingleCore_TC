@@ -61,6 +61,7 @@ enum CreatureIds
 
     // Ragnaros
     NPC_RAGNAROS_MAGMA              = 53729,
+    NPC_MAGMA_TRAP                  = 53086,
     NPC_ENGULFING_FLAMES            = 53485,
     NPC_SPLITTING_BLOW              = 53393,
     NPC_SULFURAS_SMASH              = 53268,
@@ -80,6 +81,9 @@ enum CreatureIds
     NPC_HAMUUL_RUNETOTEM            = 53876,
 
     NPC_PLATFORM_STALKER            = 53952,
+    NPC_CLOUDBURST                  = 54147,
+    NPC_BREADTH_OF_FROST            = 53953,
+    NPC_ENTRAPPING_ROOTS            = 54074,
     NPC_DREADFLAME                  = 54127,
     NPC_DREADFLAME_SPAWN            = 54203,
 

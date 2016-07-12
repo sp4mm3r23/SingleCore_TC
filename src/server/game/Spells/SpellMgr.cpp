@@ -3407,6 +3407,13 @@ void SpellMgr::LoadSpellInfoCorrections()
                 break;
             // ENDOF ISLE OF CONQUEST SPELLS
             //
+            // FIRELANDS SPELLS
+            //
+            case 100941: // Dreadflame
+                spellInfo->Attributes |= SPELL_ATTR0_NEGATIVE_1;
+                break;
+            // ENDOF FIRELANDS SPELLS
+            //
             case 102445: // Summon Master Li Fei
                 const_cast<SpellEffectInfo*>(spellInfo->GetEffect(EFFECT_0))->TargetA = SpellImplicitTargetInfo(TARGET_DEST_DB);
                 break;
