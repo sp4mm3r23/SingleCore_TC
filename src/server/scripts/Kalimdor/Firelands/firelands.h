@@ -75,6 +75,7 @@ enum CreatureIds
     NPC_RAGNAROS_LIVING_METEOR_10H  = 53814,
     NPC_RAGNAROS_LIVING_METEOR_25H  = 53815,
     NPC_MOLTEN_SEED_CASTER          = 53186,
+    NPC_BLAZING_HEAT                = 53473,
 
     NPC_CENARIUS                    = 53872,
     NPC_MALFURION_STORMRAGE         = 53875,

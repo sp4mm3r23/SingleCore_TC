@@ -33,6 +33,8 @@ enum Texts
     EMOTE_RAGE_OF_RAGNAROS                  = 22,
     EMOTE_SPLITTING_BLOW_EMERGE             = 23,
 
+    EMOTE_WHISPER_LAVA_SCION_BLAZING_HEAT    = 0,
+
     //Cenarius
     SAY_CENARIUS_HEROIC_INTRO               = 0,
     SAY_CENARIUS_HEROIC_OUTRO_1             = 1,
@@ -88,7 +90,7 @@ enum Spells
 
     //Son of Flame
     SPELL_HIT_ME                            = 100446,
-    SPELL_INVIS_PRE_VISUAL                  = 98983,
+    SPELL_SON_OF_FLAME_INVIS_PRE_VISUAL     = 98983,
     SPELL_BURNING_SPEED                     = 99414,
     SPELL_BURNING_SPEED_CHECKER             = 98473,
     SPELL_SUPERNOVA                         = 99112,
@@ -105,6 +107,13 @@ enum Spells
 
     SPELL_ENGULFING_FLAMES_FAR              = 99236,
     SPELL_ENGULFING_FLAMES_FAR_VISUAL       = 99218,
+
+    SPELL_BLAZING_HEAT_TARGET_SEARCH        = 100459,
+    SPELL_BLAZING_HEAT                      = 100460,
+    SPELL_BLAZING_HEAT_SUMMON               = 99129,
+
+    SPELL_MOLTEN_ELEMENTAL_FOCUS_CREATOR    = 100142,
+    SPELL_MOLTEN_ELEMENTAL_INVIS_PRE_VISUAL = 100153,
 
     SPELL_AWARD_REPUTATION                  = 101620,
     SPELL_DEATH                             = 99430,
@@ -1854,7 +1863,7 @@ class boss_ragnaros_firelands : public CreatureScript
                             break;
                         case EVENT_SULFURAS_SMASH:
                             DoCastAOE(SPELL_SULFURAS_SMASH_PLAYER_TRIGGER);
-                            events.ScheduleEvent(EVENT_SULFURAS_SMASH, 31 * IN_MILLISECONDS, EVENT_GROUP_DELAYABLE, PHASE_ONE);
+                            events.ScheduleEvent(EVENT_SULFURAS_SMASH, 31 * IN_MILLISECONDS, EVENT_GROUP_DELAYABLE);
                             break;
                         case EVENT_DESPAWN_SULFURAS:
                             summons.DespawnEntry(NPC_SULFURAS);
@@ -2338,7 +2347,7 @@ class npc_ragnaros_son_of_flame : public CreatureScript
             {
                 _canWalk = false;
                 me->CastSpell(me, SPELL_HIT_ME, true);
-                me->CastSpell(me, SPELL_INVIS_PRE_VISUAL, true);
+                me->CastSpell(me, SPELL_SON_OF_FLAME_INVIS_PRE_VISUAL, true);
             }
 
             void JustDied(Unit* killer) override
@@ -2358,7 +2367,7 @@ class npc_ragnaros_son_of_flame : public CreatureScript
 
                 me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
                 me->PlayOneShotAnimKitId(ANIM_KIT_UNK);
-                me->RemoveAurasDueToSpell(SPELL_INVIS_PRE_VISUAL);
+                me->RemoveAurasDueToSpell(SPELL_SON_OF_FLAME_INVIS_PRE_VISUAL);
                 me->CastSpell(me, SPELL_BURNING_SPEED_CHECKER, true);
                 events.ScheduleEvent(EVENT_SON_OF_FLAME_LAUNCH, 2.6 * IN_MILLISECONDS);
             }
@@ -2491,6 +2500,7 @@ class npc_ragnaros_magma_trap : public CreatureScript
                 if (spell->Id != SPELL_MAGMA_TRAP_TARGET_SEARCH)
                     return;
 
+                me->Yell("Boom!", LANG_UNIVERSAL);
                 //DoCastAOE(SPELL_MAGMA_TRAP_ERUPTION, true);
                 me->RemoveAurasDueToSpell(SPELL_MAGMA_TRAP_VISUAL);
                 me->RemoveAurasDueToSpell(SPELL_MAGMA_TRAP_PLAYER_TRIGGER);
@@ -2520,22 +2530,75 @@ class npc_ragnaros_magma_trap : public CreatureScript
         }
 };
 
-//// http://www.wowhead.com/npc=53231/lava-scion
-//class npc_ragnaros_lava_scion : public CreatureScript
-//{
-//    public:
-//        npc_ragnaros_lava_scion() : CreatureScript("npc_ragnaros_lava_scion") { }
-//
-//        struct npc_ragnaros_lava_scionAI : public CreatureAI
-//        {
-//            npc_ragnaros_lava_scionAI(Creature* creature) : CreatureAI(creature) { }
-//        };
-//
-//        CreatureAI* GetAI(Creature* creature) const override
-//        {
-//            return GetFirelandsAI<npc_ragnaros_lava_scionAI>(creature);
-//        }
-//};
+// http://www.wowhead.com/npc=53952/platform-stalker
+class npc_fl_ragnaros_molten_elemental : public CreatureScript
+{
+    public:
+        npc_fl_ragnaros_molten_elemental() : CreatureScript("npc_fl_ragnaros_molten_elemental") { }
+
+        struct npc_fl_ragnaros_molten_elementalAI : public ScriptedAI
+        {
+            npc_fl_ragnaros_molten_elementalAI(Creature* creature) : ScriptedAI(creature) { }
+
+            void IsSummonedBy(Unit* summoner) override
+            {
+                DoCast(SPELL_MOLTEN_ELEMENTAL_INVIS_PRE_VISUAL);
+            }
+
+            void JustDied(Unit* /*killer*/) override
+            {
+                // Hack, there's a serverside spell to is responsible for handling scale
+                me->SetObjectScale(1.0f);
+            }
+        };
+
+        CreatureAI* GetAI(Creature* creature) const override
+        {
+            return GetFirelandsAI<npc_fl_ragnaros_molten_elementalAI>(creature);
+        }
+};
+
+// http://www.wowhead.com/npc=53231/lava-scion
+class npc_ragnaros_lava_scion : public CreatureScript
+{
+    public:
+        npc_ragnaros_lava_scion() : CreatureScript("npc_ragnaros_lava_scion") { }
+
+        struct npc_ragnaros_lava_scionAI : public CreatureAI
+        {
+            npc_ragnaros_lava_scionAI(Creature* creature) : CreatureAI(creature) { }
+
+            void SpellHitTarget(Unit* target, SpellInfo const* spell) override
+            {
+                if (spell->Id != SPELL_BLAZING_HEAT)
+                    return;
+
+                Talk(EMOTE_WHISPER_LAVA_SCION_BLAZING_HEAT, target);
+            }
+
+            void EnterCombat(Unit* /*who*/) override
+            {
+                scheduler.Schedule(Seconds(12), Seconds(15), [this](TaskContext context)
+                {
+                    DoCastAOE(SPELL_BLAZING_HEAT_TARGET_SEARCH);
+                    context.Repeat(Seconds(20), Seconds(23));
+                });
+            }
+
+            void UpdateAI(uint32 diff) override
+            {
+                scheduler.Update(diff);
+            }
+
+        private:
+            TaskScheduler scheduler;
+        };
+
+        CreatureAI* GetAI(Creature* creature) const override
+        {
+            return GetFirelandsAI<npc_ragnaros_lava_scionAI>(creature);
+        }
+};
 
 // http://www.wowhead.com/npc=53872/cenarius
 class npc_ragnaros_cenarius : public CreatureScript
@@ -4502,6 +4565,107 @@ class spell_fl_ragnaros_superheated : public SpellScriptLoader
         }
 };
 
+// http://www.wowhead.com/spell=100459/blazing-heat
+class spell_fl_ragnaros_blazing_heat_target_search : public SpellScriptLoader
+{
+    public:
+        spell_fl_ragnaros_blazing_heat_target_search() : SpellScriptLoader("spell_fl_ragnaros_blazing_heat_target_search") { }
+
+        class spell_fl_ragnaros_blazing_heat_target_search_SpellScript : public SpellScript
+        {
+            PrepareSpellScript(spell_fl_ragnaros_blazing_heat_target_search_SpellScript);
+
+            void HandleScript(SpellEffIndex effIndex)
+            {
+                PreventHitDefaultEffect(effIndex);
+                GetCaster()->CastSpell(GetHitUnit(), uint32(GetEffectValue()), true);
+            }
+
+            void FilterTargets(std::list<WorldObject*>& targets)
+            {
+                targets.remove_if(PlayerCheck());
+            }
+
+            void Register() override
+            {
+                OnEffectHitTarget += SpellEffectFn(spell_fl_ragnaros_blazing_heat_target_search_SpellScript::HandleScript, EFFECT_0, SPELL_EFFECT_DUMMY);
+                OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_fl_ragnaros_blazing_heat_target_search_SpellScript::FilterTargets, EFFECT_0, TARGET_UNIT_SRC_AREA_ENEMY);
+            }
+        };
+
+        SpellScript* GetSpellScript() const override
+        {
+            return new spell_fl_ragnaros_blazing_heat_target_search_SpellScript();
+        }
+};
+
+// http://www.wowhead.com/spell=99125/blazing-heat
+class spell_fl_ragnaros_blazing_heat_spawn : public SpellScriptLoader
+{
+    public:
+        spell_fl_ragnaros_blazing_heat_spawn() : SpellScriptLoader("spell_fl_ragnaros_blazing_heat_spawn") { }
+
+        class spell_fl_ragnaros_blazing_heat_spawn_SpellScript : public SpellScript
+        {
+            PrepareSpellScript(spell_fl_ragnaros_blazing_heat_spawn_SpellScript);
+
+            void OnCastSpell()
+            {
+                GetCaster()->CastSpell(static_cast<Unit*>(nullptr), SPELL_BLAZING_HEAT_SUMMON, true);
+            }
+
+            void FilterTargets(std::list<WorldObject*>& targets)
+            {
+                targets.remove_if([](WorldObject* target) -> bool
+                {
+                    return target->GetTypeId() != TYPEID_UNIT || target->GetEntry() != NPC_BLAZING_HEAT;
+                });
+
+                if (!targets.empty())
+                    FinishCast(SPELL_FAILED_DONT_REPORT);
+            }
+
+            void Register() override
+            {
+                OnCast += SpellCastFn(spell_fl_ragnaros_blazing_heat_spawn_SpellScript::OnCastSpell);
+                OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_fl_ragnaros_blazing_heat_spawn_SpellScript::FilterTargets, EFFECT_0, TARGET_UNIT_SRC_AREA_ENTRY);
+            }
+        };
+
+        SpellScript* GetSpellScript() const override
+        {
+            return new spell_fl_ragnaros_blazing_heat_spawn_SpellScript();
+        }
+};
+
+// http://www.wowhead.com/spell=98520/molten-seed
+class spell_fl_ragnaros_molten_seed_periodic : public SpellScriptLoader
+{
+    public:
+        spell_fl_ragnaros_molten_seed_periodic() : SpellScriptLoader("spell_fl_ragnaros_molten_seed_periodic") { }
+
+        class spell_fl_ragnaros_molten_seed_periodic_AuraScript : public AuraScript
+        {
+            PrepareAuraScript(spell_fl_ragnaros_molten_seed_periodic_AuraScript);
+
+            void OnPeriodic(AuraEffect const* /*aurEff*/)
+            {
+                PreventDefaultAction();
+                GetCaster()->SetObjectScale(GetCaster()->GetObjectScale() + 0.2f);
+            }
+
+            void Register() override
+            {
+                OnEffectPeriodic += AuraEffectPeriodicFn(spell_fl_ragnaros_molten_seed_periodic_AuraScript::OnPeriodic, EFFECT_0, SPELL_AURA_PERIODIC_TRIGGER_SPELL);
+            }
+        };
+
+        AuraScript* GetAuraScript() const override
+        {
+            return new spell_fl_ragnaros_molten_seed_periodic_AuraScript();
+        }
+};
+
 class at_sulfuron_keep : public AreaTriggerScript
 {
     public:
@@ -4530,6 +4694,7 @@ void AddSC_boss_ragnaros_firelands()
     new npc_ragnaros_sulfuras_smash();
     new npc_ragnaros_lava_wave();
     new npc_ragnaros_magma_trap();
+    new npc_ragnaros_lava_scion();
     
     new npc_ragnaros_cenarius();
     new npc_ragnaros_malfurion_stormrage();
@@ -4586,6 +4751,8 @@ void AddSC_boss_ragnaros_firelands()
     new spell_ragnaros_empower_sulfuras_aura_dummy();
     new spell_ragnaros_empower_sulfuras_aura();
     new spell_fl_ragnaros_superheated();
+    new spell_fl_ragnaros_blazing_heat_target_search();
+    new spell_fl_ragnaros_blazing_heat_spawn();
 
     new at_sulfuron_keep();
 };
