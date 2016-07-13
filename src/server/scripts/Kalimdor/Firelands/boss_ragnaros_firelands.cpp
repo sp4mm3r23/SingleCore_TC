@@ -62,6 +62,7 @@ enum Spells
     SPELL_MAGMA_TRAP_VISUAL                 = 98179,
     SPELL_MAGMA_TRAP_ERUPTION               = 98175,
     SPELL_MAGMA_TRAP_PLAYER_TRIGGER         = 98172,
+    SPELL_MAGMA_TRAP_TARGET_SEARCH          = 98171,
     SPELL_MAGMA_TRAP_VULNERABILITY          = 100238,
 
     SPELL_SULFURAS_SMASH                    = 98710,
@@ -2487,33 +2488,30 @@ class npc_ragnaros_magma_trap : public CreatureScript
 
             void SpellHitTarget(Unit* /*target*/, SpellInfo const* spell) override
             {
-                if (spell->Id != SPELL_MAGMA_TRAP_ERUPTION)
+                if (spell->Id != SPELL_MAGMA_TRAP_TARGET_SEARCH)
                     return;
+
+                //DoCastAOE(SPELL_MAGMA_TRAP_ERUPTION, true);
+                me->RemoveAurasDueToSpell(SPELL_MAGMA_TRAP_VISUAL);
+                me->RemoveAurasDueToSpell(SPELL_MAGMA_TRAP_PLAYER_TRIGGER);
             }
 
             void IsSummonedBy(Unit* summoner) override
             {
                 me->CastSpell(me, SPELL_MAGMA_TRAP_VISUAL, true);
-                events.ScheduleEvent(EVENT_ARM_MAGMA_TRAP, 1.2 * IN_MILLISECONDS);
+                scheduler.Schedule(Milliseconds(1200), [this](TaskContext)
+                {
+                    me->CastSpell(me, SPELL_MAGMA_TRAP_PLAYER_TRIGGER, true);
+                });
             }
 
             void UpdateAI(uint32 diff) override
             {
-                events.Update(diff);
-
-                while (uint32 eventId = events.ExecuteEvent())
-                {
-                    switch (eventId)
-                    {
-                        case EVENT_ARM_MAGMA_TRAP:
-                            me->CastSpell(me, SPELL_MAGMA_TRAP_PLAYER_TRIGGER, true);
-                            break;
-                    }
-                }
+                scheduler.Update(diff);
             }
 
         private:
-            EventMap events;
+            TaskScheduler scheduler;
         };
 
         CreatureAI* GetAI(Creature* creature) const override
@@ -3459,9 +3457,6 @@ class spell_ragnaros_sulfuras_smash : public SpellScriptLoader
 };
 
 // http://www.wowhead.com/spell=98708/sulfuras-smash
-// http://www.wowhead.com/spell=100256/sulfuras-smash
-// http://www.wowhead.com/spell=100257/sulfuras-smash
-// http://www.wowhead.com/spell=100258/sulfuras-smash
 class spell_ragnaros_sulfuras_smash_damage : public SpellScriptLoader
 {
     public:
@@ -3645,14 +3640,6 @@ class spell_ragnaros_magma_trap_dummy : public SpellScriptLoader
         {
             PrepareSpellScript(spell_ragnaros_magma_trap_dummy_SpellScript);
 
-            void HitTarget(SpellEffIndex effIndex)
-            {
-                GetCaster()->RemoveAurasDueToSpell(SPELL_MAGMA_TRAP_VISUAL);
-                GetCaster()->RemoveAurasDueToSpell(SPELL_MAGMA_TRAP_PLAYER_TRIGGER);
-                GetCaster()->CastSpell(GetCaster(), SPELL_MAGMA_TRAP_ERUPTION, true);
-                GetCaster()->CastSpell(GetCaster(), SPELL_MAGMA_TRAP_VULNERABILITY, true);
-            }
-
             void FilterTargets(std::list<WorldObject*>& targets)
             {
                 targets.remove_if([](WorldObject* target)
@@ -3669,7 +3656,6 @@ class spell_ragnaros_magma_trap_dummy : public SpellScriptLoader
 
             void Register() override
             {
-                OnEffectHitTarget += SpellEffectFn(spell_ragnaros_magma_trap_dummy_SpellScript::HitTarget, EFFECT_0, SPELL_EFFECT_DUMMY);
                 OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_ragnaros_magma_trap_dummy_SpellScript::FilterTargets, EFFECT_0, TARGET_UNIT_SRC_AREA_ENEMY);
             }
         };
@@ -3681,9 +3667,6 @@ class spell_ragnaros_magma_trap_dummy : public SpellScriptLoader
 };
 
 // http://www.wowhead.com/spell=98175/magma-trap-eruption
-// http://www.wowhead.com/spell=100106/magma-trap-eruption
-// http://www.wowhead.com/spell=100107/magma-trap-eruption
-// http://www.wowhead.com/spell=100108/magma-trap-eruption
 class spell_ragnaros_magma_trap_eruption : public SpellScriptLoader
 {
     public:
@@ -3693,7 +3676,7 @@ class spell_ragnaros_magma_trap_eruption : public SpellScriptLoader
         {
             PrepareSpellScript(spell_ragnaros_magma_trap_eruption_SpellScript);
 
-            bool Validate(SpellInfo const* spellInfo) override
+            bool Validate(SpellInfo const* /*spellInfo*/) override
             {
                 if (!sSpellMgr->GetSpellInfo(SPELL_MAGMA_TRAP_VULNERABILITY))
                     return false;
@@ -3702,9 +3685,8 @@ class spell_ragnaros_magma_trap_eruption : public SpellScriptLoader
 
             void ChangeDamage()
             {
-                int32 damage = GetHitDamage();
-                if (Aura* vulnerability = GetHitUnit()->GetAura(SPELL_MAGMA_TRAP_VULNERABILITY))
-                    SetHitDamage(GetHitDamage() * CalculatePct(1.0f, vulnerability->GetEffect(EFFECT_0)->GetAmount()));
+                //if (Aura* vulnerability = GetHitUnit()->GetAura(SPELL_MAGMA_TRAP_VULNERABILITY))
+                //    SetHitDamage(GetHitDamage() * CalculatePct(1.0f, vulnerability->GetEffect(EFFECT_0)->GetAmount()));
             }
 
             void Register() override
