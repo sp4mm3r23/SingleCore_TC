@@ -187,7 +187,7 @@ pAuraEffectHandler AuraEffectHandler[TOTAL_AURAS]=
     &AuraEffect::HandleNoImmediateEffect,                         //125 SPELL_AURA_MOD_MELEE_DAMAGE_TAKEN implemented in Unit::MeleeDamageBonus
     &AuraEffect::HandleNoImmediateEffect,                         //126 SPELL_AURA_MOD_MELEE_DAMAGE_TAKEN_PCT implemented in Unit::MeleeDamageBonus
     &AuraEffect::HandleNoImmediateEffect,                         //127 SPELL_AURA_RANGED_ATTACK_POWER_ATTACKER_BONUS implemented in Unit::MeleeDamageBonus
-    &AuraEffect::HandleModPossessPet,                             //128 SPELL_AURA_MOD_POSSESS_PET
+    &AuraEffect::HandleFixate,                                    //128 SPELL_AURA_FIXATE
     &AuraEffect::HandleAuraModIncreaseSpeed,                      //129 SPELL_AURA_MOD_SPEED_ALWAYS
     &AuraEffect::HandleAuraModIncreaseMountedSpeed,               //130 SPELL_AURA_MOD_MOUNTED_SPEED_ALWAYS
     &AuraEffect::HandleNoImmediateEffect,                         //131 SPELL_AURA_MOD_RANGED_ATTACK_POWER_VERSUS implemented in Unit::MeleeDamageBonus
@@ -2877,6 +2877,31 @@ void AuraEffect::HandleModTaunt(AuraApplication const* aurApp, uint8 mode, bool 
     }
 }
 
+void AuraEffect::HandleFixate(AuraApplication const* aurApp, uint8 mode, bool apply) const
+{
+    if (!(mode & AURA_EFFECT_HANDLE_REAL))
+        return;
+
+    Unit* caster = GetCaster();
+    if (!caster || !caster->CanHaveThreatList())
+        return;
+
+    Unit* target = aurApp->GetTarget();
+    if (!target || target == caster)
+        return;
+
+    if (apply)
+    {
+        caster->DeleteThreatList();
+        caster->AddThreat(target, 50000000.0f);
+        caster->TauntApply(target);
+    }
+    else
+    {
+        caster->TauntFadeOut(target);
+    }
+}
+
 /*****************************/
 /***        CONTROL        ***/
 /*****************************/
@@ -2960,59 +2985,6 @@ void AuraEffect::HandleModPossess(AuraApplication const* aurApp, uint8 mode, boo
         target->SetCharmedBy(caster, CHARM_TYPE_POSSESS, aurApp);
     else
         target->RemoveCharmedBy(caster);
-}
-
-void AuraEffect::HandleModPossessPet(AuraApplication const* aurApp, uint8 mode, bool apply) const
-{
-    // Used by spell "Eyes of the Beast"
-
-    if (!(mode & AURA_EFFECT_HANDLE_REAL))
-        return;
-
-    Unit* caster = GetCaster();
-    if (!caster || caster->GetTypeId() != TYPEID_PLAYER)
-        return;
-
-    //seems it may happen that when removing it is no longer owner's pet
-    //if (caster->ToPlayer()->GetPet() != target)
-    //    return;
-
-    Unit* target = aurApp->GetTarget();
-    if (target->GetTypeId() != TYPEID_UNIT || !target->IsPet())
-        return;
-
-    Pet* pet = target->ToPet();
-
-    if (apply)
-    {
-        if (caster->ToPlayer()->GetPet() != pet)
-            return;
-
-        // Must clear current motion or pet leashes back to owner after a few yards
-        //  when under spell 'Eyes of the Beast'
-        pet->GetMotionMaster()->Clear();
-        pet->SetCharmedBy(caster, CHARM_TYPE_POSSESS, aurApp);
-    }
-    else
-    {
-        pet->RemoveCharmedBy(caster);
-
-        if (!pet->IsWithinDistInMap(caster, pet->GetMap()->GetVisibilityRange()))
-            pet->Remove(PET_SAVE_NOT_IN_SLOT, true);
-        else
-        {
-            // Reinitialize the pet bar or it will appear greyed out
-            caster->ToPlayer()->PetSpellInitialize();
-
-            // Follow owner only if not fighting or owner didn't click "stay" at new location
-            // This may be confusing because pet bar shows "stay" when under the spell but it retains
-            //  the "follow" flag. Player MUST click "stay" while under the spell.
-            if (!pet->GetVictim() && !pet->GetCharmInfo()->HasCommandState(COMMAND_STAY))
-            {
-                pet->GetMotionMaster()->MoveFollow(caster, PET_FOLLOW_DIST, pet->GetFollowAngle());
-            }
-        }
-    }
 }
 
 void AuraEffect::HandleModCharm(AuraApplication const* aurApp, uint8 mode, bool apply) const
