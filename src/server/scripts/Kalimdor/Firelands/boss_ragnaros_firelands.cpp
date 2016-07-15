@@ -219,6 +219,7 @@ enum Events
 enum Actions
 {
     ACTION_NONE,
+    ACTION_RAGNAROS_EMERGE,
     ACTION_INTRO,
     ACTION_RAGNAROS_HEROIC_SUBMERGE,
     ACTION_MALFURION_HEROIC_INTRO,
@@ -277,11 +278,15 @@ enum Phases
 
 enum CreatureGroups
 {
-    GROUP_ENGULFING_FLAMES_NEAR     = 0,
-    GROUP_ENGULFING_FLAMES_MIDDLE   = 1,
-    GROUP_ENGULFING_FLAMES_FAR      = 2,
-    GROUP_PLAYER_HELPERS            = 3,
-    GROUP_RAGNAROS_MAGMA            = 4,
+    CG_ENGULFING_FLAMES_NEAR    = 0,
+    CG_ENGULFING_FLAMES_MIDDLE  = 1,
+    CG_ENGULFING_FLAMES_FAR     = 2,
+    CG_PLAYER_HELPERS           = 3,
+    CG_RAGNAROS_MAGMA           = 4,
+    CG_LAVA_SCIONS              = 5,
+    CG_SPLITTING_BLOW_WEST      = 6,
+    CG_SPLITTING_BLOW_MIDDLE    = 7,
+    CG_SPLITTING_BLOW_EAST      = 8
 };
 
 enum RagnarosData
@@ -387,28 +392,12 @@ SlotInfo HeroicSonsOfFlame[HeroicSonsOfFlameSize] =
     { { 1042.033f, -114.9132f, 55.44709f,  1.919862f }, DATA_SPLITTING_BLOW_EAST }
 };
 
-uint32 const LavaScionPositionsMax = 2;
-Position const LavaScionPositions[LavaScionPositionsMax] = 
-{
-    { 1026.861f, 5.895833f, 55.35699f, 4.904482f },
-    { 1027.306f, -121.7465f, 55.37083f, 1.361274f }
-};
-
 uint32 const EngulfingFlames[4][2] =
 {
     { { NULL },                             { NULL } },
     { { SPELL_ENGULFING_FLAMES_NEAR },      { SPELL_ENGULFING_FLAMES_NEAR_VISUAL } },
     { { SPELL_ENGULFING_FLAMES_MIDDLE },    { SPELL_ENGULFING_FLAMES_MIDDLE_VISUAL } },
     { { SPELL_ENGULFING_FLAMES_FAR },       { SPELL_ENGULFING_FLAMES_FAR_VISUAL } }
-};
-
-uint32 const SplittingBlowPositionsMax = 4;
-Position const SplittingBlowPositions[SplittingBlowPositionsMax] =
-{
-    { NULL },
-    { 1035.446f, -25.36458f, 55.4924f,  2.495821f },
-    { 1023.55f,  -57.15799f, 55.42151f, 3.124139f },
-    { 1036.274f, -89.23959f, 55.50978f, 3.839724f }
 };
 
 uint32 const CenariusPathSize = 13;
@@ -1250,6 +1239,12 @@ class boss_ragnaros_firelands : public CreatureScript
         {
             boss_ragnaros_firelandsAI(Creature* creature) : BossAI(creature, DATA_RAGNAROS) { }
 
+            void InitializeAI() override
+            {
+                _introState = NOT_STARTED;
+                BossAI::InitializeAI();
+            }
+
             void Reset() override
             {
                 _canDie = false;
@@ -1364,6 +1359,18 @@ class boss_ragnaros_firelands : public CreatureScript
 
             void CombatCleanup(bool wipe = true)
             {
+                if (me->GetMap()->IsHeroic() && wipe)
+                {
+                    summons.DespawnEntry(NPC_CENARIUS);
+                    summons.DespawnEntry(NPC_HAMUUL_RUNETOTEM);
+                    summons.DespawnEntry(NPC_MALFURION_STORMRAGE);
+                }
+
+                summons.DespawnEntry(NPC_CLOUDBURST);
+                summons.DespawnEntry(NPC_BREADTH_OF_FROST);
+                summons.DespawnEntry(NPC_ENTRAPPING_ROOTS);
+                summons.DespawnEntry(NPC_DREADFLAME);
+
                 //Do not use summons.DespawnAll()
                 summons.DespawnEntry(NPC_MAGMA_TRAP);
                 summons.DespawnEntry(NPC_ENGULFING_FLAMES);
@@ -1371,25 +1378,6 @@ class boss_ragnaros_firelands : public CreatureScript
                 summons.DespawnEntry(NPC_SON_OF_FLAME);
                 summons.DespawnEntry(NPC_LAVA_SCION);
                 summons.DespawnEntry(NPC_SPLITTING_BLOW);
-                if (me->GetMap()->IsHeroic() && wipe)
-                {
-                    summons.DespawnEntry(NPC_CENARIUS);
-                    summons.DespawnEntry(NPC_HAMUUL_RUNETOTEM);
-                    summons.DespawnEntry(NPC_MALFURION_STORMRAGE);
-
-                    summons.DespawnEntry(NPC_CLOUDBURST);
-                    summons.DespawnEntry(NPC_BREADTH_OF_FROST);
-                    summons.DespawnEntry(NPC_ENTRAPPING_ROOTS);
-
-                    std::list<Creature*> platformStalkers;
-                    GetCreatureListWithEntryInGrid(platformStalkers, me, NPC_PLATFORM_STALKER, 200.0f);
-                    for (auto stalker : platformStalkers)
-                        if (stalker->IsAIEnabled)
-                            stalker->AI()->EnterEvadeMode();
-                }
-
-                if (!summons.HasEntry(NPC_RAGNAROS_MAGMA))
-                    me->SummonCreatureGroup(GROUP_RAGNAROS_MAGMA);
 
                 std::list<Creature*> creatures;
                 me->GetCreatureListWithEntryInGrid(creatures, NPC_RAGNAROS_MAGMA, SIZE_OF_GRIDS);
@@ -1400,8 +1388,6 @@ class boss_ragnaros_firelands : public CreatureScript
 
                     creature->AddAura(SPELL_MAGMA_PERIODIC, creature);
                 }
-
-                summons.DespawnEntry(NPC_DREADFLAME);
 
                 if (me->GetMap()->IsHeroic())
                     DoCastAOE(SPELL_DELUGE_AURA_CANCEL, true);
@@ -1475,7 +1461,7 @@ class boss_ragnaros_firelands : public CreatureScript
             {
                 switch (action)
                 {
-                    case ACTION_RAGNAROS_INTRO:
+                    case ACTION_RAGNAROS_EMERGE:
                         PreparePhase(PHASE_INTRO);
                         break;
                     case ACTION_RAGNAROS_HEROIC_SUBMERGE:
@@ -1644,7 +1630,11 @@ class boss_ragnaros_firelands : public CreatureScript
                         events.SetPhase(phase);
                         me->PlayOneShotAnimKitId(ANIM_KIT_EMERGE);
                         events.ScheduleEvent(EVENT_BASE_VISUAL, 1.2 * IN_MILLISECONDS);
-                        events.ScheduleEvent(EVENT_INTRO, 6 * IN_MILLISECONDS, EVENT_GROUP_NONE, PHASE_INTRO);
+                        if (_introState == NOT_STARTED)
+                        {
+                            _introState = DONE;
+                            events.ScheduleEvent(EVENT_INTRO, 6 * IN_MILLISECONDS, EVENT_GROUP_NONE, PHASE_INTRO);
+                        }
                         break;
                     case PHASE_ONE:
                         events.SetPhase(phase);
@@ -1731,7 +1721,7 @@ class boss_ragnaros_firelands : public CreatureScript
                         events.SetPhase(phase);
                         if (me->GetMap()->IsHeroic())
                         {
-                            me->SummonCreatureGroup(GROUP_PLAYER_HELPERS);
+                            me->SummonCreatureGroup(CG_PLAYER_HELPERS);
                         }
                         else
                         {
@@ -1878,15 +1868,14 @@ class boss_ragnaros_firelands : public CreatureScript
                             break;
                         case EVENT_SPLITTING_BLOW_SUBMERGE:
                             Talk(SAY_RAGNAROS_SPLITTING_BLOW_SUBMERGE);
-                            events.ScheduleEvent(EVENT_SPLITTING_BLOW_EMERGE_WARNING, 40 * IN_MILLISECONDS, EVENT_GROUP_NONE, PHASE_INTERMISSION);
+                            events.ScheduleEvent(EVENT_SPLITTING_BLOW_EMERGE_WARNING,     40 * IN_MILLISECONDS, EVENT_GROUP_NONE, PHASE_INTERMISSION);
+                            events.ScheduleEvent(EVENT_SPLITTING_BLOW_EMERGE,           44.5 * IN_MILLISECONDS, EVENT_GROUP_NONE, PHASE_INTERMISSION);
                             me->RemoveAurasDueToSpell(SPELL_BASE_VISUAL);
                             if (_previousPhase == PHASE_TWO)
-                                for (uint32 i = 0; i < LavaScionPositionsMax; i++)
-                                    me->SummonCreature(NPC_LAVA_SCION, LavaScionPositions[i]);
+                                me->SummonCreatureGroup(CG_LAVA_SCIONS);
                             break;
                         case EVENT_SPLITTING_BLOW_EMERGE_WARNING:
                             Talk(EMOTE_SPLITTING_BLOW_EMERGE);
-                            events.ScheduleEvent(EVENT_SPLITTING_BLOW_EMERGE, 4.5 * IN_MILLISECONDS, EVENT_GROUP_NONE, PHASE_INTERMISSION);
                             break;
                         case EVENT_SPLITTING_BLOW_EMERGE:
                             if (events.IsInPhase(PHASE_INTERMISSION))
@@ -1904,7 +1893,7 @@ class boss_ragnaros_firelands : public CreatureScript
                                 DoCastAOE(SPELL_ENGULFING_FLAMES);
                             }
                             if (events.IsInPhase(PHASE_TWO))
-                                events.ScheduleEvent(EVENT_ENGULFING_FLAMES, 40 * IN_MILLISECONDS, EVENT_GROUP_NONE, PHASE_TWO);
+                                events.ScheduleEvent(EVENT_ENGULFING_FLAMES, (me->GetMap()->IsHeroic() ? 1 * MINUTE : 40) * IN_MILLISECONDS, EVENT_GROUP_NONE, PHASE_TWO);
                             else
                                 events.ScheduleEvent(EVENT_ENGULFING_FLAMES, 30 * IN_MILLISECONDS, EVENT_GROUP_NONE, PHASE_THREE);
                             break;
@@ -2017,6 +2006,7 @@ class boss_ragnaros_firelands : public CreatureScript
             }
 
             private:
+                uint32 _introState;
                 TaskScheduler scheduler;
                 bool _canDie;
                 ObjectGuid _splittingBlowWest, _splittingBlowMiddle, _splittingBlowEast;
@@ -2036,32 +2026,38 @@ class boss_ragnaros_firelands : public CreatureScript
 
                 void PrepareEncounterArea()
                 {
-                    if (summons.HasEntry(NPC_RAGNAROS_MAGMA))
-                        me->SummonCreatureGroup(GROUP_RAGNAROS_MAGMA);
+                    if (!summons.HasEntry(NPC_RAGNAROS_MAGMA))
+                        me->SummonCreatureGroup(CG_RAGNAROS_MAGMA);
 
-                    if (Creature* splittingBlow = me->SummonCreature(NPC_SPLITTING_BLOW, SplittingBlowPositions[DATA_SPLITTING_BLOW_WEST]))
-                        _splittingBlowWest = splittingBlow->GetGUID();
+                    std::list<TempSummon*> summonGroup;
+                    me->SummonCreatureGroup(CG_SPLITTING_BLOW_WEST, &summonGroup);
+                    if (TempSummon* temp = summonGroup.front())
+                        _splittingBlowWest = summonGroup.front()->GetGUID();
 
-                    if (Creature* splittingBlow = me->SummonCreature(NPC_SPLITTING_BLOW, SplittingBlowPositions[DATA_SPLITTING_BLOW_MIDDLE]))
-                        _splittingBlowMiddle = splittingBlow->GetGUID();
+                    summonGroup.clear();
+                    me->SummonCreatureGroup(CG_SPLITTING_BLOW_MIDDLE, &summonGroup);
+                    if (TempSummon* temp = summonGroup.front())
+                        _splittingBlowMiddle = summonGroup.front()->GetGUID();
 
-                    if (Creature* splittingBlow = me->SummonCreature(NPC_SPLITTING_BLOW, SplittingBlowPositions[DATA_SPLITTING_BLOW_EAST]))
-                        _splittingBlowEast = splittingBlow->GetGUID();
+                    summonGroup.clear();
+                    me->SummonCreatureGroup(CG_SPLITTING_BLOW_EAST, &summonGroup);
+                    if (TempSummon* temp = summonGroup.front())
+                        _splittingBlowEast = summonGroup.front()->GetGUID();
 
                     std::list<TempSummon*> engulfingFlames;
-                    me->SummonCreatureGroup(GROUP_ENGULFING_FLAMES_NEAR, &engulfingFlames);
+                    me->SummonCreatureGroup(CG_ENGULFING_FLAMES_NEAR, &engulfingFlames);
                     for (auto flame : engulfingFlames)
                         if (flame->IsAIEnabled)
                             flame->AI()->SetData(DATA_ENGULFING_FLAMES_ID, DATA_ENGULFING_FLAMES_NEAR);
 
                     engulfingFlames.clear();
-                    me->SummonCreatureGroup(GROUP_ENGULFING_FLAMES_MIDDLE, &engulfingFlames);
+                    me->SummonCreatureGroup(CG_ENGULFING_FLAMES_MIDDLE, &engulfingFlames);
                     for (auto flame : engulfingFlames)
                         if (flame->IsAIEnabled)
                             flame->AI()->SetData(DATA_ENGULFING_FLAMES_ID, DATA_ENGULFING_FLAMES_MIDDLE);
 
                     engulfingFlames.clear();
-                    me->SummonCreatureGroup(GROUP_ENGULFING_FLAMES_FAR, &engulfingFlames);
+                    me->SummonCreatureGroup(CG_ENGULFING_FLAMES_FAR, &engulfingFlames);
                     for (auto flame : engulfingFlames)
                         if (flame->IsAIEnabled)
                             flame->AI()->SetData(DATA_ENGULFING_FLAMES_ID, DATA_ENGULFING_FLAMES_FAR);
@@ -2071,36 +2067,6 @@ class boss_ragnaros_firelands : public CreatureScript
 		CreatureAI* GetAI(Creature* creature) const override
         {
             return GetFirelandsAI<boss_ragnaros_firelandsAI>(creature);
-        }
-};
-
-// http://www.wowhead.com/npc=53729/magma
-class npc_ragnaros_magma : public CreatureScript
-{
-    public:
-        npc_ragnaros_magma() : CreatureScript("npc_ragnaros_magma") { }
-
-        struct npc_ragnaros_magmaAI : public PassiveAI
-        {
-            npc_ragnaros_magmaAI(Creature* creature) : PassiveAI(creature) { }
-
-            void InitializeAI() override
-            {
-                if (!me->IsAlive())
-                    return;
-
-                JustRespawned();
-            }
-
-            void JustRespawned() override
-            {
-                me->AddAura(SPELL_MAGMA_PERIODIC, me);
-            }
-        };
-
-        CreatureAI* GetAI(Creature* creature) const override
-        {
-            return GetFirelandsAI<npc_ragnaros_magmaAI>(creature);
         }
 };
 
@@ -2139,25 +2105,23 @@ class npc_fl_ragnaros_platform_stalker : public CreatureScript
 
         struct npc_fl_ragnaros_platform_stalkerAI : public PassiveAI
         {
-            npc_fl_ragnaros_platform_stalkerAI(Creature* creature) : PassiveAI(creature), _summons(creature) { }
-
-            void EnterEvadeMode(EvadeReason /*reason*/) override
-            {
-                _summons.DespawnAll();
-            }
+            npc_fl_ragnaros_platform_stalkerAI(Creature* creature) : PassiveAI(creature) { }
 
             void JustSummoned(Creature* summon) override
             {
-                _summons.Summon(summon);
+                if (InstanceScript* instance = me->GetInstanceScript())
+                    if (Creature* ragnaros = ObjectAccessor::GetCreature(*me, instance->GetGuidData(NPC_RAGNAROS)))
+                        if (ragnaros->IsAIEnabled)
+                            ragnaros->AI()->JustSummoned(summon);
             }
 
             void SummonedCreatureDespawn(Creature* summon) override
             {
-                _summons.Despawn(summon);
+                if (InstanceScript* instance = me->GetInstanceScript())
+                    if (Creature* ragnaros = ObjectAccessor::GetCreature(*me, instance->GetGuidData(NPC_RAGNAROS)))
+                        if (ragnaros->IsAIEnabled)
+                            ragnaros->AI()->SummonedCreatureDespawn(summon);
             }
-
-        private:
-            SummonList _summons;
         };
 
         CreatureAI* GetAI(Creature* creature) const override
@@ -4671,13 +4635,13 @@ class at_sulfuron_keep : public AreaTriggerScript
     public:
         at_sulfuron_keep() : AreaTriggerScript("at_sulfuron_keep") { }
 
-    bool OnTrigger(Player* player, AreaTriggerEntry const* /*areaTrigger*/, bool entered) override
+    bool OnTrigger(Player* player, AreaTriggerEntry const* /*areaTrigger*/, bool /*entered*/) override
     {
-        InstanceScript* instance = player->GetInstanceScript();
-        if (!instance || instance->GetData(DATA_RAGNAROS) == DONE)
-            return true;
+        if (InstanceScript* instance = player->GetInstanceScript())
+            if (Creature* ragnaros = ObjectAccessor::GetCreature(*player, instance->GetGuidData(NPC_RAGNAROS)))
+                if (ragnaros->IsAIEnabled)
+                    ragnaros->AI()->DoAction(ACTION_RAGNAROS_EMERGE);
 
-        instance->SetData(DATA_RAGNAROS, DONE);
         return true;
     }
 };
@@ -4685,7 +4649,6 @@ class at_sulfuron_keep : public AreaTriggerScript
 void AddSC_boss_ragnaros_firelands()
 {
     new boss_ragnaros_firelands();
-    new npc_ragnaros_magma();
     new npc_ragnaros_son_of_flame();
     new npc_ragnaros_sulfuras();
     new npc_ragnaros_engulfing_flames();

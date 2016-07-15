@@ -107,14 +107,9 @@ enum FirelandsQuests
     QUEST_HEART_OF_FLAME_H          = 29308
 };
 
-enum FirelandsActions
-{
-    ACTION_RAGNAROS_INTRO           = 1000
-};
-
 enum DungeonPhases
 {
-    PHASE_DUNGEON_ALTERNATE             = 173,
+    PHASE_DUNGEON_ALTERNATE             = 169,
 };
 
 class DelayedAttackStartEvent : public BasicEvent

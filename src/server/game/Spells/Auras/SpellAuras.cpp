@@ -184,7 +184,7 @@ void AuraApplication::_HandleEffect(uint8 effIndex, bool apply)
         aurEff->HandleEffect(this, AURA_EFFECT_HANDLE_REAL, false);
 
         // Remove all triggered by aura spells vs unlimited duration
-        aurEff->CleanupTriggeredSpells(GetTarget());
+        //aurEff->CleanupTriggeredSpells(GetTarget()); // Wrong, it should not be done in such a generic way
     }
 
     SetNeedClientUpdate();

@@ -51,8 +51,7 @@ class instance_firelands : public InstanceMapScript
                         break;
                     case NPC_RAGNAROS:
                         RagnarosGUID = creature->GetGUID();
-                        //if (!RagnarosEmerged && !creature->IsInPhase(PHASE_DUNGEON_ALTERNATE))
-                        //    creature->SetInPhase(PHASE_DUNGEON_ALTERNATE, true, true);
+                        creature->setActive(true);
                         break;
                     case NPC_SULFURAS:
                         SulfurasGUID = creature->GetGUID();
@@ -107,50 +106,6 @@ class instance_firelands : public InstanceMapScript
 
                 InstanceScript::OnGameObjectRemove(go);
             }
-            
-
-            void SetData(uint32 type, uint32 data) override
-            {
-                switch (type)
-                {
-                    case DATA_RAGNAROS:
-                    {
-                        if (data != DONE || RagnarosEmerged)
-                            break;
-
-                        Creature* ragnaros = instance->GetCreature(RagnarosGUID);
-                        if (!ragnaros || !ragnaros->IsInPhase(PHASE_DUNGEON_ALTERNATE) || !ragnaros->IsAIEnabled)
-                            break;
-
-                        ragnaros->SetInPhase(PHASE_DUNGEON_ALTERNATE, true, false);
-                        ragnaros->AI()->DoAction(ACTION_RAGNAROS_INTRO);
-
-                        RagnarosEmerged = true;
-                        SaveToDB();
-                        break;
-                    }
-                    default:
-                        break;
-                }
-
-                SaveToDB();
-            }
-
-            uint32 GetData(uint32 type) const override
-            {
-                switch (type)
-                {
-                    case DATA_RAGNAROS:
-                        if (RagnarosEmerged)
-                            return DONE;
-
-                        return NOT_STARTED;
-                    default:
-                        break;
-                }
-
-                return 0;
-            }
 
 			ObjectGuid GetGuidData(uint32 type) const override
             {
@@ -174,16 +129,6 @@ class instance_firelands : public InstanceMapScript
                 }
 
                 return ObjectGuid::Empty;
-            }
-
-            void WriteSaveDataMore(std::ostringstream& data) override
-            {
-                data << RagnarosEmerged;
-            }
-
-            void ReadSaveDataMore(std::istringstream& data) override
-            {
-                data >> RagnarosEmerged;
             }
 
             private:
