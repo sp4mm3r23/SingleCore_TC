@@ -70,7 +70,7 @@ enum Spells
     SPELL_SULFURAS_SMASH                    = 98710,
     SPELL_SULFURAS_SMASH_DAMAGE             = 98708,
     SPELL_SULFURAS_SMASH_PLAYER_TRIGGER     = 98703,
-    SPELL_SULFURAS_SMASH_SUMMON_TRIGGER     = 98706,
+    SPELL_SUMMON_SULFURAS_SMASH             = 98706,
     SPELL_SULFURAS_SMASH_LAVA_WAVE          = 98873,
     SPELL_SULFURAS_SMASH_LAVA_WAVE_N        = 98874,
     SPELL_SULFURAS_SMASH_LAVA_WAVE_W        = 98876,
@@ -255,7 +255,6 @@ enum GameObjectDisplayIds
 enum Phases
 {
     PHASE_NONE,
-    PHASE_INTRO,
     PHASE_ONE,
     PHASE_INTERMISSION,
     PHASE_TWO,
@@ -264,7 +263,6 @@ enum Phases
     PHASE_FOUR,
 
     PHASE_MASK_NONE             = 1 << PHASE_NONE,
-    PHASE_MASK_INTRO            = 1 << PHASE_INTRO,
     PHASE_MASK_ONE              = 1 << PHASE_ONE,
     PHASE_MASK_INTERMISSION     = 1 << PHASE_INTERMISSION,
     PHASE_MASK_TWO              = 1 << PHASE_TWO,
@@ -1131,7 +1129,7 @@ class npc_ragnaros_dreadflame : public CreatureScript
             }
             std::vector<DynamicObject*> dreadflames = me->GetDynObjects(SPELL_DREADFLAME_SPAWN);
             if (spreadPositions.size() > me->GetMap()->Is25ManRaid() ? 6 : 2)
-                Trinity::Containers::RandomResizeList(spreadPositions, std::max<uint32>(me->GetMap()->Is25ManRaid() ? 6 : 2, ceil(spreadPositions.size() * 0.2))); // 0.75
+                Trinity::Containers::RandomResizeList(spreadPositions, std::max<uint32>(me->GetMap()->Is25ManRaid() ? 6 : 2, ceil(spreadPositions.size() * 0.5))); // 0.75
 
             return spreadPositions;
         }
@@ -1247,6 +1245,7 @@ class boss_ragnaros_firelands : public CreatureScript
 
             void Reset() override
             {
+                _inSulfurasSmash = false;
                 _canDie = false;
                 _newPhase = PHASE_NONE;
                 _canYell = true;
@@ -1258,13 +1257,21 @@ class boss_ragnaros_firelands : public CreatureScript
                 me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
                 me->SetByteFlag(UNIT_FIELD_BYTES_1, 3, UNIT_BYTE1_FLAG_ALWAYS_STAND | UNIT_BYTE1_FLAG_HOVER);
 
-                me->SetReactState(REACT_DEFENSIVE);
                 SetCombatMovement(false);
                 PrepareEncounterArea();
                 me->LoadEquipment(EQUIP_SULFURAS);
+                me->SetReactState(REACT_DEFENSIVE);
 
                 me->PlayOneShotAnimKitId(ANIM_KIT_EMERGE);
                 events.ScheduleEvent(EVENT_BASE_VISUAL, 1.2 * IN_MILLISECONDS);
+            }
+
+            void JustReachedHome() override { }
+
+            void JustRespawned() override
+            {
+                Reset();
+                BossAI::JustRespawned();
             }
 
             void KilledUnit(Unit* who) override
@@ -1282,6 +1289,7 @@ class boss_ragnaros_firelands : public CreatureScript
                 _EnterCombat();
                 Talk(SAY_RAGNAROS_AGGRO);
 
+                events.CancelEvent(EVENT_INTRO);
                 PreparePhase(PHASE_ONE);
             }
 
@@ -1289,7 +1297,7 @@ class boss_ragnaros_firelands : public CreatureScript
             {
                 _JustDied();
                 Talk(SAY_RAGNAROS_HEROIC_DEATH);
-                CombatCleanup();
+                CombatCleanup(false);
                 DoCastAOE(SPELL_ACHIEVEMENT_CHECK, true);
                 DoCastAOE(SPELL_HEART_OF_RAGNAROS_A, true);
                 DoCastAOE(SPELL_HEART_OF_RAGNAROS_H, true);
@@ -1311,7 +1319,6 @@ class boss_ragnaros_firelands : public CreatureScript
                 _DespawnAtEvade();
 
                 me->NearTeleportTo(me->GetHomePosition().GetPositionX(), me->GetHomePosition().GetPositionY(), me->GetHomePosition().GetPositionZ(), me->GetHomePosition().GetOrientation());
-                JustReachedHome();
 
                 if (instance)
                 {
@@ -1371,23 +1378,12 @@ class boss_ragnaros_firelands : public CreatureScript
                 summons.DespawnEntry(NPC_ENTRAPPING_ROOTS);
                 summons.DespawnEntry(NPC_DREADFLAME);
 
-                //Do not use summons.DespawnAll()
                 summons.DespawnEntry(NPC_MAGMA_TRAP);
                 summons.DespawnEntry(NPC_ENGULFING_FLAMES);
                 summons.DespawnEntry(NPC_SULFURAS);
                 summons.DespawnEntry(NPC_SON_OF_FLAME);
                 summons.DespawnEntry(NPC_LAVA_SCION);
                 summons.DespawnEntry(NPC_SPLITTING_BLOW);
-
-                std::list<Creature*> creatures;
-                me->GetCreatureListWithEntryInGrid(creatures, NPC_RAGNAROS_MAGMA, SIZE_OF_GRIDS);
-                for (auto creature : creatures)
-                {
-                    if (creature->HasAura(SPELL_MAGMA_PERIODIC))
-                        continue;
-
-                    creature->AddAura(SPELL_MAGMA_PERIODIC, creature);
-                }
 
                 if (me->GetMap()->IsHeroic())
                     DoCastAOE(SPELL_DELUGE_AURA_CANCEL, true);
@@ -1411,6 +1407,19 @@ class boss_ragnaros_firelands : public CreatureScript
 
                 switch (summon->GetEntry())
                 {
+                    case NPC_SULFURAS_SMASH_TRIGGER:
+                        _inSulfurasSmash = true;
+                        me->CastStop();
+                        me->AttackStop();
+                        me->SetReactState(REACT_PASSIVE);
+                        me->SetFacingToObject(summon);
+                        me->UpdatePosition(me->GetPositionX(), me->GetPositionY(), me->GetPositionZ(), me->GetAngle(summon));
+                        DoCastAOE(SPELL_SULFURAS_SMASH);
+                        DoCastAOE(SPELL_SUMMON_SULFURAS_SMASH, true);
+                        Talk(EMOTE_SULFURAS_SMASH);
+                        events.DelayEvents(6 * IN_MILLISECONDS, EVENT_GROUP_DELAYABLE);
+                        events.ScheduleEvent(EVENT_RESUME_ATTACK, 5.6 * IN_MILLISECONDS);
+                        break;
                     case NPC_LAVA_SCION:
                         if (instance)
                             instance->SendEncounterUnit(ENCOUNTER_FRAME_ENGAGE, summon);
@@ -1437,7 +1446,7 @@ class boss_ragnaros_firelands : public CreatureScript
                 {
                     case NPC_SON_OF_FLAME:
                         summons.Despawn(summon);
-                        if (events.IsInPhase(PHASE_INTERMISSION) && !summons.HasEntry(NPC_SON_OF_FLAME) && !HasScheduledEvent(EVENT_SPLITTING_BLOW_EMERGE))
+                        if (events.IsInPhase(PHASE_INTERMISSION) && !summons.HasEntry(NPC_SON_OF_FLAME))
                             PreparePhase(_previousPhase == PHASE_ONE ? PHASE_TWO : PHASE_THREE);
                         break;
                     case NPC_LAVA_SCION:
@@ -1451,6 +1460,16 @@ class boss_ragnaros_firelands : public CreatureScript
 
             void SummonedCreatureDespawn(Creature* summon) override
             {
+                switch (summon->GetEntry())
+                {
+                    case NPC_LAVA_SCION:
+                        if (instance)
+                            instance->SendEncounterUnit(ENCOUNTER_FRAME_DISENGAGE, summon);
+                        break;
+                    default:
+                        break;
+                }
+
                 if (summon->IsAIEnabled)
                     summon->AI()->EnterEvadeMode();
 
@@ -1462,7 +1481,16 @@ class boss_ragnaros_firelands : public CreatureScript
                 switch (action)
                 {
                     case ACTION_RAGNAROS_EMERGE:
-                        PreparePhase(PHASE_INTRO);
+                        if (me->IsInPhase(PHASE_DUNGEON_ALTERNATE))
+                            me->SetInPhase(PHASE_DUNGEON_ALTERNATE, true, false);
+
+                        me->PlayOneShotAnimKitId(ANIM_KIT_EMERGE);
+                        events.ScheduleEvent(EVENT_BASE_VISUAL, 1.2 * IN_MILLISECONDS);
+                        if (_introState == NOT_STARTED)
+                        {
+                            _introState = DONE;
+                            events.ScheduleEvent(EVENT_INTRO, 6 * IN_MILLISECONDS, EVENT_GROUP_NONE);
+                        }
                         break;
                     case ACTION_RAGNAROS_HEROIC_SUBMERGE:
                         Talk(SAY_RAGNAROS_HEROIC_SUBMERGE);
@@ -1581,27 +1609,6 @@ class boss_ragnaros_firelands : public CreatureScript
                 return 0;
             }
 
-            void SetGUID(ObjectGuid guid, int32 type = 0) override
-            {
-                if (type != DATA_SULFURAS_SMASH)
-                    return;
-
-                Unit* target = ObjectAccessor::GetUnit(*me, guid);
-                if (!target)
-                    return;
-
-                me->CastStop();
-                me->AttackStop();
-                me->SetReactState(REACT_PASSIVE);
-                me->SetFacingToObject(target);
-                me->UpdatePosition(me->GetPositionX(), me->GetPositionY(), me->GetPositionZ(), me->GetAngle(target));
-                DoCastAOE(SPELL_SULFURAS_SMASH);
-                DoCastAOE(SPELL_SULFURAS_SMASH_SUMMON_TRIGGER, true);
-                Talk(EMOTE_SULFURAS_SMASH);
-                events.DelayEvents(6 * IN_MILLISECONDS, EVENT_GROUP_DELAYABLE);
-                events.ScheduleEvent(EVENT_RESUME_ATTACK, 5.6 * IN_MILLISECONDS);
-            }
-
             ObjectGuid GetGUID(int32 type) const override
             {
                 switch (type)
@@ -1621,23 +1628,14 @@ class boss_ragnaros_firelands : public CreatureScript
 
             void PreparePhase(Phases phase, Phases previousPhase = PHASE_NONE)
             {
+                events.SetPhase(phase);
+
                 if (previousPhase != PHASE_NONE)
                     _previousPhase = previousPhase;
 
                 switch (phase)
                 {
-                    case PHASE_INTRO:
-                        events.SetPhase(phase);
-                        me->PlayOneShotAnimKitId(ANIM_KIT_EMERGE);
-                        events.ScheduleEvent(EVENT_BASE_VISUAL, 1.2 * IN_MILLISECONDS);
-                        if (_introState == NOT_STARTED)
-                        {
-                            _introState = DONE;
-                            events.ScheduleEvent(EVENT_INTRO, 6 * IN_MILLISECONDS, EVENT_GROUP_NONE, PHASE_INTRO);
-                        }
-                        break;
                     case PHASE_ONE:
-                        events.SetPhase(phase);
                         me->CastSpell(me, SPELL_BURNING_WOUNDS);
                         if (!me->GetMap()->IsHeroic())
                             events.ScheduleEvent(EVENT_RAGE_OF_RAGNAROS, 5 * IN_MILLISECONDS, EVENT_GROUP_NONE, PHASE_ONE);
@@ -1645,12 +1643,11 @@ class boss_ragnaros_firelands : public CreatureScript
                         events.ScheduleEvent(EVENT_WRATH_OF_RAGNAROS, 6 * IN_MILLISECONDS, EVENT_GROUP_DELAYABLE, PHASE_ONE);
                         events.ScheduleEvent(EVENT_MAGMA_TRAP, 16 * IN_MILLISECONDS, EVENT_GROUP_DELAYABLE, PHASE_ONE);
                         events.ScheduleEvent(EVENT_HAND_OF_RAGNAROS, 26 * IN_MILLISECONDS, EVENT_GROUP_DELAYABLE, PHASE_ONE);
-                        events.ScheduleEvent(EVENT_SULFURAS_SMASH, 31 * IN_MILLISECONDS, EVENT_GROUP_DELAYABLE, PHASE_ONE);
+                        events.ScheduleEvent(EVENT_SULFURAS_SMASH, 32 * IN_MILLISECONDS, EVENT_GROUP_DELAYABLE, PHASE_ONE);
                         break;
                     case PHASE_INTERMISSION:
                     {
                         _newPhase = PHASE_NONE;
-                        events.SetPhase(phase);
                         events.CancelEvent(EVENT_MAGMA_BLAST);
                         uint32 splittingBlow = RAND(SPELL_SPLITTING_BLOW_WEST, SPELL_SPLITTING_BLOW_MIDDLE, SPELL_SPLITTING_BLOW_EAST);
                         Creature* target;
@@ -1688,7 +1685,6 @@ class boss_ragnaros_firelands : public CreatureScript
                         events.CancelEvent(EVENT_SPLITTING_BLOW_EMERGE);
                         events.CancelEvent(EVENT_SPLITTING_BLOW_EMERGE_WARNING);
 
-                        events.SetPhase(phase);
                         Talk(SAY_RAGNAROS_SPLITTING_BLOW_EMERGE);
                         me->CastSpell(me, SPELL_BASE_VISUAL, true);
                         me->PlayOneShotAnimKitId(ANIM_KIT_RESURFACE);
@@ -1704,7 +1700,6 @@ class boss_ragnaros_firelands : public CreatureScript
                         events.CancelEvent(EVENT_SPLITTING_BLOW_EMERGE);
                         events.CancelEvent(EVENT_SPLITTING_BLOW_EMERGE_WARNING);
 
-                        events.SetPhase(phase);
                         Talk(SAY_RAGNAROS_SPLITTING_BLOW_EMERGE);
                         me->CastSpell(me, SPELL_BASE_VISUAL, true);
                         me->PlayOneShotAnimKitId(ANIM_KIT_RESURFACE);
@@ -1853,13 +1848,14 @@ class boss_ragnaros_firelands : public CreatureScript
                             break;
                         case EVENT_SULFURAS_SMASH:
                             DoCastAOE(SPELL_SULFURAS_SMASH_PLAYER_TRIGGER);
-                            events.ScheduleEvent(EVENT_SULFURAS_SMASH, 31 * IN_MILLISECONDS, EVENT_GROUP_DELAYABLE);
+                            events.ScheduleEvent(EVENT_SULFURAS_SMASH, 31 * IN_MILLISECONDS, EVENT_GROUP_DELAYABLE, events.IsInPhase(PHASE_THREE) ? PHASE_THREE : events.IsInPhase(PHASE_TWO) ? PHASE_TWO : PHASE_ONE);
                             break;
                         case EVENT_DESPAWN_SULFURAS:
                             summons.DespawnEntry(NPC_SULFURAS);
                             break;
                         case EVENT_RESUME_ATTACK:
-                            me->resetAttackTimer();
+                            _inSulfurasSmash = false;
+                            me->resetAttackTimer(); // Do not auto attack straight away
                             me->SetReactState(REACT_AGGRESSIVE);
                             if (me->HealthBelowPct(11) && events.IsInPhase(PHASE_THREE))
                                 _newPhase = PHASE_SUBMERGE;
@@ -1868,14 +1864,14 @@ class boss_ragnaros_firelands : public CreatureScript
                             break;
                         case EVENT_SPLITTING_BLOW_SUBMERGE:
                             Talk(SAY_RAGNAROS_SPLITTING_BLOW_SUBMERGE);
-                            events.ScheduleEvent(EVENT_SPLITTING_BLOW_EMERGE_WARNING,     40 * IN_MILLISECONDS, EVENT_GROUP_NONE, PHASE_INTERMISSION);
-                            events.ScheduleEvent(EVENT_SPLITTING_BLOW_EMERGE,           44.5 * IN_MILLISECONDS, EVENT_GROUP_NONE, PHASE_INTERMISSION);
+                            events.ScheduleEvent(EVENT_SPLITTING_BLOW_EMERGE_WARNING, 40 * IN_MILLISECONDS, EVENT_GROUP_NONE, PHASE_INTERMISSION);
                             me->RemoveAurasDueToSpell(SPELL_BASE_VISUAL);
                             if (_previousPhase == PHASE_TWO)
                                 me->SummonCreatureGroup(CG_LAVA_SCIONS);
                             break;
                         case EVENT_SPLITTING_BLOW_EMERGE_WARNING:
                             Talk(EMOTE_SPLITTING_BLOW_EMERGE);
+                            events.ScheduleEvent(EVENT_SPLITTING_BLOW_EMERGE, 4.5 * IN_MILLISECONDS, EVENT_GROUP_NONE, PHASE_INTERMISSION);
                             break;
                         case EVENT_SPLITTING_BLOW_EMERGE:
                             if (events.IsInPhase(PHASE_INTERMISSION))
@@ -2006,6 +2002,7 @@ class boss_ragnaros_firelands : public CreatureScript
             }
 
             private:
+                bool _inSulfurasSmash;
                 uint32 _introState;
                 TaskScheduler scheduler;
                 bool _canDie;
@@ -2087,7 +2084,7 @@ class npc_sulfuras_smash_trigger : public CreatureScript
                 if (InstanceScript* instance = me->GetInstanceScript())
                     if (Creature* ragnaros = me->GetMap()->GetCreature(instance->GetGuidData(NPC_RAGNAROS)))
                         if (ragnaros->IsAIEnabled)
-                            ragnaros->AI()->SetGUID(me->GetGUID(), DATA_SULFURAS_SMASH);
+                            ragnaros->AI()->JustSummoned(me);
             }
         };
 
@@ -2205,11 +2202,9 @@ class npc_ragnaros_lava_wave : public CreatureScript
     public:
         npc_ragnaros_lava_wave() : CreatureScript("npc_ragnaros_lava_wave") { }
 
-        struct npc_ragnaros_lava_waveAI : public PassiveAI
+        struct npc_ragnaros_lava_waveAI : public NullCreatureAI
         {
-            npc_ragnaros_lava_waveAI(Creature* creature) : PassiveAI(creature) { }
-
-            void EnterEvadeMode(EvadeReason why) override { }
+            npc_ragnaros_lava_waveAI(Creature* creature) : NullCreatureAI(creature) { }
 
             void IsSummonedBy(Unit* summoner) override
             {

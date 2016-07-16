@@ -109,7 +109,7 @@ enum FirelandsQuests
 
 enum DungeonPhases
 {
-    PHASE_DUNGEON_ALTERNATE             = 169,
+    PHASE_DUNGEON_ALTERNATE             = 170,
 };
 
 class DelayedAttackStartEvent : public BasicEvent
