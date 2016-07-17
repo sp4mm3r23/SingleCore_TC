@@ -148,21 +148,15 @@ class TC_GAME_API UnitAI
         {
             ThreatContainer::StorageType const& threatlist = me->getThreatManager().getThreatList();
             if (position >= threatlist.size())
-                return nullptr;
+                return NULL;
 
             std::list<Unit*> targetList;
-            Unit* currentVictim = me->getThreatManager().getCurrentVictim()->getTarget();
-
-            // Current victim always goes first
-            if (predicate(currentVictim))
-                targetList.push_back(currentVictim);
-
             for (ThreatContainer::StorageType::const_iterator itr = threatlist.begin(); itr != threatlist.end(); ++itr)
-                if ((*itr)->getTarget() != currentVictim && predicate((*itr)->getTarget()))
+                if (predicate((*itr)->getTarget()))
                     targetList.push_back((*itr)->getTarget());
 
             if (position >= targetList.size())
-                return nullptr;
+                return NULL;
 
             if (targetType == SELECT_TARGET_NEAREST || targetType == SELECT_TARGET_FARTHEST)
                 targetList.sort(Trinity::ObjectDistanceOrderPred(me));
@@ -193,7 +187,7 @@ class TC_GAME_API UnitAI
                     break;
             }
 
-            return nullptr;
+            return NULL;
         }
 
         void SelectTargetList(std::list<Unit*>& targetList, uint32 num, SelectAggroTarget targetType, float dist = 0.0f, bool playerOnly = false, int32 aura = 0);

@@ -71,7 +71,7 @@ inline std::string ReadSkip(std::istringstream& iss, char term)
     return res;
 }
 
-inline bool CheckDelimiter(std::istringstream& iss, char delimiter, char const* context)
+inline bool CheckDelimiter(std::istringstream& iss, char delimiter, const char* context)
 {
     char c = iss.peek();
     if (c != delimiter)
@@ -96,7 +96,7 @@ inline bool ReadHex(std::istringstream& iss, uint32& res, uint32 length)
 #define DELIMITER ':'
 #define PIPE_CHAR '|'
 
-bool ChatLink::ValidateName(char* buffer, char const* /*context*/)
+bool ChatLink::ValidateName(char* buffer, const char* /*context*/)
 {
     _name = buffer;
     return true;
@@ -170,7 +170,7 @@ bool ItemChatLink::Initialize(std::istringstream& iss)
 inline std::string ItemChatLink::FormatName(uint8 index, ItemLocale const* locale, char* const* suffixStrings) const
 {
     std::stringstream ss;
-    if (locale == nullptr || index >= locale->Name.size())
+    if (locale == NULL || index >= locale->Name.size())
         ss << _item->Name1;
     else
         ss << locale->Name[index];
@@ -179,13 +179,13 @@ inline std::string ItemChatLink::FormatName(uint8 index, ItemLocale const* local
     return ss.str();
 }
 
-bool ItemChatLink::ValidateName(char* buffer, char const* context)
+bool ItemChatLink::ValidateName(char* buffer, const char* context)
 {
     ChatLink::ValidateName(buffer, context);
 
-    char* const* suffixStrings = _suffix ? _suffix->nameSuffix : (_property ? _property->nameSuffix : nullptr);
+    char* const* suffixStrings = _suffix ? _suffix->nameSuffix : (_property ? _property->nameSuffix : NULL);
 
-    bool res = (FormatName(LOCALE_enUS, nullptr, suffixStrings) == buffer);
+    bool res = (FormatName(LOCALE_enUS, NULL, suffixStrings) == buffer);
     if (!res)
     {
         ItemLocale const* il = sObjectMgr->GetItemLocale(_item->ItemId);
@@ -239,7 +239,7 @@ bool QuestChatLink::Initialize(std::istringstream& iss)
     return true;
 }
 
-bool QuestChatLink::ValidateName(char* buffer, char const* context)
+bool QuestChatLink::ValidateName(char* buffer, const char* context)
 {
     ChatLink::ValidateName(buffer, context);
 
@@ -280,7 +280,7 @@ bool SpellChatLink::Initialize(std::istringstream& iss)
     return true;
 }
 
-bool SpellChatLink::ValidateName(char* buffer, char const* context)
+bool SpellChatLink::ValidateName(char* buffer, const char* context)
 {
     ChatLink::ValidateName(buffer, context);
 
@@ -373,7 +373,7 @@ bool AchievementChatLink::Initialize(std::istringstream& iss)
     return true;
 }
 
-bool AchievementChatLink::ValidateName(char* buffer, char const* context)
+bool AchievementChatLink::ValidateName(char* buffer, const char* context)
 {
     ChatLink::ValidateName(buffer, context);
 
@@ -537,7 +537,7 @@ bool GlyphChatLink::Initialize(std::istringstream& iss)
     return true;
 }
 
-LinkExtractor::LinkExtractor(char const* msg) : _iss(msg) { }
+LinkExtractor::LinkExtractor(const char* msg) : _iss(msg) { }
 
 LinkExtractor::~LinkExtractor()
 {
@@ -549,19 +549,19 @@ LinkExtractor::~LinkExtractor()
 bool LinkExtractor::IsValidMessage()
 {
     const char validSequence[6] = "cHhhr";
-    char const* validSequenceIterator = validSequence;
+    const char* validSequenceIterator = validSequence;
 
     char buffer[256];
 
     std::istringstream::pos_type startPos = 0;
     uint32 color = 0;
 
-    ChatLink* link = nullptr;
+    ChatLink* link = NULL;
     while (!_iss.eof())
     {
         if (validSequence == validSequenceIterator)
         {
-            link = nullptr;
+            link = NULL;
             _iss.ignore(255, PIPE_CHAR);
             startPos = _iss.tellg() - std::istringstream::pos_type(1);
         }
