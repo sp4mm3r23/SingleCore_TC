@@ -17,7 +17,7 @@
 
 #include "Log.h"
 #include "Item.h"
-#include "ItemTemplate.h"
+#include "ItemPrototype.h"
 #include "AuctionHouseBotBuyer.h"
 
 AuctionBotBuyer::AuctionBotBuyer() : _checkInterval(20 * MINUTE)

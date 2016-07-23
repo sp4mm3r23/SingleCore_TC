@@ -473,11 +473,12 @@ class boss_illidan_stormrage : public CreatureScript
 public:
     boss_illidan_stormrage() : CreatureScript("boss_illidan_stormrage") { }
 
-    struct boss_illidan_stormrageAI : public BossAI
+    struct boss_illidan_stormrageAI : public ScriptedAI
     {
-        boss_illidan_stormrageAI(Creature* creature) : BossAI(creature, DATA_ILLIDAN_STORMRAGE)
+        boss_illidan_stormrageAI(Creature* creature) : ScriptedAI(creature), Summons(me)
         {
             Initialize();
+            instance = creature->GetInstanceScript();
             DoCast(me, SPELL_DUAL_WIELD, true);
         }
 
@@ -518,7 +519,7 @@ public:
                     EnterPhase(PHASE_FLIGHT_SEQUENCE);
                 }
             }
-            summons.Despawn(summon);
+            Summons.Despawn(summon);
         }
 
         void MovementInform(uint32 /*MovementType*/, uint32 /*Data*/) override
@@ -561,10 +562,10 @@ public:
         {
             me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
 
+            instance->SetBossState(DATA_ILLIDAN_STORMRAGE, DONE);
+
             for (uint8 i = DATA_GO_ILLIDAN_DOOR_R; i < DATA_GO_ILLIDAN_DOOR_L + 1; ++i)
                 instance->HandleGameObject(instance->GetGuidData(i), true);
-
-            _JustDied();
         }
 
         void KilledUnit(Unit* victim) override
@@ -1128,6 +1129,7 @@ public:
         uint32 Timer[EVENT_ENRAGE + 1];
         PhaseIllidan Phase;
     private:
+        InstanceScript* instance;
         EventIllidan Event;
         uint32 TalkCount;
         uint32 TransformCount;
@@ -1136,6 +1138,7 @@ public:
         ObjectGuid MaievGUID;
         ObjectGuid FlameGUID[2];
         ObjectGuid GlaiveGUID[2];
+        SummonList Summons;
     };
 
     CreatureAI* GetAI(Creature* creature) const override
@@ -1810,7 +1813,7 @@ public:
 
 void boss_illidan_stormrage::boss_illidan_stormrageAI::Reset()
 {
-    _Reset();
+    instance->SetBossState(DATA_ILLIDAN_STORMRAGE, NOT_STARTED);
 
     if (Creature* akama = ObjectAccessor::GetCreature(*me, AkamaGUID))
     {
@@ -1829,11 +1832,12 @@ void boss_illidan_stormrage::boss_illidan_stormrageAI::Reset()
     SetEquipmentSlots(false, EQUIP_UNEQUIP, EQUIP_UNEQUIP, EQUIP_NO_CHANGE);
     me->SetDisableGravity(false);
     me->setActive(false);
+    Summons.DespawnAll();
 }
 
 void boss_illidan_stormrage::boss_illidan_stormrageAI::JustSummoned(Creature* summon)
 {
-    summons.Summon(summon);
+    Summons.Summon(summon);
     switch (summon->GetEntry())
     {
     case PARASITIC_SHADOWFIEND:
@@ -1926,7 +1930,7 @@ void boss_illidan_stormrage::boss_illidan_stormrageAI::HandleTalkSequence()
         break;
     case 15:
         DoCast(me, SPELL_DEATH); // Animate his kneeling + stun him
-        summons.DespawnAll();
+        Summons.DespawnAll();
         break;
     case 17:
         if (Creature* akama = ObjectAccessor::GetCreature(*me, AkamaGUID))

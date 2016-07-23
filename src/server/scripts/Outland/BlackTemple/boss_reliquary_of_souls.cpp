@@ -135,11 +135,12 @@ public:
         return GetInstanceAI<boss_reliquary_of_soulsAI>(creature);
     }
 
-    struct boss_reliquary_of_soulsAI : public BossAI
+    struct boss_reliquary_of_soulsAI : public ScriptedAI
     {
-        boss_reliquary_of_soulsAI(Creature* creature) : BossAI(creature, DATA_RELIQUARY_OF_SOULS)
+        boss_reliquary_of_soulsAI(Creature* creature) : ScriptedAI(creature)
         {
             Initialize();
+            instance = creature->GetInstanceScript();
             Counter = 0;
             Timer = 0;
             SoulCount = 0;
@@ -150,6 +151,8 @@ public:
         {
             Phase = 0;
         }
+
+        InstanceScript* instance;
 
         ObjectGuid EssenceGUID;
 
@@ -162,7 +165,7 @@ public:
 
         void Reset() override
         {
-            _Reset();
+            instance->SetBossState(DATA_RELIQUARY_OF_SOULS, NOT_STARTED);
 
             if (EssenceGUID)
             {
@@ -199,7 +202,8 @@ public:
         void EnterCombat(Unit* who) override
         {
             me->AddThreat(who, 10000.0f);
-            _EnterCombat();
+            DoZoneInCombat();
+            instance->SetBossState(DATA_RELIQUARY_OF_SOULS, IN_PROGRESS);
 
             Phase = 1;
             Counter = 0;
@@ -240,6 +244,11 @@ public:
                     me->AddThreat(unit, threat);       // This makes it so that the unit has the same amount of threat in Reliquary's threatlist as in the target creature's (One of the Essences).
                 }
             }
+        }
+
+        void JustDied(Unit* /*killer*/) override
+        {
+            instance->SetBossState(DATA_RELIQUARY_OF_SOULS, DONE);
         }
 
         void UpdateAI(uint32 diff) override
