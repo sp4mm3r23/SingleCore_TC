@@ -175,10 +175,15 @@ public:
     {
         PrepareAuraScript(spell_dh_demon_blades_AuraScript);
 
+        bool Validate(SpellInfo const* /*spellInfo*/) override
+        {
+            if (!sSpellMgr->GetSpellInfo(SPELL_DEMON_BLADES_PROC))
+                return false;
+            return true;
+        }
+
         void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
         {
-            PreventDefaultAction();
-
             if (Unit* caster = GetCaster())
                 caster->CastSpell(caster->GetVictim(), SPELL_DEMON_BLADES_PROC, true);
         }
