@@ -90,6 +90,8 @@ enum IllidariCouncil
     SPELL_BERSERK               = 45078
 };
 
+#define ERROR_INST_DATA           "SD2 ERROR: Instance Data for Black Temple not set properly; Illidari Council event will not function properly."
+
 struct CouncilYells
 {
     int32 entry;
@@ -163,7 +165,7 @@ public:
                 Council[1] = instance->GetGuidData(DATA_VERAS_DARKSHADOW);
                 Council[2] = instance->GetGuidData(DATA_LADY_MALANDE);
                 Council[3] = instance->GetGuidData(DATA_HIGH_NETHERMANCER_ZEREVOR);
-            }
+            } else TC_LOG_ERROR("scripts", ERROR_INST_DATA);
         }
 
         void EnterCombat(Unit* /*who*/) override { }
