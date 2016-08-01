@@ -668,7 +668,8 @@ DeclinedNames = 0
 #    Expansion
 #        Description: Allow server to use content from expansions. Checks for expansion-related
 #                     map files, client compatibility and class/race character creation.
-#        Default:     5 - (Expansion 5)
+#        Default:     6 - (Expansion 6)
+#                     5 - (Expansion 5)
 #                     4 - (Expansion 4)
 #                     3 - (Expansion 3)
 #                     2 - (Expansion 2)
@@ -788,15 +789,15 @@ CharactersPerAccount = 50
 #
 #    CharactersPerRealm
 #        Description: Limit number of characters per account on this realm.
-#        Range:       1-11
-#        Default:     11 - (Client limitation)
+#        Range:       1-12
+#        Default:     12 - (Client limitation)
 
-CharactersPerRealm = 11
+CharactersPerRealm = 12
 
 #
 #    HeroicCharactersPerRealm
 #        Description: Limit number of heroic class characters per account on this realm.
-#        Range:       1-10
+#        Range:       1-12
 #        Default:     1
 
 HeroicCharactersPerRealm = 1
@@ -810,6 +811,24 @@ HeroicCharactersPerRealm = 1
 #                     1  - (Enabled, Requires at least another level 1 character)
 
 CharacterCreating.MinLevelForHeroicCharacter = 55
+
+#
+#    DemonHuntersPerRealm
+#        Description: Limit number of demon hunter characters per account on this realm.
+#        Range:       1-12
+#        Default:     1
+
+DemonHuntersPerRealm = 1
+
+#
+#    CharacterCreating.MinLevelForDemonHunter
+#        Description: Limit creating demon hunters only for account with another
+#                     character of specific level.
+#        Default:     70 - (Enabled, Requires at least another level 70 character)
+#                     0  - (Disabled)
+#                     1  - (Enabled, Requires at least another level 1 character)
+
+CharacterCreating.MinLevelForDemonHunter = 70
 
 #
 #    SkipCinematics
@@ -852,6 +871,14 @@ StartPlayerLevel = 1
 #        Default:     55
 
 StartHeroicPlayerLevel = 55
+
+#
+#    StartDemonHunterPlayerLevel
+#        Description: Staring level for demon hunters after creation.
+#        Range:       98-MaxPlayerLevel
+#        Default:     98
+
+StartDemonHunterPlayerLevel = 98
 
 #
 #    StartPlayerMoney
@@ -2530,6 +2557,64 @@ Wintergrasp.NoBattleTimer = 150
 #         Default:     10
 
 Wintergrasp.CrashRestartTimer = 10
+
+#
+#     TolBarad.Enable
+#         Description: Enable the Tol Barad battlefield.
+#         Default:     0 - (Disabled)
+#                      1 - (Enabled, Experimental as in incomplete, bugged and with crashes)
+
+TolBarad.Enable = 0
+
+#
+#     TolBarad.PlayerMax
+#         Description: Maximum number of players allowed in Tol Barad.
+#         Default:     100
+
+TolBarad.PlayerMax = 100
+
+#
+#     TolBarad.PlayerMin
+#         Description: Minimum number of players required for Tol Barad.
+#         Default:     0
+
+TolBarad.PlayerMin = 0
+
+#
+#     TolBarad.PlayerMinLvl
+#         Description: Required character level for the Tol Barad battle.
+#         Default:     85
+
+TolBarad.PlayerMinLvl = 85
+
+#
+#     TolBarad.BattleTimer
+#         Description: Time (in minutes) for the Tol Barad battle to last.
+#         Default:     15
+
+TolBarad.BattleTimer = 15
+
+#
+#     TolBarad.BonusTime
+#         Description: Bonus time (in minutes) for each tower destroyed in Tol Barad battle.
+#         Default:     5
+
+TolBarad.BonusTime = 5
+
+#
+#     TolBarad.NoBattleTimer
+#         Description: Time (in minutes) between TolBarad battles.
+#         Default:     150
+
+TolBarad.NoBattleTimer = 150
+
+#
+#     TolBarad.CrashRestartTimer
+#         Description: Time (in minutes) to delay the restart of TolBarad if the world server
+#                      crashed during a running battle.
+#         Default:     10
+
+TolBarad.CrashRestartTimer = 10
 
 #
 ###################################################################################################
