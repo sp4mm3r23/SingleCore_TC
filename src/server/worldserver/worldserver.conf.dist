@@ -96,15 +96,9 @@ LogsDir = "Logs"
 #        Default:     "127.0.0.1;3306;trinity;trinity;auth"       - (LoginDatabaseInfo)
 #                     "127.0.0.1;3306;trinity;trinity;world"      - (WorldDatabaseInfo)
 #                     "127.0.0.1;3306;trinity;trinity;characters" - (CharacterDatabaseInfo)
-#
-#    Don't change hostname unless you are hosting mysql on a different machine, if you need help
-#    with configuration allowing to connect from diferent machine than the one running server
-#    search for TCE00016 on forum.
-#    Don't open port on firewall to external connections (it belongs to mysql, not to wow server).
-#    The username you choose must have permisions to create/alter/rename tables.
 
-LoginDatabaseInfo     = "127.0.0.1;3310;root;123456;login"
-WorldDatabaseInfo     = "127.0.0.1;3310;root;123456;world2"
+LoginDatabaseInfo     = "127.0.0.1;3310;root;123456;realmd"
+WorldDatabaseInfo     = "127.0.0.1;3310;root;123456;world"
 CharacterDatabaseInfo = "127.0.0.1;3310;root;123456;characters"
 
 #
@@ -536,7 +530,7 @@ PacketLogFile = ""
 #                     16 - (FFA_PVP, Free for all pvp mode like arena PvP in all zones except rest
 #                          activated places and sanctuaries)
 
-GameType = 0
+GameType = 8
 
 #
 #    RealmZone
@@ -784,7 +778,7 @@ CharacterCreating.MinLevelForHeroicCharacter = 55
 #                     1 - (Show intro only for first character of selected race)
 #                     2 - (Disable intro for all classes)
 
-SkipCinematics = 0
+SkipCinematics = 1
 
 #
 #    MaxPlayerLevel
@@ -964,7 +958,7 @@ Instance.UnloadDelay = 1800000
 #        Default:     false - (Disabled, don't show, blizzlike)
 #                     true  - (Enabled, show)
 
-InstancesResetAnnounce = false
+InstancesResetAnnounce = true
 
 #
 #    Quests.EnableQuestTracker
@@ -1059,7 +1053,7 @@ MaxPrimaryTradeSkill = 2
 #        Range:       0-9
 #        Default:     9
 
-MinPetitionSigns = 9
+MinPetitionSigns = 0
 
 #
 #    MaxGroupXPDistance
@@ -1139,7 +1133,7 @@ BeepAtStart = 1
 #        Example:     "Welcome to John's Server!@This server is proud to be powered by Trinity Core."
 #        Default:     "Welcome to a Trinity Core server."
 
-Motd = "Welcome to a Trinity Core server."
+Motd = "Welcome to Single Player Project server."
 
 #
 #    Server.LoginInfo
@@ -1147,7 +1141,7 @@ Motd = "Welcome to a Trinity Core server."
 #        Default:     0 - (Disabled)
 #                     1 - (Enabled)
 
-Server.LoginInfo = 0
+Server.LoginInfo = 1
 
 #
 #    Command.LookupMaxResults
@@ -1191,7 +1185,7 @@ DungeonFinder.OptionsMask = 1
 #        Default:     1 - (Enabled, Enforce DBC values)
 #                     0 - (Disabled, Use database values)
 
-DBC.EnforceItemAttributes = 1
+DBC.EnforceItemAttributes = 0
 
 #
 #   AccountInstancesPerHour
@@ -1297,7 +1291,7 @@ Updates.CleanDeadRefMaxCount = 3
 #        Default:     1 - (Enabled)
 #                     0 - (Disabled)
 
-HotSwap.Enabled = 1
+HotSwap.Enabled = 0
 
 #
 #    HotSwap.ScriptDir
@@ -1368,7 +1362,7 @@ HotSwap.ReCompilerBuildType = ""
 #        Default:     0 - (Disabled)
 #                     1 - (Enabled)
 
-Warden.Enabled = 0
+Warden.Enabled = 1
 
 #
 #    Warden.NumMemChecks
@@ -2284,7 +2278,7 @@ Death.Bones.BattlegroundOrArena = 1
 #        Default:     1 - (Enabled)
 #                     0 - (Disabled)
 
-Die.Command.Mode = 1
+Die.Command.Mode = 0
 
 #
 ###################################################################################################
@@ -2356,7 +2350,7 @@ Battleground.CastDeserter = 1
 #        Default:     0 - (Disabled)
 #                     1 - (Enabled)
 
-Battleground.QueueAnnouncer.Enable = 0
+Battleground.QueueAnnouncer.Enable = 1
 
 #
 #    Battleground.QueueAnnouncer.PlayerOnly
@@ -2364,7 +2358,7 @@ Battleground.QueueAnnouncer.Enable = 0
 #        Default:     0 - (System message, Anyone can see it)
 #                     1 - (Private, Only queued players can see it)
 
-Battleground.QueueAnnouncer.PlayerOnly = 0
+Battleground.QueueAnnouncer.PlayerOnly = 1
 
 #
 #    Battleground.StoreStatistics.Enable
@@ -2372,7 +2366,7 @@ Battleground.QueueAnnouncer.PlayerOnly = 0
 #        Default:     0 - (Disabled)
 #                     1 - (Enabled)
 
-Battleground.StoreStatistics.Enable = 0
+Battleground.StoreStatistics.Enable = 1
 
 #
 #    Battleground.TrackDeserters.Enable
@@ -2380,7 +2374,7 @@ Battleground.StoreStatistics.Enable = 0
 #        Default:     0 - (Disabled)
 #                     1 - (Enabled)
 
-Battleground.TrackDeserters.Enable = 0
+Battleground.TrackDeserters.Enable = 1
 
 #
 #    Battleground.InvitationType
@@ -2418,7 +2412,7 @@ Battleground.PremadeGroupWaitForMatch = 1800000
 #        Default:     0 - (Disabled)
 #                     1 - (Enabled)
 
-Battleground.GiveXPForKills = 0
+Battleground.GiveXPForKills = 1
 
 #
 #    Battleground.Random.ResetHour
@@ -2462,7 +2456,7 @@ Battleground.RewardLoserHonorLast   = 5
 #         Default:     0 - (Disabled)
 #                      1 - (Enabled, Experimental as in incomplete, bugged and with crashes)
 
-Wintergrasp.Enable = 0
+Wintergrasp.Enable = 1
 
 #
 #     Wintergrasp.PlayerMax
@@ -2558,7 +2552,7 @@ Arena.AutoDistributeInterval = 7
 #        Default:     0 - (Disabled)
 #                     1 - (Enabled)
 
-Arena.QueueAnnouncer.Enable = 0
+Arena.QueueAnnouncer.Enable = 1
 
 #
 #    Arena.ArenaSeason.ID
@@ -2862,7 +2856,7 @@ AlwaysMaxWeaponSkill = 0
 #        Default:     0 - (Disabled)
 #                     1 - (Enabled)
 
-PvPToken.Enable = 0
+PvPToken.Enable = 1
 
 #
 #    PvPToken.MapAllowType
@@ -3032,8 +3026,8 @@ Calculate.Gameoject.Zone.Area.Data = 0
 #        Default: 0 - (Blizzlike)
 #
 
-NoGrayAggro.Above = 1
-NoGrayAggro.Below = 1
+NoGrayAggro.Above = 0
+NoGrayAggro.Below = 0
 
 #
 #    PreventRenameCharacterOnCustomization
@@ -3044,6 +3038,11 @@ NoGrayAggro.Below = 1
 #
 
 PreventRenameCharacterOnCustomization = 0
+
+#
+#	 Unknown settings
+
+MonsterSight = 50.000000
 
 #
 ###################################################################################################
@@ -3283,12 +3282,12 @@ AuctionHouseBot.Items.ReqSkill.Max = 0
 #       Default:     0, 2000, 2500, 1500, 1000, 0, 0 (Gray, white, green, blue, purple, orange, yellow)
 
 AuctionHouseBot.Items.Amount.Gray = 0
-AuctionHouseBot.Items.Amount.White = 2000
-AuctionHouseBot.Items.Amount.Green = 2500
-AuctionHouseBot.Items.Amount.Blue = 1500
-AuctionHouseBot.Items.Amount.Purple = 1000
-AuctionHouseBot.Items.Amount.Orange = 0
-AuctionHouseBot.Items.Amount.Yellow = 0
+AuctionHouseBot.Items.Amount.White = 500
+AuctionHouseBot.Items.Amount.Green = 350
+AuctionHouseBot.Items.Amount.Blue = 250
+AuctionHouseBot.Items.Amount.Purple = 100
+AuctionHouseBot.Items.Amount.Orange = 50
+AuctionHouseBot.Items.Amount.Yellow = 50
 
 #
 #    AuctionHouseBot.Class.*
@@ -3586,10 +3585,10 @@ AuctionHouseBot.Buyer.Recheck.Interval = 20
 #                         Maximum value is 4294967295 (4 gb). Leave blank for no limit.
 #                         NOTE: Does not work with dynamic filenames.
 #                         Example:  536870912 (512 mb)
-#
+#conan
 
-Appender.Console=1,3,0
-Appender.Server=2,2,0,Server.log,w
+Appender.Console=1,3,0,13 7 11 9 3 1
+Appender.Server=2,1,0,Server.log,w
 Appender.GM=2,2,15,gm/gm_%s.log
 Appender.DBErrors=2,2,0,DBErrors.log
 
@@ -3695,7 +3694,7 @@ Allow.IP.Based.Action.Logging = 0
 #                     0 - (Log only 'network')
 #                     2 - (Log + kick + ban)
 
-PacketSpoof.Policy = 1
+PacketSpoof.Policy = 0
 
 #
 #    PacketSpoof.BanMode
@@ -3771,7 +3770,7 @@ Metric.OverallStatusInterval = 1
 #        Default:     1 (enabled)
 #                     0 (disabled)
 
-DoubleXP.Enable = 1
+DoubleXP.Enable = 0
 
 #
 ###################################################################################################
@@ -3787,7 +3786,7 @@ DoubleXP.Enable = 1
 #        Default : 0 (No honor when you kill a guard)
 #
 
-Custom.GainHonorOnGuardKill = 1
+Custom.GainHonorOnGuardKill = 0
 
 #
 # Custom.GainHonorOnEliteKill
@@ -3860,7 +3859,7 @@ Custom.HurtInRealTime = 0
 #     Example : 180 (When a quest is completed, the quest giver will be summoned for 3 minutes)
 #
 
-Custom.AutoCompleteQuestDelay = 180
+Custom.AutoCompleteQuestDelay = 0
 
 #
 ###################################################################################################
@@ -3930,6 +3929,7 @@ Min.D.Mod = 0.10
 
 VAS.AutoBalance.40.Name = "11583,16441,30057,13020,15589,14435,18192,14889,14888,14887,14890,15302,15818,15742,15741,15740,18338"
 VAS.AutoBalance.25.Name = "22997,21966,21965,21964,21806,21215,21845,19728,12397,17711,18256,18192,"
+VAS.AutoBalance.20.Name = ""
 VAS.AutoBalance.10.Name = "15689,15550,16152,17521,17225,16028,29324,31099"
 VAS.AutoBalance.5.Name = "15203,15204,15205,15305,6109,26801,30508,26799,30495,26803,30497,27859,27249"
 VAS.AutoBalance.2.Name = "25549,24558,25574,24559,25556,25557,25578,24561,25555,24555,25541,24553,25550,24554,24552,25564,15931,29373"
@@ -4181,7 +4181,7 @@ Guildhouse.SellCost = 500
 #                 = 0 (Anyone can use)
 #         default = 1 (Hunter only)
 
-BeastMaster.OnlyHunter = 0
+BeastMaster.OnlyHunter = 1
 
 #
 # BeastMaster Enable Normal Pets
@@ -4230,7 +4230,7 @@ PvPRank.Rate.ExtraHonor = 1
 
 #
 #     PvPRank.Rate.ExtraHonor
-#        Description: Required honor point for PvP ranks
+#        Description: Required honor points for PvP ranks
 #        Default:     10,50,100,200,450,750,1300,2000,3500,6000,9500,15000,21000,30000
 
 PvPRank.HKPerRank = 10,50,100,200,450,750,1300,2000,3500,6000,9500,15000,21000,30000
@@ -4242,30 +4242,34 @@ PvPRank.HKPerRank = 10,50,100,200,450,750,1300,2000,3500,6000,9500,15000,21000,3
 #
 #     Killstreak.Enable
 #        Description: System announce every 5, 10, 15...etc killstreak in global chat.
-#        Default:     1
+#        Default:     0 (disabled)
+#                     1 (enabled)
 
-Killstreak.Enable = 1
+Killstreak.Enable = 0
 
 #
 #     Killstreak.Battleground.Only
 #        Description: Killstreak system only in battlegrounds.
-#        Default:     0
+#        Default:     0 (disabled)
+#                     1 (enabled)
 
 Killstreak.Battleground.Only = 0
 
 #
 #     Loose.Token.On.PvP.Death
 #        Description: Loosing PvP token if you killed by someone else.
-#        Default:     0
+#        Default:     0 (disabled)
+#                     1 (enabled)
 
-Loose.Token.On.PvP.Death = 1
+Loose.Token.On.PvP.Death = 0
 
 #
 #     Add.Token.On.PvP.Kill
 #        Description: You receive PvP token when you killing other players or bots
-#        Default:     0
+#        Default:     0 (disabled)
+#                     1 (enabled)
 
-Add.Token.On.PvP.Kill = 1
+Add.Token.On.PvP.Kill = 0
 
 #
 ###################################################################################################
@@ -4289,70 +4293,81 @@ StartGuild.Horde = 0
 #     Solocraft.Enable
 #        Description: Solocraft is a script to increase players and bots stats in raids, 
 #		 based on group size. It feels a little Hacky, but raids is unfair hard with playerbots.
-#        Default:     0
+#        Default:     0 (disabled)
+#                     1 (enabled)
 
 Solocraft.Enable = 0
 
 #
 #     Boss.Announcer.Enable
 #        Description: System announce who killed a world boss in global.
-#        Default:     1
+#        Default:     0 (disabled)
+#                     1 (enabled)
 
-Boss.Announcer.Enable = 1
+Boss.Announcer.Enable = 0
 
 #
 #     Login.Announcer.Enable
 #        Description: Announce every player and bots login
-#        Default:     1
+#        Default:     0 (disabled)
+#                     1 (enabled)
 
-Login.Announcer.Enable = 1
+Login.Announcer.Enable = 0
 
 #
 #     Auto.Spell.Learn
 #        Description: Learning spells automatically on levelup.
-#        Default:     1
+#        Default:     0 (disabled)
+#                     1 (enabled)
 
-Auto.Spell.Learn = 1
+Auto.Spell.Learn = 0
 
 #
 #     Random.Visual.Enchant
-#        Description: You have chance to loot weapons with a random visual enchant.
+#        Description: You have 25% chance to loot weapons with a random visual enchant.
 #					  Only a visual tuning, not a real enchant
 #
-#        Default:     Random.Visual.Enchant = 1
+#        Default:     Random.Visual.Enchant = 0 (disabled)
+#                                             1 (enabled)
+#
 #					  Visual.drop.chance = 0.10 (0.10 = 10% chance, 1.0 = 100%)
 
-Random.Visual.Enchant = 1
+Random.Visual.Enchant = 0
 Visual.drop.chance = 0.10
 
 #
 #     Reset.on.login
 #        Description: Restore players health, mana and cooldowns when log into the game.
-#        Default:     1
+#        Default:     0 (disabled)
+#                     1 (enabled)
 
 Reset.on.login = 1
 
 #
 #     Login.BoA
 #        Description: New players get some starting equipment.
-#        Default:     1
+#        Default:     0 (disabled)
+#                     1 (enabled)
 
-Login.BoA = 1
+Login.BoA = 0
 
 #
 #     PhasedDueling.Enable
 #        Description: On the start of a duel, the system create a separated phase 
 #					  for the duel partners and hide the other players.
-#        Default:     0
+#        Default:     0 (disabled)
+#                     1 (enabled)
 
 PhasedDueling.Enable = 0
 
 #
 #     FireWorksOnLevelUp
-#        Description: Players shoot a firework when reach level 80.
-#        Default:     0
+#        Description: Players, who reach lvl80 shooting a firework to the sky.
+#					  
+#        Default:     0 (disabled)
+#                     1 (enabled)
 
-FireWorksOnLevelUp = 1
+FireWorksOnLevelUp = 0
 
 #
 ###################################################################################################
