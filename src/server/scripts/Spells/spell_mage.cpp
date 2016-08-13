@@ -1476,6 +1476,150 @@ class spell_mage_water_elemental_freeze : public SpellScriptLoader
        }
 };
 
+// Ice Nova - 157997
+class spell_mage_icenova : public SpellScriptLoader
+{
+    public:
+        spell_mage_icenova() : SpellScriptLoader("spell_mage_icenova") { }
+
+        class spell_mage_icenova_SpellScript : public SpellScript
+        {
+            PrepareSpellScript(spell_mage_icenova_SpellScript);
+
+            uint64 tar;
+
+            void HandleBeforeCast()
+            {
+                Unit* target = GetExplTargetUnit();
+                Unit* caster = GetCaster();
+
+                if (!caster || !target)
+                    return;
+
+                tar = target->GetGUID();
+            }
+
+            void HandleOnHit()
+            {
+                Unit* target = GetHitUnit();
+                Unit* caster = GetCaster();
+
+                if (!caster || !target || !tar)
+                    return;
+
+                if (target->GetGUID() == tar && target->IsHostileTo(caster))
+                    SetHitDamage(GetHitDamage()*5);
+            }
+
+            void Register() override
+            {
+                BeforeCast += SpellCastFn(spell_mage_icenova_SpellScript::HandleBeforeCast);
+                OnHit += SpellHitFn(spell_mage_icenova_SpellScript::HandleOnHit);
+            }
+        };
+
+        SpellScript* GetSpellScript() const override
+        {
+            return new spell_mage_icenova_SpellScript();
+        }
+};
+
+// Supernova - 157980
+class spell_mage_supernova : public SpellScriptLoader
+{
+    public:
+        spell_mage_supernova() : SpellScriptLoader("spell_mage_supernova") { }
+
+        class spell_mage_supernova_SpellScript : public SpellScript
+        {
+            PrepareSpellScript(spell_mage_supernova_SpellScript);
+
+            uint64 tar;
+
+            void HandleBeforeCast()
+            {
+                Unit* target = GetExplTargetUnit();
+                Unit* caster = GetCaster();
+
+                if (!caster || !target)
+                    return;
+
+                tar = target->GetGUID();
+            }
+
+            void HandleOnHit()
+            {
+                Unit* target = GetHitUnit();
+                Unit* caster = GetCaster();
+
+                if (!caster || !target || !tar)
+                    return;
+
+                if (target->GetGUID() == tar)
+                    SetHitDamage(GetHitDamage()*5);
+            }
+
+            void Register() override
+            {
+                BeforeCast += SpellCastFn(spell_mage_supernova_SpellScript::HandleBeforeCast);
+                OnHit += SpellHitFn(spell_mage_supernova_SpellScript::HandleOnHit);
+            }
+        };
+
+        SpellScript* GetSpellScript() const override
+        {
+            return new spell_mage_supernova_SpellScript();
+        }
+};
+
+// Blastwave - 157981
+class spell_mage_blastwave : public SpellScriptLoader
+{
+    public:
+        spell_mage_blastwave() : SpellScriptLoader("spell_mage_blastwave") { }
+
+        class spell_mage_blastwave_SpellScript : public SpellScript
+        {
+            PrepareSpellScript(spell_mage_blastwave_SpellScript);
+
+            uint64 tar;
+
+            void HandleBeforeCast()
+            {
+                Unit* target = GetExplTargetUnit();
+                Unit* caster = GetCaster();
+
+                if (!caster || !target)
+                    return;
+
+                tar = target->GetGUID();
+            }
+
+            void HandleOnHit()
+            {
+                Unit* target = GetHitUnit();
+                Unit* caster = GetCaster();
+
+                if (!caster || !target || !tar)
+                    return;
+
+                if (target->GetGUID() == tar)
+                    SetHitDamage(GetHitDamage()*5);
+            }
+
+            void Register() override
+            {
+                BeforeCast += SpellCastFn(spell_mage_blastwave_SpellScript::HandleBeforeCast);
+                OnHit += SpellHitFn(spell_mage_blastwave_SpellScript::HandleOnHit);
+            }
+        };
+
+        SpellScript* GetSpellScript() const override
+        {
+            return new spell_mage_blastwave_SpellScript();
+        }
+};
+
 void AddSC_mage_spell_scripts()
 {
     new spell_mage_arcane_potency();
@@ -1506,4 +1650,7 @@ void AddSC_mage_spell_scripts()
     new spell_mage_ring_of_frost_freeze();
     new spell_mage_time_warp();
     new spell_mage_water_elemental_freeze();
+    new spell_mage_icenova();
+    new spell_mage_supernova();
+    new spell_mage_blastwave();
 }
