@@ -79,10 +79,26 @@ enum MageSpells
     SPELL_MAGE_RING_OF_FROST_SUMMON              = 82676,
     SPELL_MAGE_RING_OF_FROST_FREEZE              = 82691,
     SPELL_MAGE_RING_OF_FROST_DUMMY               = 91264,
+    SPELL_MAGE_ICE_NOVA                          = 157997,
+    SPELL_MAGE_EVANESCE                          = 157913,
+    SPELL_MAGE_SUPERNOVA                         = 157980,
+    SPELL_MAGE_BLASTWAVE                         = 157981,
 
     SPELL_MAGE_FINGERS_OF_FROST                  = 44544,
     SPELL_MAGE_TEMPORAL_DISPLACEMENT             = 80354,
     SPELL_PET_NETHERWINDS_FATIGUED               = 160455,
+    SPELL_MAGE_CAUTERIZE                         = 87023,
+    SPELL_MAGE_REKINDLE                          = 155064,
+    SPELL_MAGE_MADE_CAUTERIZE                    = 87024,
+    
+    SPELL_MAGE_COMET_STORM_0                     = 153596,
+    SPELL_MAGE_COMET_STORM_1                     = 153596,
+    SPELL_MAGE_COMET_STORM_2                     = 153596,
+    SPELL_MAGE_COMET_STORM_3                     = 153596,
+    SPELL_MAGE_COMET_STORM_4                     = 153596,
+    SPELL_MAGE_COMET_STORM_5                     = 153596,
+    SPELL_MAGE_COMET_STORM_6                     = 153596,
+    SPELL_MAGE_COMET_STORM_7                     = 153596
 };
 
 enum MageIcons
@@ -100,6 +116,23 @@ enum MiscSpells
     SPELL_PRIEST_SHADOW_WORD_DEATH               = 32409,
     SPELL_SHAMAN_EXHAUSTION                      = 57723,
     SPELL_SHAMAN_SATED                           = 57724
+};
+
+enum MiscMage
+{
+    MAX_SUMMON_COMET_STORM                       = 8
+};
+
+uint32 const SummonMageCometStormSpells[MAX_SUMMON_COMET_STORM] =
+{
+    SPELL_MAGE_COMET_STORM_0,
+    SPELL_MAGE_COMET_STORM_1,
+    SPELL_MAGE_COMET_STORM_2,
+    SPELL_MAGE_COMET_STORM_3,
+    SPELL_MAGE_COMET_STORM_4,
+    SPELL_MAGE_COMET_STORM_5,
+    SPELL_MAGE_COMET_STORM_6,
+    SPELL_MAGE_COMET_STORM_7
 };
 
 // -31571 - Arcane Potency
@@ -274,18 +307,12 @@ class spell_mage_cold_snap : public SpellScriptLoader
         {
             PrepareSpellScript(spell_mage_cold_snap_SpellScript);
 
-            bool Load() override
-            {
-                return GetCaster()->GetTypeId() == TYPEID_PLAYER;
-            }
-
             void HandleDummy(SpellEffIndex /*effIndex*/)
             {
                 GetCaster()->GetSpellHistory()->ResetCooldowns([](SpellHistory::CooldownStorageType::iterator itr)
                 {
                     SpellInfo const* spellInfo = sSpellMgr->AssertSpellInfo(itr->first);
-                    return spellInfo->SpellFamilyName == SPELLFAMILY_MAGE && (spellInfo->GetSchoolMask() & SPELL_SCHOOL_MASK_FROST) &&
-                           spellInfo->Id != SPELL_MAGE_COLD_SNAP && spellInfo->GetRecoveryTime() > 0;
+                    return spellInfo->SpellFamilyName == SPELLFAMILY_MAGE && spellInfo->Id != SPELL_MAGE_COLD_SNAP && spellInfo->GetRecoveryTime() > 0;
                 }, true);
             }
 
@@ -298,6 +325,37 @@ class spell_mage_cold_snap : public SpellScriptLoader
         SpellScript* GetSpellScript() const override
         {
             return new spell_mage_cold_snap_SpellScript();
+        }
+};
+
+// 11958 - Cold Snap
+class spell_mage_cold_snap_2 : public SpellScriptLoader
+{
+    public:
+        spell_mage_cold_snap_2() : SpellScriptLoader("spell_mage_cold_snap_2") { }
+
+        class spell_mage_cold_snap_2_SpellScript : public SpellScript
+        {
+            PrepareSpellScript(spell_mage_cold_snap_2_SpellScript);
+
+            void HandleDummy(SpellEffIndex /*effIndex*/)
+            {
+                GetCaster()->GetSpellHistory()->ResetCooldowns([](SpellHistory::CooldownStorageType::iterator itr)
+                {
+                    SpellInfo const* spellInfo = sSpellMgr->AssertSpellInfo(itr->first);
+                    return spellInfo->GetRecoveryTime() > 0;
+                }, true);
+            }
+
+            void Register() override
+            {
+                OnEffectHit += SpellEffectFn(spell_mage_cold_snap_2_SpellScript::HandleDummy, EFFECT_0, SPELL_EFFECT_DUMMY);
+            }
+        };
+
+        SpellScript* GetSpellScript() const override
+        {
+            return new spell_mage_cold_snap_2_SpellScript();
         }
 };
 
@@ -1476,6 +1534,112 @@ class spell_mage_water_elemental_freeze : public SpellScriptLoader
        }
 };
 
+// 6.x Frost Mage Talent Comet Storm: Id 153595.
+class spell_mage_comet_storm : public SpellScriptLoader
+{
+    public:
+        spell_mage_comet_storm() : SpellScriptLoader("spell_mage_comet_storm") { }
+
+        class spell_mage_comet_storm_SpellScript : public SpellScript
+        {
+            PrepareSpellScript(spell_mage_comet_storm_SpellScript);
+
+            bool Validate(SpellInfo const* /*spell*/) override
+            {
+                for (uint8 i = 0; i < MAX_SUMMON_COMET_STORM; ++i)
+                    if (!sSpellMgr->GetSpellInfo(SummonMageCometStormSpells[i]))
+                        return false;
+                return true;
+            }
+            
+            void HandleAfterCast()
+            {
+                for (uint8 i = 0; i < MAX_SUMMON_COMET_STORM; ++i)
+                    GetCaster()->CastSpell(GetHitUnit(), SummonMageCometStormSpells[i], true);
+            }
+
+            void Register() override
+            {
+                AfterCast += SpellCastFn(spell_mage_comet_storm_SpellScript::HandleAfterCast);
+            }
+        };
+
+        SpellScript* GetSpellScript() const override
+        {
+            return new spell_mage_comet_storm_SpellScript();
+        }
+};
+
+// 6.x Frost Mage Talent Comet Storm: Id 153595.
+class spell_mage_comet_storm_2 : public SpellScriptLoader
+{
+    public:
+        spell_mage_comet_storm_2() : SpellScriptLoader("spell_mage_comet_storm_2") { }
+
+        class spell_mage_comet_storm_2_SpellScript : public SpellScript
+        {
+            PrepareSpellScript(spell_mage_comet_storm_2_SpellScript);
+
+            bool Validate(SpellInfo const* /*spell*/) override
+            {
+                for (uint8 i = 0; i < MAX_SUMMON_COMET_STORM; ++i)
+                    if (!sSpellMgr->GetSpellInfo(SummonMageCometStormSpells[i]))
+                        return false;
+                return true;
+            }
+            
+            void HandleAfterCast()
+            {
+                for (uint8 i = 0; i < MAX_SUMMON_COMET_STORM; ++i)
+                    GetCaster()->CastSpell(GetHitUnit(), SummonMageCometStormSpells[i], TRIGGERED_FULL_MASK);
+            }
+
+            void Register() override
+            {
+                AfterCast += SpellCastFn(spell_mage_comet_storm_2_SpellScript::HandleAfterCast);
+            }
+        };
+
+        SpellScript* GetSpellScript() const override
+        {
+            return new spell_mage_comet_storm_2_SpellScript();
+        }
+};
+class spell_mage_cauterize : public SpellScriptLoader     // 86949
+{
+    public:
+        spell_mage_cauterize() : SpellScriptLoader("spell_mage_cauterize") { }
+
+        class spell_mage_cauterize_AuraScript : public AuraScript
+        {
+            PrepareAuraScript(spell_mage_cauterize_AuraScript);
+
+            void OnAbsorb(AuraEffect* /*aurEff*/, DamageInfo& dmgInfo, uint32& absorbAmount)
+            {
+                if (dmgInfo.GetDamage() >= GetTarget()->GetHealth())
+                {
+                    absorbAmount = dmgInfo.GetDamage();
+                    // or absorbAmount = dmgInfo.GetDamage() - GetTarget()->GetHealth() + 1
+                    GetTarget()->CastSpell(GetTarget(), SPELL_MAGE_CAUTERIZE, true);
+                    GetTarget()->CastSpell(GetTarget(), SPELL_MAGE_REKINDLE, true);
+                    GetTarget()->CastSpell(GetTarget(), SPELL_MAGE_MADE_CAUTERIZE, true);
+                }
+                else
+                    PreventDefaultAction();
+            }
+
+            void Register() override
+            {
+                OnEffectAbsorb += AuraEffectAbsorbFn(spell_mage_cauterize_AuraScript::OnAbsorb, EFFECT_0);
+            }
+        };
+
+        AuraScript* GetAuraScript() const override
+        {
+            return new spell_mage_cauterize_AuraScript();
+        }
+};
+
 // Ice Nova - 157997
 class spell_mage_icenova : public SpellScriptLoader
 {
@@ -1486,8 +1650,6 @@ class spell_mage_icenova : public SpellScriptLoader
         {
             PrepareSpellScript(spell_mage_icenova_SpellScript);
 
-            uint64 tar;
-
             void HandleBeforeCast()
             {
                 Unit* target = GetExplTargetUnit();
@@ -1495,8 +1657,6 @@ class spell_mage_icenova : public SpellScriptLoader
 
                 if (!caster || !target)
                     return;
-
-                tar = target->GetGUID();
             }
 
             void HandleOnHit()
@@ -1504,11 +1664,13 @@ class spell_mage_icenova : public SpellScriptLoader
                 Unit* target = GetHitUnit();
                 Unit* caster = GetCaster();
 
-                if (!caster || !target || !tar)
+                if (!caster || !target)
                     return;
 
-                if (target->GetGUID() == tar && target->IsHostileTo(caster))
-                    SetHitDamage(GetHitDamage()*5);
+                if (target->IsHostileTo(caster))
+                    SetHitDamage(GetHitDamage() * 5);
+                else
+                    SetHitDamage(GetHitDamage());
             }
 
             void Register() override
@@ -1534,8 +1696,6 @@ class spell_mage_supernova : public SpellScriptLoader
         {
             PrepareSpellScript(spell_mage_supernova_SpellScript);
 
-            uint64 tar;
-
             void HandleBeforeCast()
             {
                 Unit* target = GetExplTargetUnit();
@@ -1543,8 +1703,6 @@ class spell_mage_supernova : public SpellScriptLoader
 
                 if (!caster || !target)
                     return;
-
-                tar = target->GetGUID();
             }
 
             void HandleOnHit()
@@ -1552,11 +1710,13 @@ class spell_mage_supernova : public SpellScriptLoader
                 Unit* target = GetHitUnit();
                 Unit* caster = GetCaster();
 
-                if (!caster || !target || !tar)
+                if (!caster || !target)
                     return;
 
-                if (target->GetGUID() == tar)
-                    SetHitDamage(GetHitDamage()*5);
+                if (target->IsHostileTo(caster))
+                    SetHitDamage(GetHitDamage() * 5);
+                else
+                    SetHitDamage(GetHitDamage());
             }
 
             void Register() override
@@ -1582,8 +1742,6 @@ class spell_mage_blastwave : public SpellScriptLoader
         {
             PrepareSpellScript(spell_mage_blastwave_SpellScript);
 
-            uint64 tar;
-
             void HandleBeforeCast()
             {
                 Unit* target = GetExplTargetUnit();
@@ -1591,8 +1749,6 @@ class spell_mage_blastwave : public SpellScriptLoader
 
                 if (!caster || !target)
                     return;
-
-                tar = target->GetGUID();
             }
 
             void HandleOnHit()
@@ -1600,11 +1756,13 @@ class spell_mage_blastwave : public SpellScriptLoader
                 Unit* target = GetHitUnit();
                 Unit* caster = GetCaster();
 
-                if (!caster || !target || !tar)
+                if (!caster || !target)
                     return;
 
-                if (target->GetGUID() == tar)
-                    SetHitDamage(GetHitDamage()*5);
+                if (target->IsHostileTo(caster))
+                    SetHitDamage(GetHitDamage() * 5);
+                else
+                    SetHitDamage(GetHitDamage());
             }
 
             void Register() override
@@ -1626,6 +1784,7 @@ void AddSC_mage_spell_scripts()
     new spell_mage_blast_wave();
     new spell_mage_blazing_speed();
     new spell_mage_cold_snap();
+    new spell_mage_cold_snap_2();
     new spell_mage_cone_of_cold();
     new spell_mage_conjure_refreshment();
     new spell_mage_conjure_refreshment_table();
@@ -1650,6 +1809,9 @@ void AddSC_mage_spell_scripts()
     new spell_mage_ring_of_frost_freeze();
     new spell_mage_time_warp();
     new spell_mage_water_elemental_freeze();
+    new spell_mage_comet_storm();
+    new spell_mage_comet_storm_2();
+    new spell_mage_cauterize();
     new spell_mage_icenova();
     new spell_mage_supernova();
     new spell_mage_blastwave();
