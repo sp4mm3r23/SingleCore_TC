@@ -37,3 +37,18 @@ INSERT INTO `spell_script_names` (`spell_id`,`ScriptName`) VALUES
 DELETE FROM `spell_script_names` WHERE `ScriptName` = 'spell_dk_dark_transformation_form';
 INSERT INTO `spell_script_names` (`spell_id`,`ScriptName`) VALUES
 (63560,'spell_dk_dark_transformation_form');
+
+-- spell_mage_icenova
+DELETE FROM `spell_script_names` WHERE `ScriptName` = 'spell_mage_icenova';
+INSERT INTO `spell_script_names` (`spell_id`,`ScriptName`) VALUES
+(157997,'spell_mage_icenova');
+
+-- spell_mage_supernova
+DELETE FROM `spell_script_names` WHERE `ScriptName` = 'spell_mage_supernova';
+INSERT INTO `spell_script_names` (`spell_id`,`ScriptName`) VALUES
+(157980,'spell_mage_supernova');
+
+-- spell_mage_blastwave
+DELETE FROM `spell_script_names` WHERE `ScriptName` = 'spell_mage_blastwave';
+INSERT INTO `spell_script_names` (`spell_id`,`ScriptName`) VALUES
+(157981,'spell_mage_blastwave');
