@@ -18,6 +18,12 @@
 #include "ScriptMgr.h"
 #include "InstanceScript.h"
 #include "firelands.h"
+#include <minwindef.h>
+
+BossBoundaryData const bounderies =
+{
+    { DATA_RAGNAROS, new CircleBoundary(Position(1040.0f, -57.0f), 80) },
+};
 
 DoorData const doorData[] =
 {
@@ -36,9 +42,11 @@ class instance_firelands : public InstanceMapScript
             {
                 SetHeaders(DataHeader);
                 SetBossNumber(EncounterCount);
+                LoadBossBoundaries(bounderies);
                 LoadDoorData(doorData);
 
                 RagnarosEmerged = false;
+                RagnarosFirstEmerge = false;
             }
 
             void OnCreatureCreate(Creature* creature) override
@@ -51,7 +59,6 @@ class instance_firelands : public InstanceMapScript
                         break;
                     case NPC_RAGNAROS:
                         RagnarosGUID = creature->GetGUID();
-                        creature->setActive(true);
                         break;
                     case NPC_SULFURAS:
                         SulfurasGUID = creature->GetGUID();
@@ -107,6 +114,55 @@ class instance_firelands : public InstanceMapScript
                 InstanceScript::OnGameObjectRemove(go);
             }
 
+            bool SetBossState(uint32 type, EncounterState state) override
+            {
+                if (!InstanceScript::SetBossState(type, state))
+                    return false;
+
+                switch (type)
+                {
+                    case DATA_RAGNAROS:
+                        if (state == FAIL)
+                        {
+                            scheduler.Schedule(Seconds(35), [this](TaskContext)
+                            {
+                                instance->SummonCreature(NPC_RAGNAROS, { 1075.201f, -57.84896f, 55.42427f, 3.159046f });
+                            });
+                        }
+                        break;
+                }
+
+                return true;
+            }
+
+            void SetData(uint32 data, uint32 value) override
+            {
+                switch (data)
+                {
+                    case DATA_RAGNAROS_EMERGED:
+                        RagnarosEmerged = value == TRUE;
+                        if (RagnarosEmerged && !GetCreature(NPC_RAGNAROS))
+                            instance->SummonCreature(NPC_RAGNAROS, { 1075.201f, -57.84896f, 55.42427f, 3.159046f });
+                        break;
+                    case DATA_RAGNAROS_FIRST_EMERGE:
+                        RagnarosFirstEmerge = value == TRUE;
+                        break;
+                }
+            }
+
+            uint32 GetData(uint32 data) const override
+            {
+                switch (data)
+                {
+                    case DATA_RAGNAROS_EMERGED:
+                        return RagnarosEmerged ? TRUE : FALSE;
+                    case DATA_RAGNAROS_FIRST_EMERGE:
+                        return RagnarosFirstEmerge ? TRUE : FALSE;
+                }
+
+                return 0;
+            }
+
 			ObjectGuid GetGuidData(uint32 type) const override
             {
                 switch (type)
@@ -131,10 +187,18 @@ class instance_firelands : public InstanceMapScript
                 return ObjectGuid::Empty;
             }
 
-            private:
-                bool RagnarosEmerged;
+            void Update(uint32 diff) override
+            {
+                InstanceScript::Update(diff);
+
+                scheduler.Update(diff);
+            }
 
             protected:
+                bool RagnarosEmerged;
+                bool RagnarosFirstEmerge;
+
+                // Creatures
                 ObjectGuid RagnarosGUID;
                 ObjectGuid SulfurasGUID;
                 ObjectGuid CenariusGUID;
@@ -142,7 +206,10 @@ class instance_firelands : public InstanceMapScript
                 ObjectGuid MalfurionGUID;
                 ObjectGuid DreadflameGUID;
 
+                // GameObjects
                 ObjectGuid RagnarosPlatformGUID;
+
+                TaskScheduler scheduler;
         };
 
         InstanceScript* GetInstanceScript(InstanceMap* map) const override

@@ -3,6 +3,7 @@
 #include "SpellScript.h"
 #include "SpellAuraEffects.h"
 #include "firelands.h"
+#include "MiscPackets.h"
 
 enum Texts
 {
@@ -77,6 +78,7 @@ enum Spells
     SPELL_SULFURAS_SMASH_LAVA_WAVE_E        = 98875,
     SPELL_SULFURAS_SMASH_LAVA_POOL          = 98712,
     SPELL_SCORCHED_GROUND                   = 98871,
+    SPELL_LAVALOGGED                        = 101088,
 
     SPELL_SUBMERGE                          = 100051,
     SPELL_SUBMERGE_PERIODIC_AURA            = 98982,
@@ -98,13 +100,10 @@ enum Spells
     SPELL_ENGULFING_FLAMES                  = 99171,
     SPELL_ENGULFING_FLAMES_PERIODIC         = 99225,
     SPELL_WORLD_IN_FLAMES                   = 100171,
-
     SPELL_ENGULFING_FLAMES_NEAR             = 99172,
     SPELL_ENGULFING_FLAMES_NEAR_VISUAL      = 99216,
-
     SPELL_ENGULFING_FLAMES_MIDDLE           = 99235,
     SPELL_ENGULFING_FLAMES_MIDDLE_VISUAL    = 99217,
-
     SPELL_ENGULFING_FLAMES_FAR              = 99236,
     SPELL_ENGULFING_FLAMES_FAR_VISUAL       = 99218,
 
@@ -112,8 +111,24 @@ enum Spells
     SPELL_BLAZING_HEAT                      = 100460,
     SPELL_BLAZING_HEAT_SUMMON               = 99129,
 
-    SPELL_MOLTEN_ELEMENTAL_FOCUS_CREATOR    = 100142,
+    SPELL_MOLTEN_SEED_TARGET_SEARCH         = 98333,
+
+    // Molten Elemental
+    SPELL_MOLTEN_SEED_MISSILE_TARGET_SEARCH = 98497,
+    SPELL_MOLTEN_SEED_MISSILE_HIT           = 98498,
+    SPELL_MOLTEN_ELEMENTAL_INFERNO          = 98518,
+    SPELL_MOLTEN_SEED_COUNTDOWN             = 98520,
+    SPELL_MOLTEN_ELEMENTAL_AGGRO_SUMMONER   = 100142,
     SPELL_MOLTEN_ELEMENTAL_INVIS_PRE_VISUAL = 100153,
+    SPELL_MOLTEN_ELEMENTAL_MOLTEN_POWER     = 100157,
+    SPELL_MOLTEN_ELEMENTAL_DISABLE_CRIT     = 64481,
+
+    // Living Meteor
+    SPELL_LIVING_METEOR_DAMAGE_REDUCTION    = 100904,
+    SPELL_LIVING_METEOR_COMBUSTIBLE         = 99296,
+    SPELL_LIVING_METEOR_PROXIMITY_CHECK     = 99269,
+    SPELL_LIVING_METEOR_SPEED_TRIGGER       = 100278,
+    SPELL_LIVING_METEOR_FIXATE_VISUAL       = 99849,
 
     SPELL_AWARD_REPUTATION                  = 101620,
     SPELL_DEATH                             = 99430,
@@ -221,6 +236,7 @@ enum Actions
     ACTION_NONE,
     ACTION_RAGNAROS_EMERGE,
     ACTION_INTRO,
+    ACTION_MOLTEN_ELEMENTAL_ACTIVATE,
     ACTION_RAGNAROS_HEROIC_SUBMERGE,
     ACTION_MALFURION_HEROIC_INTRO,
     ACTION_RAGNAROS_DREADFLAME,
@@ -276,15 +292,15 @@ enum Phases
 
 enum CreatureGroups
 {
-    CG_ENGULFING_FLAMES_NEAR    = 0,
-    CG_ENGULFING_FLAMES_MIDDLE  = 1,
-    CG_ENGULFING_FLAMES_FAR     = 2,
-    CG_PLAYER_HELPERS           = 3,
-    CG_RAGNAROS_MAGMA           = 4,
-    CG_LAVA_SCIONS              = 5,
-    CG_SPLITTING_BLOW_WEST      = 6,
-    CG_SPLITTING_BLOW_MIDDLE    = 7,
-    CG_SPLITTING_BLOW_EAST      = 8
+    CG_MAGMA                    = 0,
+    CG_SPLITTING_BLOW_WEST      = 1,
+    CG_SPLITTING_BLOW_MIDDLE    = 2,
+    CG_SPLITTING_BLOW_EAST      = 3,
+    CG_ENGULFING_FLAMES_NEAR    = 4,
+    CG_ENGULFING_FLAMES_MIDDLE  = 5,
+    CG_ENGULFING_FLAMES_FAR     = 6,
+    CG_LAVA_SCIONS              = 7,
+    CG_PLAYER_HELPERS           = 8
 };
 
 enum RagnarosData
@@ -308,6 +324,8 @@ enum RagnarosData
     DATA_SULFURAS_SMASH             = 1,
     DATA_DELUGE_CHARGES             = 2,
     DATA_DREADFLAME                 = 3,
+
+    DATA_IGNITED_METEORS            = 0,
 
     EQUIP_SULFURAS                  = 1,
     EQUIP_EMPOWERED_SULFURAS        = 2,
@@ -428,8 +446,6 @@ G3D::Vector3 const MalfurionPath[MalfurionPathSize] =
     { 984.2274f, -77.62153f, 61.69744f }
 };
 
-Position const MalfurionLandPoint = { 984.2274f, -77.62153f, 55.36398f, 0.0f };
-
 uint32 const HamuulPathSize = 8;
 G3D::Vector3 const HamuulPath[HamuulPathSize] =
 {
@@ -442,8 +458,6 @@ G3D::Vector3 const HamuulPath[HamuulPathSize] =
     { 982.9132f, -43.22049f, 59.49538f },
     { 982.9132f, -43.22049f, 59.49538f }
 };
-
-Position const HamuulLandPoint = { 983.1728f, -43.2179f, 55.35419f, 0.0f };
 
 Position const RagnarosHeroicPosition = { 1072.38f, -57.4948f, 56.0f };
 
@@ -1041,6 +1055,47 @@ class RagnarosAuraRemovePredicate
         WorldObject const* _refObj;
 };
 
+class HeartOfFlameCheck : public std::unary_function<Player*, bool>
+{
+    public:
+        HeartOfFlameCheck() : _questId(0) { }
+        HeartOfFlameCheck(uint32 questId) : _questId(questId) { }
+
+        bool operator()(Player* player) const
+        {
+            // Get faction specific legendary quest and check if it's in progress
+            Quest const* quest = sObjectMgr->GetQuestTemplate(_questId != 0 ? _questId : player->GetTeam() == ALLIANCE ? QUEST_HEART_OF_FLAME_A : player->GetTeam() == HORDE ? QUEST_HEART_OF_FLAME_H : 0);
+            if (!quest || player->GetQuestStatus(quest->ID) != QUEST_STATUS_INCOMPLETE)
+                return true;
+
+            // Ensure the quest criterias we're looking for are met, in this case player should have collected all the smouldering essences and does not possess the heart of flame already
+            for (QuestObjective const& obj : quest->GetObjectives())
+                if (obj.ObjectID == ITEM_HEART_OF_FLAME && player->HasItemCount(ITEM_HEART_OF_FLAME, obj.Amount) ||
+                    obj.ObjectID == NPC_SMOULDERING_ESSENCE_CREDIT && player->GetReqKillOrCastCurrentCount(quest->ID, NPC_SMOULDERING_ESSENCE_CREDIT) != obj.Amount)
+                    return true;
+
+            return false;
+        }
+
+    private:
+        uint32 _questId;
+};
+
+class DelayedDisappearAndDieEvent : public BasicEvent
+{
+    public:
+        DelayedDisappearAndDieEvent(Creature* owner) : _owner(owner) { }
+
+        bool Execute(uint64 /*execTime*/, uint32 /*diff*/) override
+        {
+            _owner->DisappearAndDie();
+            return true;
+        }
+
+    private:
+        Creature* _owner;
+};
+
 // http://www.wowhead.com/npc=54127/dreadflame
 class npc_ragnaros_dreadflame : public CreatureScript
 {
@@ -1235,15 +1290,35 @@ class boss_ragnaros_firelands : public CreatureScript
 
         struct boss_ragnaros_firelandsAI : public BossAI
         {
-            boss_ragnaros_firelandsAI(Creature* creature) : BossAI(creature, DATA_RAGNAROS) { }
-
-            void InitializeAI() override
-            {
-                _introState = NOT_STARTED;
-                BossAI::InitializeAI();
-            }
+            boss_ragnaros_firelandsAI(Creature* creature) : BossAI(creature, DATA_RAGNAROS) { me->setActive(true); }
 
             void Reset() override
+            {
+                ResetVariables();
+                me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+                me->SetDisableGravity(true);
+                me->SetByteFlag(UNIT_FIELD_BYTES_1, 3, UNIT_BYTE1_FLAG_ALWAYS_STAND | UNIT_BYTE1_FLAG_HOVER);
+
+                SetCombatMovement(false);
+                PrepareEncounterArea();
+                me->LoadEquipment(EQUIP_SULFURAS);
+                me->SetReactState(REACT_DEFENSIVE);
+
+                //WorldPackets::Misc::PlayOneShotAnimKit data;
+                //data.Unit = me->GetGUID();
+                //data.AnimKitID = ANIM_KIT_EMERGE;
+                //me->GetMap()->SendToPlayers(data.Write());
+
+                //me->PlayOneShotAnimKitId(ANIM_KIT_EMERGE);
+                events.ScheduleEvent(EVENT_BASE_VISUAL, 1.2 * IN_MILLISECONDS);
+                if (instance && instance->GetData(DATA_RAGNAROS_FIRST_EMERGE) == 0)
+                {
+                    instance->SetData(DATA_RAGNAROS_FIRST_EMERGE, 1);
+                    events.ScheduleEvent(EVENT_INTRO, 6 * IN_MILLISECONDS, EVENT_GROUP_NONE);
+                }
+            }
+
+            void ResetVariables()
             {
                 _inSulfurasSmash = false;
                 _canDie = false;
@@ -1253,17 +1328,6 @@ class boss_ragnaros_firelands : public CreatureScript
                 _dreadflameCountdown = DREADFLAME_BASE_CD;
                 _lastEngulfingFlame = 0;
                 _engulfedPositions.clear();
-
-                me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
-                me->SetByteFlag(UNIT_FIELD_BYTES_1, 3, UNIT_BYTE1_FLAG_ALWAYS_STAND | UNIT_BYTE1_FLAG_HOVER);
-
-                SetCombatMovement(false);
-                PrepareEncounterArea();
-                me->LoadEquipment(EQUIP_SULFURAS);
-                me->SetReactState(REACT_DEFENSIVE);
-
-                me->PlayOneShotAnimKitId(ANIM_KIT_EMERGE);
-                events.ScheduleEvent(EVENT_BASE_VISUAL, 1.2 * IN_MILLISECONDS);
             }
 
             void JustReachedHome() override { }
@@ -1287,6 +1351,7 @@ class boss_ragnaros_firelands : public CreatureScript
             void EnterCombat(Unit* /*who*/) override
             {
                 _EnterCombat();
+                instance->SendEncounterUnit(ENCOUNTER_FRAME_ENGAGE, me);
                 Talk(SAY_RAGNAROS_AGGRO);
 
                 events.CancelEvent(EVENT_INTRO);
@@ -1295,7 +1360,14 @@ class boss_ragnaros_firelands : public CreatureScript
 
             void JustDied(Unit* killer) override
             {
-                _JustDied();
+                events.Reset();
+                scheduler.CancelAll();
+                if (instance)
+                {
+                    instance->SetBossState(DATA_RAGNAROS, DONE);
+                    instance->SendEncounterUnit(ENCOUNTER_FRAME_DISENGAGE, me);
+                }
+
                 Talk(SAY_RAGNAROS_HEROIC_DEATH);
                 CombatCleanup(false);
                 DoCastAOE(SPELL_ACHIEVEMENT_CHECK, true);
@@ -1312,13 +1384,10 @@ class boss_ragnaros_firelands : public CreatureScript
                 if (!_EnterEvadeModeRagnaros(why))
                     return;
 
+                _resetDueToEvade = true;
                 events.Reset();
                 CombatCleanup();
                 PreparePhase(PHASE_NONE);
-
-                _DespawnAtEvade();
-
-                me->NearTeleportTo(me->GetHomePosition().GetPositionX(), me->GetHomePosition().GetPositionY(), me->GetHomePosition().GetPositionZ(), me->GetHomePosition().GetOrientation());
 
                 if (instance)
                 {
@@ -1327,6 +1396,8 @@ class boss_ragnaros_firelands : public CreatureScript
                     if (GameObject* platform = ObjectAccessor::GetGameObject(*me, instance->GetGuidData(GO_RAGNAROS_PLATFORM)))
                         platform->SetDestructibleState(GO_DESTRUCTIBLE_INTACT);
                 }
+
+                me->DespawnOrUnsummon();
             }
 
             bool _EnterEvadeModeRagnaros(EvadeReason /*why*/)
@@ -1378,12 +1449,14 @@ class boss_ragnaros_firelands : public CreatureScript
                 summons.DespawnEntry(NPC_ENTRAPPING_ROOTS);
                 summons.DespawnEntry(NPC_DREADFLAME);
 
+                summons.DespawnEntry(NPC_RAGNAROS_MAGMA);
                 summons.DespawnEntry(NPC_MAGMA_TRAP);
                 summons.DespawnEntry(NPC_ENGULFING_FLAMES);
                 summons.DespawnEntry(NPC_SULFURAS);
                 summons.DespawnEntry(NPC_SON_OF_FLAME);
                 summons.DespawnEntry(NPC_LAVA_SCION);
                 summons.DespawnEntry(NPC_SPLITTING_BLOW);
+                summons.DespawnEntry(NPC_MOLTEN_ELEMENTAL);
 
                 if (me->GetMap()->IsHeroic())
                     DoCastAOE(SPELL_DELUGE_AURA_CANCEL, true);
@@ -1433,11 +1506,6 @@ class boss_ragnaros_firelands : public CreatureScript
                     default:
                         break;
                 }
-
-                //Ragnaros is in a separate hidden phase before people enter sulfuron keep inner chamber.
-                //Ragnaros needs to spawn a set of creatures that automatically get put into this phase, remove them from this phase.
-                if (summon->IsInPhase(PHASE_DUNGEON_ALTERNATE))
-                    summon->SetInPhase(PHASE_DUNGEON_ALTERNATE, true, false);
             }
 
             void SummonedCreatureDies(Creature* summon, Unit* killer) override
@@ -1480,18 +1548,6 @@ class boss_ragnaros_firelands : public CreatureScript
             {
                 switch (action)
                 {
-                    case ACTION_RAGNAROS_EMERGE:
-                        if (me->IsInPhase(PHASE_DUNGEON_ALTERNATE))
-                            me->SetInPhase(PHASE_DUNGEON_ALTERNATE, true, false);
-
-                        me->PlayOneShotAnimKitId(ANIM_KIT_EMERGE);
-                        events.ScheduleEvent(EVENT_BASE_VISUAL, 1.2 * IN_MILLISECONDS);
-                        if (_introState == NOT_STARTED)
-                        {
-                            _introState = DONE;
-                            events.ScheduleEvent(EVENT_INTRO, 6 * IN_MILLISECONDS, EVENT_GROUP_NONE);
-                        }
-                        break;
                     case ACTION_RAGNAROS_HEROIC_SUBMERGE:
                         Talk(SAY_RAGNAROS_HEROIC_SUBMERGE);
                         me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
@@ -1548,62 +1604,76 @@ class boss_ragnaros_firelands : public CreatureScript
 
             uint32 GetData(uint32 type) const override
             {
-                if (type != DATA_NEW_ENGULFING_FLAME)
-                    return 0;
+                switch (type)
+                {
+                    case DATA_NEW_ENGULFING_FLAME:
+                    {
+                        uint32 NearCount = 0;
+                        uint32 MiddleCount = 0;
+                        uint32 FarCount = 0;
+                        for (auto _entry : _engulfedPositions)
+                        {
+                            if (_entry == DATA_ENGULFING_FLAMES_NEAR)
+                                ++NearCount;
+                            else if (_entry == DATA_ENGULFING_FLAMES_MIDDLE)
+                                ++MiddleCount;
+                            else if (_entry == DATA_ENGULFING_FLAMES_FAR)
+                                ++FarCount;
+                        }
 
-                uint32 NearCount = 0;
-                uint32 MiddleCount = 0;
-                uint32 FarCount = 0;
-                for (auto _entry : _engulfedPositions)
-                {
-                    if (_entry == DATA_ENGULFING_FLAMES_NEAR)
-                        ++NearCount;
-                    else if (_entry == DATA_ENGULFING_FLAMES_MIDDLE)
-                        ++MiddleCount;
-                    else if (_entry == DATA_ENGULFING_FLAMES_FAR)
-                        ++FarCount;
-                }
+                        if (NearCount == 2 || MiddleCount == 2 || FarCount == 2)
+                        {
+                            if (NearCount == 0)
+                                return DATA_ENGULFING_FLAMES_NEAR;
+                            if (MiddleCount == 0)
+                                return DATA_ENGULFING_FLAMES_MIDDLE;
+                            if (FarCount == 0)
+                                return DATA_ENGULFING_FLAMES_FAR;
+                        }
+                        else if (NearCount == 1 && MiddleCount == 1 && FarCount == 0)
+                        {
+                            if (_lastEngulfingFlame == DATA_ENGULFING_FLAMES_NEAR)
+                                return RAND(DATA_ENGULFING_FLAMES_MIDDLE, DATA_ENGULFING_FLAMES_FAR);
+                            if (_lastEngulfingFlame == DATA_ENGULFING_FLAMES_MIDDLE)
+                                return RAND(DATA_ENGULFING_FLAMES_NEAR, DATA_ENGULFING_FLAMES_FAR);
+                        }
+                        else if (MiddleCount == 1 && FarCount == 1 && NearCount == 0)
+                        {
+                            if (_lastEngulfingFlame == DATA_ENGULFING_FLAMES_MIDDLE)
+                                return RAND(DATA_ENGULFING_FLAMES_NEAR, DATA_ENGULFING_FLAMES_FAR);
+                            if (_lastEngulfingFlame == DATA_ENGULFING_FLAMES_FAR)
+                                return RAND(DATA_ENGULFING_FLAMES_NEAR, DATA_ENGULFING_FLAMES_MIDDLE);
+                        }
+                        else if (NearCount == 1 && FarCount == 1 && MiddleCount == 0)
+                        {
+                            if (_lastEngulfingFlame == DATA_ENGULFING_FLAMES_FAR)
+                                return RAND(DATA_ENGULFING_FLAMES_NEAR, DATA_ENGULFING_FLAMES_MIDDLE);
+                            if (_lastEngulfingFlame == DATA_ENGULFING_FLAMES_NEAR)
+                                return RAND(DATA_ENGULFING_FLAMES_FAR, DATA_ENGULFING_FLAMES_MIDDLE);
+                        }
+                        else
+                        {
+                            if (_lastEngulfingFlame == DATA_ENGULFING_FLAMES_NEAR)
+                                return RAND(DATA_ENGULFING_FLAMES_MIDDLE, DATA_ENGULFING_FLAMES_FAR);
+                            if (_lastEngulfingFlame == DATA_ENGULFING_FLAMES_MIDDLE)
+                                return RAND(DATA_ENGULFING_FLAMES_NEAR, DATA_ENGULFING_FLAMES_FAR);
+                            if (_lastEngulfingFlame == DATA_ENGULFING_FLAMES_FAR)
+                                return RAND(DATA_ENGULFING_FLAMES_NEAR, DATA_ENGULFING_FLAMES_MIDDLE);
+                            else
+                                return RAND(DATA_ENGULFING_FLAMES_NEAR, DATA_ENGULFING_FLAMES_MIDDLE, DATA_ENGULFING_FLAMES_FAR);
+                        }
+                        break;
+                    }
+                    case DATA_IGNITED_METEORS:
+                    {
+                        uint32 count = 0;
+                        for (auto guid : summons)
+                            if (Creature* summon = ObjectAccessor::GetCreature(*me, guid))
+                                if (summon->GetEntry() == NPC_RAGNAROS_LIVING_METEOR && summon->HasAura(SPELL_LAVALOGGED))
+                                    count++;
 
-                if (NearCount == 2 || MiddleCount == 2 || FarCount == 2)
-                {
-                    if (NearCount == 0)
-                        return DATA_ENGULFING_FLAMES_NEAR;
-                    if (MiddleCount == 0)
-                        return DATA_ENGULFING_FLAMES_MIDDLE;
-                    if (FarCount == 0)
-                        return DATA_ENGULFING_FLAMES_FAR;
-                }
-                else if (NearCount == 1 && MiddleCount == 1 && FarCount == 0)
-                {
-                    if (_lastEngulfingFlame == DATA_ENGULFING_FLAMES_NEAR)
-                        return RAND(DATA_ENGULFING_FLAMES_MIDDLE, DATA_ENGULFING_FLAMES_FAR);
-                    if (_lastEngulfingFlame == DATA_ENGULFING_FLAMES_MIDDLE)
-                        return RAND(DATA_ENGULFING_FLAMES_NEAR, DATA_ENGULFING_FLAMES_FAR);
-                }
-                else if (MiddleCount == 1 && FarCount == 1 && NearCount == 0)
-                {
-                    if (_lastEngulfingFlame == DATA_ENGULFING_FLAMES_MIDDLE)
-                        return RAND(DATA_ENGULFING_FLAMES_NEAR, DATA_ENGULFING_FLAMES_FAR);
-                    if (_lastEngulfingFlame == DATA_ENGULFING_FLAMES_FAR)
-                        return RAND(DATA_ENGULFING_FLAMES_NEAR, DATA_ENGULFING_FLAMES_MIDDLE);
-                }
-                else if (NearCount == 1 && FarCount == 1 && MiddleCount == 0)
-                {
-                    if (_lastEngulfingFlame == DATA_ENGULFING_FLAMES_FAR)
-                        return RAND(DATA_ENGULFING_FLAMES_NEAR, DATA_ENGULFING_FLAMES_MIDDLE);
-                    if (_lastEngulfingFlame == DATA_ENGULFING_FLAMES_NEAR)
-                        return RAND(DATA_ENGULFING_FLAMES_FAR, DATA_ENGULFING_FLAMES_MIDDLE);
-                }
-                else
-                {
-                    if (_lastEngulfingFlame == DATA_ENGULFING_FLAMES_NEAR)
-                        return RAND(DATA_ENGULFING_FLAMES_MIDDLE, DATA_ENGULFING_FLAMES_FAR);
-                    if (_lastEngulfingFlame == DATA_ENGULFING_FLAMES_MIDDLE)
-                        return RAND(DATA_ENGULFING_FLAMES_NEAR, DATA_ENGULFING_FLAMES_FAR);
-                    if (_lastEngulfingFlame == DATA_ENGULFING_FLAMES_FAR)
-                        return RAND(DATA_ENGULFING_FLAMES_NEAR, DATA_ENGULFING_FLAMES_MIDDLE);
-                    else
-                        return RAND(DATA_ENGULFING_FLAMES_NEAR, DATA_ENGULFING_FLAMES_MIDDLE, DATA_ENGULFING_FLAMES_FAR);
+                        return count;
+                    }
                 }
 
                 return 0;
@@ -1713,13 +1783,11 @@ class boss_ragnaros_firelands : public CreatureScript
                         break;
                     case PHASE_SUBMERGE:
                         _newPhase = PHASE_NONE;
-                        events.SetPhase(phase);
                         if (me->GetMap()->IsHeroic())
-                        {
                             me->SummonCreatureGroup(CG_PLAYER_HELPERS);
-                        }
                         else
                         {
+                            _JustDied();
                             Talk(SAY_RAGNAROS_NORMAL_SUBMERGE);
                             me->RemoveAllAurasOnDeath();
                             me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
@@ -1737,7 +1805,7 @@ class boss_ragnaros_firelands : public CreatureScript
                             DoCastAOE(SPELL_ACHIEVEMENT_CHECK, true);
                             DoCastAOE(SPELL_HEART_OF_RAGNAROS_A, true);
                             DoCastAOE(SPELL_HEART_OF_RAGNAROS_H, true);
-                            events.ScheduleEvent(EVENT_DISAPPEAR_AND_DIE, 3.6 * IN_MILLISECONDS);
+                            me->m_Events.AddEvent(new DelayedDisappearAndDieEvent(me), me->m_Events.CalculateTime(3.6 * IN_MILLISECONDS));
                         }
                         break;
                     case PHASE_FOUR:
@@ -2002,8 +2070,8 @@ class boss_ragnaros_firelands : public CreatureScript
             }
 
             private:
+                bool _resetDueToEvade;
                 bool _inSulfurasSmash;
-                uint32 _introState;
                 TaskScheduler scheduler;
                 bool _canDie;
                 ObjectGuid _splittingBlowWest, _splittingBlowMiddle, _splittingBlowEast;
@@ -2023,8 +2091,7 @@ class boss_ragnaros_firelands : public CreatureScript
 
                 void PrepareEncounterArea()
                 {
-                    if (!summons.HasEntry(NPC_RAGNAROS_MAGMA))
-                        me->SummonCreatureGroup(CG_RAGNAROS_MAGMA);
+                    me->SummonCreatureGroup(CG_MAGMA);
 
                     std::list<TempSummon*> summonGroup;
                     me->SummonCreatureGroup(CG_SPLITTING_BLOW_WEST, &summonGroup);
@@ -2208,7 +2275,9 @@ class npc_ragnaros_lava_wave : public CreatureScript
 
             void IsSummonedBy(Unit* summoner) override
             {
-                movePos = me->GetNearPosition(80.0f, summoner->GetRelativeAngle(me));
+                float x, y;
+                me->GetNearPoint2D(x, y, 80.0f, summoner->GetAngle(me));
+                movePos = { x, y, me->GetPositionZ() };
             }
 
             void SpellHit(Unit* caster, SpellInfo const* spell) override
@@ -2459,7 +2528,7 @@ class npc_ragnaros_magma_trap : public CreatureScript
                 if (spell->Id != SPELL_MAGMA_TRAP_TARGET_SEARCH)
                     return;
 
-                me->Yell("Boom!", LANG_UNIVERSAL);
+                me->Yell("Explosion disabled to due bug in core!", LANG_UNIVERSAL);
                 //DoCastAOE(SPELL_MAGMA_TRAP_ERUPTION, true);
                 me->RemoveAurasDueToSpell(SPELL_MAGMA_TRAP_VISUAL);
                 me->RemoveAurasDueToSpell(SPELL_MAGMA_TRAP_PLAYER_TRIGGER);
@@ -2489,7 +2558,7 @@ class npc_ragnaros_magma_trap : public CreatureScript
         }
 };
 
-// http://www.wowhead.com/npc=53952/platform-stalker
+// http://www.wowhead.com/npc=53189/molten-elemental
 class npc_fl_ragnaros_molten_elemental : public CreatureScript
 {
     public:
@@ -2497,18 +2566,75 @@ class npc_fl_ragnaros_molten_elemental : public CreatureScript
 
         struct npc_fl_ragnaros_molten_elementalAI : public ScriptedAI
         {
-            npc_fl_ragnaros_molten_elementalAI(Creature* creature) : ScriptedAI(creature) { }
+            npc_fl_ragnaros_molten_elementalAI(Creature* creature) : ScriptedAI(creature) { me->SetReactState(REACT_PASSIVE); }
 
-            void IsSummonedBy(Unit* summoner) override
+            void EnterCombat(Unit* who) override
             {
-                DoCast(SPELL_MOLTEN_ELEMENTAL_INVIS_PRE_VISUAL);
+                DoCast(SPELL_MOLTEN_ELEMENTAL_DISABLE_CRIT);
             }
 
-            void JustDied(Unit* /*killer*/) override
+            void DoAction(int32 action) override
             {
-                // Hack, there's a serverside spell to is responsible for handling scale
-                me->SetObjectScale(1.0f);
+                if (action != ACTION_MOLTEN_ELEMENTAL_ACTIVATE)
+                    return;
+
+                me->Say("BOOM!", LANG_UNIVERSAL);
+                me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+                DoCastAOE(SPELL_MOLTEN_ELEMENTAL_INFERNO);
+                scheduler.Schedule(Milliseconds(600), [this](TaskContext)
+                {
+                    me->SetReactState(REACT_AGGRESSIVE);
+                    DoCastAOE(SPELL_MOLTEN_ELEMENTAL_AGGRO_SUMMONER);
+                });
             }
+
+            void IsSummonedBy(Unit* /*summoner*/) override
+            {
+                if (InstanceScript* instance = me->GetInstanceScript())
+                    if (Creature* ragnaros = ObjectAccessor::GetCreature(*me, instance->GetGuidData(NPC_RAGNAROS)))
+                        if (ragnaros->IsAIEnabled)
+                            ragnaros->AI()->JustSummoned(me);
+
+                me->Say("Shit, i just got summoned", LANG_UNIVERSAL);
+                DoCastAOE(SPELL_MOLTEN_SEED_MISSILE_TARGET_SEARCH);
+                me->AddAura(SPELL_MOLTEN_ELEMENTAL_INVIS_PRE_VISUAL, me);
+            }
+
+            void SpellHit(Unit* caster, SpellInfo const* spell) override
+            {
+                if (spell->Id != SPELL_MOLTEN_SEED_MISSILE_HIT || caster->GetGUID() != SeedCasterGUID)
+                    return;
+
+                me->Say("APPEAR!", LANG_UNIVERSAL);
+                me->RemoveAurasDueToSpell(SPELL_MOLTEN_ELEMENTAL_INVIS_PRE_VISUAL);
+                DoCast(SPELL_MOLTEN_SEED_COUNTDOWN);
+
+                if (!me->GetMap()->IsHeroic())
+                    return;
+
+                scheduler.Schedule(Milliseconds(8200), [this](TaskContext)
+                {
+                    DoCast(SPELL_MOLTEN_ELEMENTAL_MOLTEN_POWER);
+                });
+            }
+
+            void SpellHitTarget(Unit* target, SpellInfo const* spell) override
+            {
+                if (spell->Id != SPELL_MOLTEN_SEED_MISSILE_TARGET_SEARCH)
+                    return;
+
+                SeedCasterGUID = target->GetGUID();
+            }
+
+            void UpdateAI(uint32 diff) override
+            {
+                ScriptedAI::UpdateAI(diff);
+                scheduler.Update(diff);
+            }
+
+        private:
+            ObjectGuid SeedCasterGUID;
+            TaskScheduler scheduler;
         };
 
         CreatureAI* GetAI(Creature* creature) const override
@@ -2547,6 +2673,11 @@ class npc_ragnaros_lava_scion : public CreatureScript
             void UpdateAI(uint32 diff) override
             {
                 scheduler.Update(diff);
+
+                if (me->HasUnitState(UNIT_STATE_CASTING))
+                    return;
+
+                DoMeleeAttackIfReady();
             }
 
         private:
@@ -2744,8 +2875,11 @@ class npc_ragnaros_malfurion_stormrage : public CreatureScript
                     switch (eventId)
                     {
                         case EVENT_MALFURION_LAND:
-                            me->GetMotionMaster()->MoveLand(2, MalfurionLandPoint);
+                        {
+                            Position pos = { me->GetPositionZ(), me->GetPositionY(), me->GetMap()->GetHeight(me->GetPhaseMask(), me->GetPositionX(), me->GetPositionY(), me->GetPositionZ()) };
+                            me->GetMotionMaster()->MoveLand(2, pos);
                             break;
+                        }
                         case EVENT_DRAW_OUT_FIRELORD:
                             DoCastAOE(SPELL_MALFURION_DRAW_OUT_FIRELORD, true);
                             break;
@@ -2856,8 +2990,11 @@ class npc_ragnaros_hamuul_runetotem : public CreatureScript
                     switch (eventId)
                     {
                         case EVENT_HAMUUL_LAND:
-                            me->GetMotionMaster()->MoveLand(2, HamuulLandPoint);
+                        {
+                            Position pos = { me->GetPositionZ(), me->GetPositionY(), me->GetMap()->GetHeight(me->GetPhaseMask(), me->GetPositionX(), me->GetPositionY(), me->GetPositionZ()) };
+                            me->GetMotionMaster()->MoveLand(2, pos);
                             break;
+                        }
                         case EVENT_DRAW_OUT_FIRELORD:
                             DoCastAOE(SPELL_HAMUUL_DRAW_OUT_FIRELORD, true);
                             break;
@@ -3024,6 +3161,83 @@ class npc_ragnaros_cloudburst : public CreatureScript
     {
         return GetFirelandsAI<npc_ragnaros_cloudburstAI>(creature);
     }
+};
+
+
+// Spawn
+// 1.2 seconds, choose target (apply threat only, 100 000 000)
+// 1.2 seconds, cast combustible (99296), cast proximity check (99269), start moving to target, apply speed boost trigger(100278)
+// 1.2 seconds, cast fixate (99849) and repeat every 1.2 seconds for some reason
+// http://www.wowhead.com/npc=53500/living-meteor
+class npc_fl_ragnaros_living_meteor : public CreatureScript
+{
+    public:
+        npc_fl_ragnaros_living_meteor() : CreatureScript("npc_fl_ragnaros_living_meteor") {}
+
+        struct npc_fl_ragnaros_living_meteorAI : public PassiveAI
+        {
+            npc_fl_ragnaros_living_meteorAI(Creature* creature) : PassiveAI(creature) {}
+
+            void Reset() override
+            {
+                DoCast(SPELL_LIVING_METEOR_DAMAGE_REDUCTION);
+                scheduler.Schedule(Milliseconds(1200), [this](TaskContext context)
+                {
+                    Unit* target = GetRandomFocusTarget(200.0f, CurrentTarget);
+                    if (!target)
+                    {
+                        context.Repeat();
+                        return;
+                    }
+
+                    me->AddThreat(target, 100000000);
+                    context.Schedule(Milliseconds(1200), [this, target](TaskContext context)
+                    {
+                        DoCast(SPELL_LIVING_METEOR_COMBUSTIBLE);
+                        DoCast(SPELL_LIVING_METEOR_PROXIMITY_CHECK);
+                        me->GetMotionMaster()->MoveChase(target);
+                        me->AddAura(SPELL_LIVING_METEOR_SPEED_TRIGGER, me);
+                        context.Schedule(Milliseconds(1200), [this](TaskContext context)
+                        {
+                            DoCast(SPELL_LIVING_METEOR_FIXATE_VISUAL);
+                            context.Repeat();
+                        });
+                    });
+                });
+            }
+
+            void UpdateAI(uint32 diff) override
+            {
+                PassiveAI::UpdateAI(diff);
+                scheduler.Update(diff);
+            }
+
+        private:
+            ObjectGuid CurrentTarget;
+            TaskScheduler scheduler;
+            Unit* GetRandomFocusTarget(float distance, ObjectGuid ignore = ObjectGuid::Empty)
+            {
+                std::list<Player*> players;
+                Trinity::AnyPlayerInObjectRangeCheck checker(me, distance);
+                Trinity::PlayerListSearcher<Trinity::AnyPlayerInObjectRangeCheck> searcher(me, players, checker);
+                me->VisitNearbyWorldObject(distance, searcher);
+
+                players.remove_if([](Player* player)
+                {
+                    return player->IsGameMaster();
+                });
+
+                if (Player* player = ObjectAccessor::GetPlayer(*me, CurrentTarget))
+                    players.remove(player);
+
+                return Trinity::Containers::SelectRandomContainerElement(players);
+            }
+        };
+
+        CreatureAI* GetAI(Creature* creature) const override
+        {
+            return GetFirelandsAI<npc_fl_ragnaros_living_meteorAI>(creature);
+        }
 };
 
 // http://www.wowhead.com/spell=98951/splitting-blow
@@ -3194,9 +3408,15 @@ class spell_rage_of_ragnaros_dummy : public SpellScriptLoader
                 caster->AI()->Talk(SAY_RAGNAROS_RAGE_OF_RAGNAROS, player);
             }
 
+            void FilterTargets(std::list<WorldObject*>& targets)
+            {
+                targets.remove_if(HeartOfFlameCheck());
+            }
+
             void Register() override
             {
                 OnEffectHitTarget += SpellEffectFn(spell_rage_of_ragnaros_dummy_SpellScript::HandleScript, EFFECT_0, SPELL_EFFECT_DUMMY);
+                OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_rage_of_ragnaros_dummy_SpellScript::FilterTargets, EFFECT_0, TARGET_UNIT_SRC_AREA_ENEMY);
             }
         };
 
@@ -3559,16 +3779,24 @@ class spell_ragnaros_lava_wave : public SpellScriptLoader
         {
             PrepareSpellScript(spell_ragnaros_lava_wave_SpellScript);
 
+            void HandleScript(SpellEffIndex effIndex)
+            {
+                PreventHitDefaultEffect(effIndex);
+                GetCaster()->Say("I should have knocked back", LANG_UNIVERSAL);
+                GetHitUnit()->Say("I should have been knocked back", LANG_UNIVERSAL);
+            }
+
             void FilterTargets(std::list<WorldObject*>& targets)
             {
-                targets.remove_if([](WorldObject* target)
+                targets.remove_if([this](WorldObject* target)
                 {
-                    return target->GetTypeId() != TYPEID_PLAYER;
+                    return target->GetTypeId() != TYPEID_PLAYER || target->ToUnit()->HasAura(GetSpellInfo()->Id);
                 });
             }
 
             void Register() override
             {
+                OnEffectHitTarget += SpellEffectFn(spell_ragnaros_lava_wave_SpellScript::HandleScript, EFFECT_2, SPELL_EFFECT_LEAP_BACK);
                 OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_ragnaros_lava_wave_SpellScript::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ENEMY);
                 OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_ragnaros_lava_wave_SpellScript::FilterTargets, EFFECT_1, TARGET_UNIT_DEST_AREA_ENEMY);
                 OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_ragnaros_lava_wave_SpellScript::FilterTargets, EFFECT_2, TARGET_UNIT_DEST_AREA_ENEMY);
@@ -4597,31 +4825,270 @@ class spell_fl_ragnaros_blazing_heat_spawn : public SpellScriptLoader
         }
 };
 
-// http://www.wowhead.com/spell=98520/molten-seed
-class spell_fl_ragnaros_molten_seed_periodic : public SpellScriptLoader
+// http://www.wowhead.com/spell=100771/deluge-aura-cancel
+class spell_fl_ragnaros_deluge_aura_cancel : public SpellScriptLoader
 {
     public:
-        spell_fl_ragnaros_molten_seed_periodic() : SpellScriptLoader("spell_fl_ragnaros_molten_seed_periodic") { }
+        spell_fl_ragnaros_deluge_aura_cancel() : SpellScriptLoader("spell_fl_ragnaros_deluge_aura_cancel") { }
 
-        class spell_fl_ragnaros_molten_seed_periodic_AuraScript : public AuraScript
+        class spell_fl_ragnaros_deluge_aura_cancel_SpellScript : public SpellScript
         {
-            PrepareAuraScript(spell_fl_ragnaros_molten_seed_periodic_AuraScript);
+            PrepareSpellScript(spell_fl_ragnaros_deluge_aura_cancel_SpellScript);
 
-            void OnPeriodic(AuraEffect const* /*aurEff*/)
+            bool Validate(SpellInfo const* /*spellInfo*/) override
             {
-                PreventDefaultAction();
-                GetCaster()->SetObjectScale(GetCaster()->GetObjectScale() + 0.2f);
+                if (!sSpellMgr->GetSpellInfo(SPELL_DELUGE_AURA_CANCEL))
+                    return false;
+                return true;
+            }
+
+            void HandleScriptEffect(SpellEffIndex effIndex)
+            {
+                PreventHitDefaultEffect(effIndex);
+                GetHitUnit()->RemoveAurasDueToSpell((uint32)GetEffectValue());
+            }
+
+            void FilterTargets(std::list<WorldObject*>& targets)
+            {
+                targets.remove_if(PlayerCheck());
             }
 
             void Register() override
             {
-                OnEffectPeriodic += AuraEffectPeriodicFn(spell_fl_ragnaros_molten_seed_periodic_AuraScript::OnPeriodic, EFFECT_0, SPELL_AURA_PERIODIC_TRIGGER_SPELL);
+                OnEffectHitTarget += SpellEffectFn(spell_fl_ragnaros_deluge_aura_cancel_SpellScript::HandleScriptEffect, EFFECT_0, SPELL_EFFECT_SCRIPT_EFFECT);
+                OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_fl_ragnaros_deluge_aura_cancel_SpellScript::FilterTargets, EFFECT_0, TARGET_UNIT_SRC_AREA_ENTRY);
+            }
+        };
+
+        SpellScript* GetSpellScript() const override
+        {
+            return new spell_fl_ragnaros_deluge_aura_cancel_SpellScript();
+        }
+};
+
+// http://www.wowhead.com/spell=99907/magma
+class spell_fl_ragnaros_magma : public SpellScriptLoader
+{
+    public:
+        spell_fl_ragnaros_magma() : SpellScriptLoader("spell_fl_ragnaros_magma") {}
+
+        class spell_fl_ragnaros_magma_SpellScript : public SpellScript
+        {
+            PrepareSpellScript(spell_fl_ragnaros_magma_SpellScript);
+
+            void FilterTargets(std::list<WorldObject*>& targets)
+            {
+                targets.remove_if([this](WorldObject* target)
+                {
+                    return target->GetPositionZ() > 54.0f;
+                });
+            }
+
+            void Register() override
+            {
+                OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_fl_ragnaros_magma_SpellScript::FilterTargets, EFFECT_0, TARGET_UNIT_SRC_AREA_ENEMY);
+                OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_fl_ragnaros_magma_SpellScript::FilterTargets, EFFECT_1, TARGET_UNIT_SRC_AREA_ENEMY);
+            }
+        };
+
+        SpellScript* GetSpellScript() const override
+        {
+            return new spell_fl_ragnaros_magma_SpellScript();
+        }
+};
+
+// http://www.wowhead.com/spell=98497/molten-seed
+class spell_fl_ragnaros_molten_seed_missile_target_search : public SpellScriptLoader
+{
+    public:
+        spell_fl_ragnaros_molten_seed_missile_target_search() : SpellScriptLoader("spell_fl_ragnaros_molten_seed_missile_target_search") { }
+
+        class spell_fl_ragnaros_molten_seed_missile_target_search_SpellScript : public SpellScript
+        {
+            PrepareSpellScript(spell_fl_ragnaros_molten_seed_missile_target_search_SpellScript);
+
+            bool Validate(SpellInfo const* /*spellInfo*/) override
+            {
+                if (!sSpellMgr->GetSpellInfo(SPELL_MOLTEN_SEED_MISSILE_TARGET_SEARCH))
+                    return false;
+                return true;
+            }
+
+            void HandleScriptEffect(SpellEffIndex /*effIndex*/)
+            {
+                GetHitUnit()->CastSpell(GetCaster(), uint32(GetEffectValue()), true);
+            }
+
+            void FilterTargets(std::list<WorldObject*>& targets)
+            {
+                Trinity::Containers::RandomResizeList(targets, [](WorldObject* target) -> bool
+                {
+                    return target->GetTypeId() != TYPEID_UNIT || target->GetEntry() != NPC_MOLTEN_SEED_CASTER;
+                }, 1);
+            }
+
+            void Register() override
+            {
+                OnEffectHitTarget += SpellEffectFn(spell_fl_ragnaros_molten_seed_missile_target_search_SpellScript::HandleScriptEffect, EFFECT_0, SPELL_EFFECT_SCRIPT_EFFECT);
+                OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_fl_ragnaros_molten_seed_missile_target_search_SpellScript::FilterTargets, EFFECT_0, TARGET_UNIT_SRC_AREA_ENTRY);
+            }
+        };
+
+        SpellScript* GetSpellScript() const override
+        {
+            return new spell_fl_ragnaros_molten_seed_missile_target_search_SpellScript();
+        }
+};
+
+// http://www.wowhead.com/spell=98520/molten-seed
+class spell_fl_ragnaros_molten_seed_grow : public SpellScriptLoader
+{
+    public:
+        spell_fl_ragnaros_molten_seed_grow() : SpellScriptLoader("spell_fl_ragnaros_molten_seed_grow") { }
+
+        class spell_fl_ragnaros_molten_seed_grow_AuraScript : public AuraScript
+        {
+            PrepareAuraScript(spell_fl_ragnaros_molten_seed_grow_AuraScript);
+
+            void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+            {
+                if (Unit* owner = GetUnitOwner())
+                    if (Creature* creature = owner->ToCreature())
+                        if (creature->IsAIEnabled)
+                            creature->AI()->DoAction(ACTION_MOLTEN_ELEMENTAL_ACTIVATE);
+            }
+
+            void Register() override
+            {
+                AfterEffectRemove += AuraEffectRemoveFn(spell_fl_ragnaros_molten_seed_grow_AuraScript::OnRemove, EFFECT_0, SPELL_AURA_PERIODIC_TRIGGER_SPELL, AURA_EFFECT_HANDLE_REAL);
             }
         };
 
         AuraScript* GetAuraScript() const override
         {
-            return new spell_fl_ragnaros_molten_seed_periodic_AuraScript();
+            return new spell_fl_ragnaros_molten_seed_grow_AuraScript();
+        }
+};
+
+// http://www.wowhead.com/spell=100158/molten-power
+class spell_fl_ragnaros_molten_power : public SpellScriptLoader
+{
+    public:
+        spell_fl_ragnaros_molten_power() : SpellScriptLoader("spell_fl_ragnaros_molten_power") { }
+
+        class spell_fl_ragnaros_molten_power_SpellScript : public SpellScript
+        {
+            PrepareSpellScript(spell_fl_ragnaros_molten_power_SpellScript);
+
+            void FilterTargets(std::list<WorldObject*>& targets)
+            {
+                targets.remove_if([](WorldObject* target) -> bool
+                {
+                    return target->GetTypeId() != TYPEID_UNIT || target->GetEntry() != NPC_MOLTEN_ELEMENTAL;
+                });
+            }
+
+            void Register() override
+            {
+                OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_fl_ragnaros_molten_power_SpellScript::FilterTargets, EFFECT_0, TARGET_UNIT_SRC_AREA_ENTRY);
+                OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_fl_ragnaros_molten_power_SpellScript::FilterTargets, EFFECT_1, TARGET_UNIT_SRC_AREA_ENTRY);
+                OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_fl_ragnaros_molten_power_SpellScript::FilterTargets, EFFECT_2, TARGET_UNIT_SRC_AREA_ENTRY);
+            }
+        };
+
+        SpellScript* GetSpellScript() const override
+        {
+            return new spell_fl_ragnaros_molten_power_SpellScript();
+        }
+};
+
+// http://www.wowhead.com/spell=98333/molten-seed
+class spell_fl_ragnaros_molten_seed_target_search : public SpellScriptLoader
+{
+    public:
+        spell_fl_ragnaros_molten_seed_target_search() : SpellScriptLoader("spell_fl_ragnaros_molten_seed_target_search") { }
+
+        class spell_fl_ragnaros_molten_seed_target_search_SpellScript : public SpellScript
+        {
+            PrepareSpellScript(spell_fl_ragnaros_molten_seed_target_search_SpellScript);
+
+            void FilterTargets(std::list<WorldObject*>& targets)
+            {
+                Trinity::Containers::RandomResizeList(targets, GetCaster()->GetMap()->Is25ManRaid() ? 20 : 10);
+            }
+
+            void Register() override
+            {
+                OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_fl_ragnaros_molten_seed_target_search_SpellScript::FilterTargets, EFFECT_0, TARGET_UNIT_SRC_AREA_ENEMY);
+            }
+        };
+
+        SpellScript* GetSpellScript() const override
+        {
+            return new spell_fl_ragnaros_molten_seed_target_search_SpellScript();
+        }
+};
+
+// http://www.wowhead.com/spell=98518/molten-inferno
+class spell_fl_ragnaros_molten_inferno : public SpellScriptLoader
+{
+    public:
+        spell_fl_ragnaros_molten_inferno() : SpellScriptLoader("spell_fl_ragnaros_molten_inferno") { }
+
+        class spell_fl_ragnaros_molten_inferno_SpellScript : public SpellScript
+        {
+            PrepareSpellScript(spell_fl_ragnaros_molten_inferno_SpellScript);
+
+            bool Validate(SpellInfo const* /*spellInfo*/) override
+            {
+                if (!sSpellMgr->GetSpellInfo(SPELL_MOLTEN_ELEMENTAL_INFERNO))
+                    return false;
+                return true;
+            }
+
+            void ChangeDamage()
+            {
+                float maxRange = GetSpellInfo()->GetEffect(EFFECT_0)->CalcRadius();
+                float actualRange = GetCaster()->GetDistance2d(GetHitUnit());
+                SetHitDamage(GetHitDamage()*pow(0.8, uint32((actualRange / maxRange) * 100)));
+            }
+
+            void Register() override
+            {
+                OnHit += SpellHitFn(spell_fl_ragnaros_molten_inferno_SpellScript::ChangeDamage);
+            }
+        };
+
+        SpellScript* GetSpellScript() const override
+        {
+            return new spell_fl_ragnaros_molten_inferno_SpellScript();
+        }
+};
+
+// http://www.wowhead.com/spell=101252/heart-of-ragnaros
+class spell_fl_ragnaros_heart_of_ragnaros : public SpellScriptLoader
+{
+    public:
+        spell_fl_ragnaros_heart_of_ragnaros() : SpellScriptLoader("spell_fl_ragnaros_heart_of_ragnaros") { }
+
+        class spell_fl_ragnaros_heart_of_ragnaros_SpellScript : public SpellScript
+        {
+            PrepareSpellScript(spell_fl_ragnaros_heart_of_ragnaros_SpellScript);
+
+            void FilterTargets(std::list<WorldObject*>& targets)
+            {
+                targets.remove_if(HeartOfFlameCheck(m_scriptSpellId == SPELL_HEART_OF_RAGNAROS_A ? QUEST_HEART_OF_FLAME_A : m_scriptSpellId == SPELL_HEART_OF_RAGNAROS_H ? QUEST_HEART_OF_FLAME_H : 0));
+            }
+
+            void Register() override
+            {
+                OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_fl_ragnaros_heart_of_ragnaros_SpellScript::FilterTargets, EFFECT_0, TARGET_UNIT_SRC_AREA_ENTRY);
+            }
+        };
+
+        SpellScript* GetSpellScript() const override
+        {
+            return new spell_fl_ragnaros_heart_of_ragnaros_SpellScript();
         }
 };
 
@@ -4633,12 +5100,25 @@ class at_sulfuron_keep : public AreaTriggerScript
     bool OnTrigger(Player* player, AreaTriggerEntry const* /*areaTrigger*/, bool /*entered*/) override
     {
         if (InstanceScript* instance = player->GetInstanceScript())
-            if (Creature* ragnaros = ObjectAccessor::GetCreature(*player, instance->GetGuidData(NPC_RAGNAROS)))
-                if (ragnaros->IsAIEnabled)
-                    ragnaros->AI()->DoAction(ACTION_RAGNAROS_EMERGE);
+            if (instance->GetData(DATA_RAGNAROS_EMERGED) == 0)
+                instance->SetData(DATA_RAGNAROS_EMERGED, 1);
 
         return true;
     }
+};
+
+class achievement_ragnar_os : public AchievementCriteriaScript
+{
+    public:
+        achievement_ragnar_os() : AchievementCriteriaScript("achievement_ragnar_os") { }
+
+        bool OnCheck(Player* /*source*/, Unit* target) override
+        {
+            if (!target)
+                return false;
+
+            return target->GetAI()->GetData(DATA_IGNITED_METEORS) >= 3;
+        }
 };
 
 void AddSC_boss_ragnaros_firelands()
@@ -4653,26 +5133,23 @@ void AddSC_boss_ragnaros_firelands()
     new npc_ragnaros_lava_wave();
     new npc_ragnaros_magma_trap();
     new npc_ragnaros_lava_scion();
-    
     new npc_ragnaros_cenarius();
     new npc_ragnaros_malfurion_stormrage();
     new npc_ragnaros_hamuul_runetotem();
     new npc_ragnaros_dreadflame();
     new npc_ragnaros_dreadflame_spawn();
-
     new npc_ragnaros_breadth_of_frost();
     new npc_ragnaros_entrapping_roots();
     new npc_ragnaros_cloudburst();
+    new npc_fl_ragnaros_molten_elemental();
 
     new spell_ragnaros_splitting_blow();
     new spell_ragnaros_splitting_blow_dummy();
     new spell_ragnaros_invoke_sons();
-
     new spell_rage_of_ragnaros_dummy();
     new spell_rage_of_ragnaros();
     new spell_engulfing_flames();
     new spell_world_in_flames();
-
     new spell_ragnaros_submerge();
     new spell_sulfuras_smash_player_trigger();
     new spell_ragnaros_sulfuras_smash();
@@ -4684,15 +5161,12 @@ void AddSC_boss_ragnaros_firelands()
     new spell_ragnaros_magma_trap_dummy();
     new spell_ragnaros_magma_trap_eruption();
     new spell_ragnaros_wrath_of_ragnaros();
-
     new spell_dreadflame_deluge_control_aura();
     new spell_dreadflame_damage_control_aura();
     new spell_dreadflame_spawn_control_aura();
     new spell_dreadflame_spread_control_aura();
-
     new spell_draw_out_firelord();
     new spell_cenarius_meteor_freeze();
-
     new spell_ragnaros_breadth_of_frost_trigger();
     new spell_ragnaros_entrapping_roots_trigger();
     new spell_fl_ragnaros_npc_helper_summon();
@@ -4700,10 +5174,8 @@ void AddSC_boss_ragnaros_firelands()
     new spell_breadth_of_frost_player_aura();
     new spell_breadth_of_frost_meteor_aura();
     new spell_ragnaros_cloudburst();
-
     new spell_ragnaros_magma_knockup();
     new spell_ragnaros_dreadflame_dummy();
-
     new spell_empower_sulfuras_visual_missile();
     new spell_ragnaros_empower_sulfuras();
     new spell_ragnaros_empower_sulfuras_aura_dummy();
@@ -4711,6 +5183,15 @@ void AddSC_boss_ragnaros_firelands()
     new spell_fl_ragnaros_superheated();
     new spell_fl_ragnaros_blazing_heat_target_search();
     new spell_fl_ragnaros_blazing_heat_spawn();
+    new spell_fl_ragnaros_deluge_aura_cancel();
+    new spell_fl_ragnaros_magma();
+    new spell_fl_ragnaros_molten_seed_missile_target_search();
+    new spell_fl_ragnaros_molten_seed_grow();
+    new spell_fl_ragnaros_molten_power();
+    new spell_fl_ragnaros_molten_seed_target_search();
+    new spell_fl_ragnaros_molten_inferno();
 
     new at_sulfuron_keep();
+
+    new achievement_ragnar_os();
 };

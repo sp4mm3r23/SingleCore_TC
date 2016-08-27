@@ -38,6 +38,9 @@ enum DataTypes
     DATA_BALEROC                = 4,
     DATA_MAJORDOMO_STAGHELM     = 5,
     DATA_RAGNAROS               = 6,
+
+    DATA_RAGNAROS_EMERGED       = 7,
+    DATA_RAGNAROS_FIRST_EMERGE  = 8,
 };
 
 enum CreatureIds
@@ -69,6 +72,7 @@ enum CreatureIds
     NPC_LAVA_WAVE                   = 53363,
     NPC_SULFURAS                    = 53420,
     NPC_SON_OF_FLAME                = 53140,
+    NPC_MOLTEN_ELEMENTAL            = 53189,
     NPC_LAVA_SCION                  = 53231,
     NPC_RAGNAROS_LIVING_METEOR      = 53500,
     NPC_RAGNAROS_LIVING_METEOR_25N  = 53813,
@@ -93,6 +97,7 @@ enum CreatureIds
     NPC_FIRELANDS_BRIDGE_STALKER    = 42098,
     NPC_TELEPORT_TO_MAJORDOMO       = 54348,
     NPC_TELEPORT_TO_FLAMEBREACH     = 54367,
+    NPC_SMOULDERING_ESSENCE_CREDIT  = 54198,
 };
 
 enum GameobjectIds
@@ -105,6 +110,11 @@ enum FirelandsQuests
 {
     QUEST_HEART_OF_FLAME_A          = 29307,
     QUEST_HEART_OF_FLAME_H          = 29308
+};
+
+enum FirelandsItems
+{
+    ITEM_HEART_OF_FLAME             = 69848,
 };
 
 enum DungeonPhases
