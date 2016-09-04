@@ -4030,6 +4030,35 @@ Custom.AutoCompleteQuestDelay = 180
 
 ###################################################################################################
 #
+# BeastMaster Configuration
+#
+# BeastMaster Hunter Only
+#                 = 0 (Anyone can use)
+#         default = 1 (Hunter only)
+
+BeastMaster.OnlyHunter = 0
+
+#
+# BeastMaster Enable Normal Pets
+#                 = 0  (Normal pets disabled)
+#         default = 1  (Normal Pets enabled)
+#
+
+BeastMaster.EnableNormalPet = 1
+
+#
+# BeastMaster Enable Exotic Pets
+#                 = 0  (Anyone Can get Exotic pets)
+#         default = 1  (Can only get Exotic Pets if you know how)
+#
+
+BeastMaster.EnableExoticPet = 1
+
+#
+###################################################################################################
+
+###################################################################################################
+#
 #     Solocraft.Enable
 #        Description: Solocraft is a script to increase players and bots stats in raids, 
 #		 based on group size. It feels a little Hacky, but raids is unfair hard with playerbots.
