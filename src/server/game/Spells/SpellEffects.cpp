@@ -371,6 +371,10 @@ void Spell::EffectInstaKill(SpellEffIndex /*effIndex*/)
         if (unitTarget->ToPlayer()->GetCommandStatus(CHEAT_GOD))
             return;
 
+    // Ra-den Fatal Strike exception.     
+    if (m_caster->GetEntry() == 69473 || m_caster->GetEntry() == 69888 && unitTarget->HasAura(132404) || unitTarget->HasAura(145054) || unitTarget->HasAura(132403) || unitTarget->HasAura(77535) || unitTarget->HasAura(115307))
+        return;
+        
     if (m_caster == unitTarget)                              // prevent interrupt message
         finish();
 

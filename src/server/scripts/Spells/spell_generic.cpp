@@ -1317,7 +1317,7 @@ class spell_gen_despawn_self : public SpellScriptLoader
 
             void Register() override
             {
-                OnEffectHitTarget += SpellEffectFn(spell_gen_despawn_self_SpellScript::HandleDummy, EFFECT_ALL, SPELL_EFFECT_ANY);
+				OnEffectHitTarget += SpellEffectFn(spell_gen_despawn_self_SpellScript::HandleDummy, EFFECT_ALL, SPELL_EFFECT_ANY);
             }
         };
 
@@ -4386,6 +4386,808 @@ class spell_gen_azgalor_rain_of_fire_hellfire_citadel : public SpellScriptLoader
         }
 };
 
+class spell_gen_endless_absorb : public SpellScriptLoader
+{
+    public:
+        spell_gen_endless_absorb() : SpellScriptLoader("spell_gen_endless_absorb") { }
+
+        class spell_gen_endless_absorb_AuraScript : public AuraScript
+        {
+            PrepareAuraScript(spell_gen_endless_absorb_AuraScript);
+
+            void OnAbsorb(AuraEffect* aurEff, DamageInfo& dmgInfo, uint32& absorbAmount)
+            {
+                absorbAmount = CalculatePct(dmgInfo.GetDamage(), aurEff->GetAmount());
+                RoundToInterval<uint32>(absorbAmount, 0, dmgInfo.GetDamage());
+                dmgInfo.AbsorbDamage(absorbAmount);
+            }
+
+            void Register() override
+            {
+                OnEffectAbsorb += AuraEffectAbsorbFn(spell_gen_endless_absorb_AuraScript::OnAbsorb, EFFECT_0);
+            }
+        };
+
+        AuraScript* GetAuraScript() const override
+        {
+            return new spell_gen_endless_absorb_AuraScript();
+        }
+};
+
+// 119630 - Reflective Shield.
+class spell_gen_kings_guard_reflective_shield : public SpellScriptLoader
+{
+    public:
+        spell_gen_kings_guard_reflective_shield() : SpellScriptLoader("spell_gen_kings_guard_reflective_shield") { }
+
+        class spell_gen_kings_guard_reflective_shield_AuraScript : public AuraScript
+        {
+            PrepareAuraScript(spell_gen_kings_guard_reflective_shield_AuraScript);
+
+            bool Validate(SpellInfo const* spellInfo) override
+            {
+                if (!sSpellMgr->GetSpellInfo(spellInfo->GetEffect(EFFECT_0)->TriggerSpell))
+                    return false;
+                return true;
+            }
+
+            void OnProc(const AuraEffect* aurEff, ProcEventInfo& eventInfo)
+            {
+                if (Unit* caster = GetCaster())
+                {
+                    uint32 triggerSpell = GetSpellInfo()->GetEffect(aurEff->GetEffIndex())->TriggerSpell;
+                    int32 reflectiveshielddmg = int32(CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), 100));
+                    GetTarget()->CastCustomSpell(triggerSpell, SPELLVALUE_BASE_POINT0, reflectiveshielddmg, (Unit*)NULL, TRIGGERED_FULL_MASK, NULL, aurEff);
+                }
+            }
+
+            void Register() override
+            {
+                OnEffectProc += AuraEffectProcFn(spell_gen_kings_guard_reflective_shield_AuraScript::OnProc, EFFECT_0, SPELL_AURA_DUMMY);
+                OnEffectProc += AuraEffectProcFn(spell_gen_kings_guard_reflective_shield_AuraScript::OnProc, EFFECT_0, SPELL_AURA_DUMMY);
+            }
+        };
+
+        AuraScript* GetAuraScript() const override
+        {
+            return new spell_gen_kings_guard_reflective_shield_AuraScript();
+        }
+};
+
+class spell_gen_healing_from_damage : public SpellScriptLoader
+{
+    public:
+        spell_gen_healing_from_damage() : SpellScriptLoader("spell_gen_healing_from_damage") { }
+
+        class spell_gen_healing_from_damage_AuraScript : public AuraScript
+        {
+            PrepareAuraScript(spell_gen_healing_from_damage_AuraScript);
+
+            bool Validate(SpellInfo const* spellInfo) override
+            {
+                if (!sSpellMgr->GetSpellInfo(spellInfo->GetEffect(EFFECT_0)->TriggerSpell))
+                    return false;
+                return true;
+            }
+
+            void OnProc(const AuraEffect* aurEff, ProcEventInfo& eventInfo)
+            {
+                if (Unit* caster = GetCaster())
+                {
+                    uint32 triggerSpell = GetSpellInfo()->GetEffect(aurEff->GetEffIndex())->TriggerSpell;
+                    int32 heal = CalculatePct(int32(eventInfo.GetDamageInfo()->GetDamage()), aurEff->GetAmount());
+                    GetTarget()->CastCustomSpell(triggerSpell, SPELLVALUE_BASE_POINT0, heal, (Unit*)NULL, TRIGGERED_FULL_MASK, NULL, aurEff);
+                }
+            }
+            
+            void Register() override
+            {
+                OnEffectProc += AuraEffectProcFn(spell_gen_healing_from_damage_AuraScript::OnProc, EFFECT_0, SPELL_AURA_DUMMY);
+            }
+        };
+
+        AuraScript* GetAuraScript() const override
+        {
+            return new spell_gen_healing_from_damage_AuraScript();
+        }
+};
+
+class spell_gen_healing_from_healing : public SpellScriptLoader
+{
+    public:
+        spell_gen_healing_from_healing() : SpellScriptLoader("spell_gen_healing_from_healing") { }
+
+        class spell_gen_healing_from_healing_AuraScript : public AuraScript
+        {
+            PrepareAuraScript(spell_gen_healing_from_healing_AuraScript);
+
+            bool Validate(SpellInfo const* spellInfo) override
+            {
+                if (!sSpellMgr->GetSpellInfo(spellInfo->GetEffect(EFFECT_0)->TriggerSpell))
+                    return false;
+                return true;
+            }
+
+            void OnProc(const AuraEffect* aurEff, ProcEventInfo& eventInfo)
+            {
+                if (Unit* caster = GetCaster())
+                {
+                    uint32 triggerSpell = GetSpellInfo()->GetEffect(aurEff->GetEffIndex())->TriggerSpell;
+                    int32 heal = CalculatePct(eventInfo.GetHealInfo()->GetHeal(), aurEff->GetAmount());
+                    GetTarget()->CastCustomSpell(triggerSpell, SPELLVALUE_BASE_POINT0, heal, (Unit*)NULL, TRIGGERED_FULL_MASK, NULL, aurEff);
+                }
+            }
+            
+            void Register() override
+            {
+                OnEffectProc += AuraEffectProcFn(spell_gen_healing_from_healing_AuraScript::OnProc, EFFECT_0, SPELL_AURA_DUMMY);
+            }
+        };
+
+        AuraScript* GetAuraScript() const override
+        {
+            return new spell_gen_healing_from_healing_AuraScript();
+        }
+};
+
+class spell_gen_damage_from_damage : public SpellScriptLoader
+{
+    public:
+        spell_gen_damage_from_damage() : SpellScriptLoader("spell_gen_damage_from_damage") { }
+
+        class spell_gen_damage_from_damage_AuraScript : public AuraScript
+        {
+            PrepareAuraScript(spell_gen_damage_from_damage_AuraScript);
+
+            bool Validate(SpellInfo const* spellInfo) override
+            {
+                if (!sSpellMgr->GetSpellInfo(spellInfo->GetEffect(EFFECT_0)->TriggerSpell))
+                    return false;
+                return true;
+            }
+
+            void OnProc(const AuraEffect* aurEff, ProcEventInfo& eventInfo)
+            {
+                if (Unit* caster = GetCaster())
+                {
+                    uint32 triggerSpell = GetSpellInfo()->GetEffect(aurEff->GetEffIndex())->TriggerSpell;
+                    int32 dmg = CalculatePct(int32(eventInfo.GetDamageInfo()->GetDamage()), aurEff->GetAmount());
+                    GetTarget()->CastCustomSpell(triggerSpell, SPELLVALUE_BASE_POINT0, dmg, (Unit*)NULL, TRIGGERED_FULL_MASK, NULL, aurEff);
+                }
+            }
+            
+            void Register() override
+            {
+                OnEffectProc += AuraEffectProcFn(spell_gen_damage_from_damage_AuraScript::OnProc, EFFECT_0, SPELL_AURA_DUMMY);
+            }
+        };
+
+        AuraScript* GetAuraScript() const override
+        {
+            return new spell_gen_damage_from_damage_AuraScript();
+        }
+};
+
+class spell_gen_damage_from_healing : public SpellScriptLoader
+{
+    public:
+        spell_gen_damage_from_healing() : SpellScriptLoader("spell_gen_damage_from_healing") { }
+
+        class spell_gen_damage_from_healing_AuraScript : public AuraScript
+        {
+            PrepareAuraScript(spell_gen_damage_from_healing_AuraScript);
+
+            bool Validate(SpellInfo const* spellInfo) override
+            {
+                if (!sSpellMgr->GetSpellInfo(spellInfo->GetEffect(EFFECT_0)->TriggerSpell))
+                    return false;
+                return true;
+            }
+
+            void OnProc(const AuraEffect* aurEff, ProcEventInfo& eventInfo)
+            {
+                if (Unit* caster = GetCaster())
+                {
+                    uint32 triggerSpell = GetSpellInfo()->GetEffect(aurEff->GetEffIndex())->TriggerSpell;
+                    int32 dmg = CalculatePct(eventInfo.GetHealInfo()->GetHeal(), aurEff->GetAmount());
+                    GetTarget()->CastCustomSpell(triggerSpell, SPELLVALUE_BASE_POINT0, dmg, (Unit*)NULL, TRIGGERED_FULL_MASK, NULL, aurEff);
+                }
+            }
+            
+            void Register() override
+            {
+                OnEffectProc += AuraEffectProcFn(spell_gen_damage_from_healing_AuraScript::OnProc, EFFECT_0, SPELL_AURA_DUMMY);
+            }
+        };
+
+        AuraScript* GetAuraScript() const override
+        {
+            return new spell_gen_damage_from_healing_AuraScript();
+        }
+};
+
+class spell_gen_absorb_from_damage : public SpellScriptLoader
+{
+    public:
+        spell_gen_absorb_from_damage() : SpellScriptLoader("spell_gen_absorb_from_damage") { }
+
+        class spell_gen_absorb_from_damage_AuraScript : public AuraScript
+        {
+            PrepareAuraScript(spell_gen_absorb_from_damage_AuraScript);
+
+            bool Validate(SpellInfo const* spellInfo) override
+            {
+                if (!sSpellMgr->GetSpellInfo(spellInfo->GetEffect(EFFECT_0)->TriggerSpell))
+                    return false;
+                return true;
+            }
+
+            void OnProc(const AuraEffect* aurEff, ProcEventInfo& eventInfo)
+            {
+                if (Unit* caster = GetCaster())
+                {
+                    uint32 triggerSpell = GetSpellInfo()->GetEffect(aurEff->GetEffIndex())->TriggerSpell;
+                    int32 dmg = CalculatePct(int32(eventInfo.GetDamageInfo()->GetDamage()), aurEff->GetAmount());
+                    GetTarget()->CastCustomSpell(triggerSpell, SPELLVALUE_BASE_POINT0, dmg, (Unit*)NULL, TRIGGERED_FULL_MASK, NULL, aurEff);
+                }
+            }
+            
+            void Register() override
+            {
+                OnEffectProc += AuraEffectProcFn(spell_gen_absorb_from_damage_AuraScript::OnProc, EFFECT_0, SPELL_AURA_DUMMY);
+            }
+        };
+
+        AuraScript* GetAuraScript() const override
+        {
+            return new spell_gen_absorb_from_damage_AuraScript();
+        }
+};
+
+class spell_gen_absorb_from_healing : public SpellScriptLoader
+{
+    public:
+        spell_gen_absorb_from_healing() : SpellScriptLoader("spell_gen_absorb_from_healing") { }
+
+        
+        class spell_gen_absorb_from_healing_AuraScript : public AuraScript
+        {
+            PrepareAuraScript(spell_gen_absorb_from_healing_AuraScript);
+
+            bool Validate(SpellInfo const* spellInfo) override
+            {
+                if (!sSpellMgr->GetSpellInfo(spellInfo->GetEffect(EFFECT_0)->TriggerSpell))
+                    return false;
+                return true;
+            }
+
+            void OnProc(const AuraEffect* aurEff, ProcEventInfo& eventInfo)
+            {
+                if (Unit* caster = GetCaster())
+                {
+                    uint32 triggerSpell = GetSpellInfo()->GetEffect(aurEff->GetEffIndex())->TriggerSpell;
+                    int32 heal = CalculatePct(eventInfo.GetHealInfo()->GetHeal(), aurEff->GetAmount());
+                    GetTarget()->CastCustomSpell(triggerSpell, SPELLVALUE_BASE_POINT0, heal, (Unit*)NULL, TRIGGERED_FULL_MASK, NULL, aurEff);
+                }
+            }
+            
+            void Register() override
+            {
+                OnEffectProc += AuraEffectProcFn(spell_gen_absorb_from_healing_AuraScript::OnProc, EFFECT_0, SPELL_AURA_DUMMY);
+            }
+        };
+
+        AuraScript* GetAuraScript() const override
+        {
+            return new spell_gen_absorb_from_healing_AuraScript();
+        }
+};
+
+class spell_gen_subjugator_korul_darkness_calls : public SpellScriptLoader  // 151159
+{
+    public:
+        spell_gen_subjugator_korul_darkness_calls() : SpellScriptLoader("spell_gen_subjugator_korul_darkness_calls") { }
+
+        class spell_gen_subjugator_korul_darkness_calls_SpellScript : public SpellScript
+        {
+            PrepareSpellScript(spell_gen_subjugator_korul_darkness_calls_SpellScript);
+
+            void HandleScript(SpellEffIndex /*effIndex*/)
+            {
+                if (Unit* hitUnit = GetHitUnit())
+                    GetCaster()->CastSpell(hitUnit, uint32(GetEffectValue()));
+            }
+
+            void Register() override
+            {
+                OnEffectHitTarget += SpellEffectFn(spell_gen_subjugator_korul_darkness_calls_SpellScript::HandleScript, EFFECT_0, SPELL_EFFECT_DUMMY);
+                OnEffectHitTarget += SpellEffectFn(spell_gen_subjugator_korul_darkness_calls_SpellScript::HandleScript, EFFECT_1, SPELL_EFFECT_DUMMY);
+            }
+        };
+
+        SpellScript* GetSpellScript() const override
+        {
+            return new spell_gen_subjugator_korul_darkness_calls_SpellScript();
+        }
+};
+
+class spell_gen_endless_night : public SpellScriptLoader  // 151159
+{
+    public:
+        spell_gen_endless_night() : SpellScriptLoader("spell_gen_endless_night") { }
+
+        class spell_gen_endless_night_SpellScript : public SpellScript
+        {
+            PrepareSpellScript(spell_gen_endless_night_SpellScript);
+
+            void HandleDummy(SpellEffIndex /*effIndex*/)
+            {
+                GetHitUnit()->CastSpell(GetCaster(), uint32(GetEffectValue()));
+            }
+
+            void Register() override
+            {
+                OnEffectHitTarget += SpellEffectFn(spell_gen_endless_night_SpellScript::HandleDummy, EFFECT_0, SPELL_EFFECT_DUMMY);
+                OnEffectHitTarget += SpellEffectFn(spell_gen_endless_night_SpellScript::HandleDummy, EFFECT_1, SPELL_EFFECT_DUMMY);
+                OnEffectHitTarget += SpellEffectFn(spell_gen_endless_night_SpellScript::HandleDummy, EFFECT_2, SPELL_EFFECT_DUMMY);
+            }
+        };
+
+        SpellScript* GetSpellScript() const override
+        {
+            return new spell_gen_endless_night_SpellScript();
+        }
+};
+
+class spell_gen_eternal_night : public SpellScriptLoader
+{
+    public:
+        spell_gen_eternal_night() : SpellScriptLoader("spell_gen_eternal_night") { }
+
+        class spell_gen_eternal_night_SpellScript : public SpellScript
+        {
+            PrepareSpellScript(spell_gen_eternal_night_SpellScript);
+
+            void HandleScript(SpellEffIndex /*effIndex*/)
+            {
+               GetHitUnit()->CastSpell(GetCaster(), uint32(GetEffectValue()));
+            }
+
+            void Register() override
+            {
+                OnEffectHitTarget += SpellEffectFn(spell_gen_eternal_night_SpellScript::HandleScript, EFFECT_0, SPELL_EFFECT_SCRIPT_EFFECT);
+                OnEffectHitTarget += SpellEffectFn(spell_gen_eternal_night_SpellScript::HandleScript, EFFECT_1, SPELL_EFFECT_SCRIPT_EFFECT);
+                OnEffectHitTarget += SpellEffectFn(spell_gen_eternal_night_SpellScript::HandleScript, EFFECT_2, SPELL_EFFECT_SCRIPT_EFFECT);
+            }
+        };
+
+        SpellScript* GetSpellScript() const override
+        {
+            return new spell_gen_eternal_night_SpellScript();
+        }
+};
+
+class spell_gen_periodic_dummy_aura_caster_on_target : public SpellScriptLoader
+{
+    public:
+        spell_gen_periodic_dummy_aura_caster_on_target() : SpellScriptLoader("spell_gen_periodic_dummy_aura_caster_on_target") { }
+
+        class spell_gen_periodic_dummy_aura_caster_on_target_AuraScript : public AuraScript
+        {
+            PrepareAuraScript(spell_gen_periodic_dummy_aura_caster_on_target_AuraScript);
+
+            void PeriodicTick(AuraEffect const* /*aurEff*/)
+            {
+                 GetCaster()->CastSpell(GetTarget(), GetSpellInfo()->GetEffect(GetCaster(), EFFECT_0)->TriggerSpell, true);
+                 GetCaster()->CastSpell(GetTarget(), GetSpellInfo()->GetEffect(GetCaster(), EFFECT_1)->TriggerSpell, true);
+                 GetCaster()->CastSpell(GetTarget(), GetSpellInfo()->GetEffect(GetCaster(), EFFECT_2)->TriggerSpell, true);
+            }
+
+            void Register() override
+            {
+                OnEffectPeriodic += AuraEffectPeriodicFn(spell_gen_periodic_dummy_aura_caster_on_target_AuraScript::PeriodicTick, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
+                OnEffectPeriodic += AuraEffectPeriodicFn(spell_gen_periodic_dummy_aura_caster_on_target_AuraScript::PeriodicTick, EFFECT_1, SPELL_AURA_PERIODIC_DUMMY);
+                OnEffectPeriodic += AuraEffectPeriodicFn(spell_gen_periodic_dummy_aura_caster_on_target_AuraScript::PeriodicTick, EFFECT_2, SPELL_AURA_PERIODIC_DUMMY);
+            }
+        };
+
+        AuraScript* GetAuraScript() const override
+        {
+           return new spell_gen_periodic_dummy_aura_caster_on_target_AuraScript();
+        }
+};
+
+class spell_gen_periodic_dummy_aura_target_on_target : public SpellScriptLoader
+{
+    public:
+        spell_gen_periodic_dummy_aura_target_on_target() : SpellScriptLoader("spell_gen_periodic_dummy_aura_target_on_target") { }
+
+        class spell_gen_periodic_dummy_aura_target_on_target_AuraScript : public AuraScript
+        {
+            PrepareAuraScript(spell_gen_periodic_dummy_aura_target_on_target_AuraScript);
+
+            void PeriodicTick(AuraEffect const* /*aurEff*/)
+            {
+                 GetTarget()->CastSpell(GetTarget(), GetSpellInfo()->GetEffect(GetCaster(), EFFECT_0)->TriggerSpell, true);
+                 GetTarget()->CastSpell(GetTarget(), GetSpellInfo()->GetEffect(GetCaster(), EFFECT_1)->TriggerSpell, true);
+                 GetTarget()->CastSpell(GetTarget(), GetSpellInfo()->GetEffect(GetCaster(), EFFECT_2)->TriggerSpell, true);
+            }
+
+            void Register() override
+            {
+                OnEffectPeriodic += AuraEffectPeriodicFn(spell_gen_periodic_dummy_aura_target_on_target_AuraScript::PeriodicTick, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
+                OnEffectPeriodic += AuraEffectPeriodicFn(spell_gen_periodic_dummy_aura_target_on_target_AuraScript::PeriodicTick, EFFECT_1, SPELL_AURA_PERIODIC_DUMMY);
+                OnEffectPeriodic += AuraEffectPeriodicFn(spell_gen_periodic_dummy_aura_target_on_target_AuraScript::PeriodicTick, EFFECT_2, SPELL_AURA_PERIODIC_DUMMY);
+            }
+        };
+
+        AuraScript* GetAuraScript() const override
+        {
+           return new spell_gen_periodic_dummy_aura_target_on_target_AuraScript();
+        }
+};
+
+class spell_gen_periodic_dummy_aura_target_on_caster : public SpellScriptLoader
+{
+    public:
+        spell_gen_periodic_dummy_aura_target_on_caster() : SpellScriptLoader("spell_gen_periodic_dummy_aura_target_on_caster") { }
+
+        class spell_gen_periodic_dummy_aura_target_on_caster_AuraScript : public AuraScript
+        {
+            PrepareAuraScript(spell_gen_periodic_dummy_aura_target_on_caster_AuraScript);
+
+            void PeriodicTick(AuraEffect const* /*aurEff*/)
+            {
+                GetTarget()->CastSpell(GetCaster(), GetSpellInfo()->GetEffect(GetCaster(), EFFECT_0)->TriggerSpell, true);
+                GetTarget()->CastSpell(GetCaster(), GetSpellInfo()->GetEffect(GetCaster(), EFFECT_1)->TriggerSpell, true);
+                GetTarget()->CastSpell(GetCaster(), GetSpellInfo()->GetEffect(GetCaster(), EFFECT_2)->TriggerSpell, true);
+            }
+
+            void Register() override
+            {
+                OnEffectPeriodic += AuraEffectPeriodicFn(spell_gen_periodic_dummy_aura_target_on_caster_AuraScript::PeriodicTick, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
+                OnEffectPeriodic += AuraEffectPeriodicFn(spell_gen_periodic_dummy_aura_target_on_caster_AuraScript::PeriodicTick, EFFECT_1, SPELL_AURA_PERIODIC_DUMMY);
+                OnEffectPeriodic += AuraEffectPeriodicFn(spell_gen_periodic_dummy_aura_target_on_caster_AuraScript::PeriodicTick, EFFECT_2, SPELL_AURA_PERIODIC_DUMMY);
+            }
+        };
+
+        AuraScript* GetAuraScript() const override
+        {
+           return new spell_gen_periodic_dummy_aura_target_on_caster_AuraScript();
+        }
+};
+
+class spell_gen_endless_absorb_bp1 : public SpellScriptLoader
+{
+    public:
+        spell_gen_endless_absorb_bp1() : SpellScriptLoader("spell_gen_endless_absorb_bp1") { }
+
+        class spell_gen_endless_absorb_bp1_AuraScript : public AuraScript
+        {
+            PrepareAuraScript(spell_gen_endless_absorb_bp1_AuraScript);
+
+            void OnAbsorb(AuraEffect* aurEff, DamageInfo& dmgInfo, uint32& absorbAmount)
+            {
+                absorbAmount = CalculatePct(dmgInfo.GetDamage(), aurEff->GetAmount());
+                RoundToInterval<uint32>(absorbAmount, 0, dmgInfo.GetDamage());
+                dmgInfo.AbsorbDamage(absorbAmount);
+            }
+
+            void Register() override
+            {
+                OnEffectAbsorb += AuraEffectAbsorbFn(spell_gen_endless_absorb_bp1_AuraScript::OnAbsorb, EFFECT_1);
+            }
+        };
+
+        AuraScript* GetAuraScript() const override
+        {
+            return new spell_gen_endless_absorb_bp1_AuraScript();
+        }
+};
+
+class spell_gen_endless_absorb_bp2 : public SpellScriptLoader
+{
+    public:
+        spell_gen_endless_absorb_bp2() : SpellScriptLoader("spell_gen_endless_absorb_bp2") { }
+
+        class spell_gen_endless_absorb_bp2_AuraScript : public AuraScript
+        {
+            PrepareAuraScript(spell_gen_endless_absorb_bp2_AuraScript);
+
+            void OnAbsorb(AuraEffect* aurEff, DamageInfo& dmgInfo, uint32& absorbAmount)
+            {
+                absorbAmount = CalculatePct(dmgInfo.GetDamage(), aurEff->GetAmount());
+                RoundToInterval<uint32>(absorbAmount, 0, dmgInfo.GetDamage());
+                dmgInfo.AbsorbDamage(absorbAmount);
+            }
+
+            void Register() override
+            {
+                OnEffectAbsorb += AuraEffectAbsorbFn(spell_gen_endless_absorb_bp2_AuraScript::OnAbsorb, EFFECT_2);
+            }
+        };
+
+        AuraScript* GetAuraScript() const override
+        {
+            return new spell_gen_endless_absorb_bp2_AuraScript();
+        }
+};
+
+class spell_generic_mana_damage : public SpellScriptLoader
+{
+    public:
+        spell_generic_mana_damage() : SpellScriptLoader("spell_generic_mana_damage") { }
+
+        class spell_generic_mana_damage_AuraScript : public AuraScript
+        {
+            PrepareAuraScript(spell_generic_mana_damage_AuraScript);
+
+            void HandleEffectApply(AuraEffect const* aurEff, AuraEffectHandleModes /*mode*/)
+            {
+                if (Unit* caster = GetCaster())
+                {
+                    int32 mana = int32(aurEff->GetAmount() * std::pow(2.0f, GetStackAmount())); // mana restore - bp * 2^stackamount
+                    int32 damage = mana * 2;
+                    caster->CastCustomSpell(GetTarget(), GetSpellInfo()->GetEffect(GetCaster(), EFFECT_0)->TriggerSpell, &mana, NULL, NULL, true);
+                    caster->CastCustomSpell(GetTarget(), GetSpellInfo()->GetEffect(GetCaster(), EFFECT_1)->TriggerSpell, &damage, NULL, NULL, true);
+                }
+            }
+
+            void Register() override
+            {
+                AfterEffectApply += AuraEffectApplyFn(spell_generic_mana_damage_AuraScript::HandleEffectApply, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL_OR_REAPPLY_MASK);
+                AfterEffectApply += AuraEffectApplyFn(spell_generic_mana_damage_AuraScript::HandleEffectApply, EFFECT_1, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL_OR_REAPPLY_MASK);
+            }
+        };
+
+        AuraScript* GetAuraScript() const override
+        {
+            return new spell_generic_mana_damage_AuraScript();
+        }
+};
+
+enum LifeStealJuggernaut
+{
+    SPELL_LIFESTEAL_JUGGERNAUT_HEAL  = 146347
+};
+
+// 146346 - Life Steal - Iron Juggernaut item.
+class spell_gen_lifesteal_juggernaut : public SpellScriptLoader
+{
+    public:
+        spell_gen_lifesteal_juggernaut() : SpellScriptLoader("spell_gen_lifesteal_juggernaut") { }
+
+        class spell_gen_lifesteal_juggernaut_AuraScript : public AuraScript
+        {
+            PrepareAuraScript(spell_gen_lifesteal_juggernaut_AuraScript);
+
+            bool Validate(SpellInfo const* /*spellInfo*/) override
+            {
+                if (!sSpellMgr->GetSpellInfo(SPELL_LIFESTEAL_JUGGERNAUT_HEAL))
+                    return false;
+                return true;
+            }
+
+            void OnProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+            {
+                PreventDefaultAction();
+
+                int32 heal = CalculatePct(int32(eventInfo.GetDamageInfo()->GetDamage()), aurEff->GetAmount());
+                GetTarget()->CastCustomSpell(SPELL_LIFESTEAL_JUGGERNAUT_HEAL, SPELLVALUE_BASE_POINT0, heal, (Unit*)NULL, true, NULL, aurEff);
+            }
+
+            void Register() override
+            {
+                OnEffectProc += AuraEffectProcFn(spell_gen_lifesteal_juggernaut_AuraScript::OnProc, EFFECT_0, SPELL_AURA_DUMMY);
+            }
+        };
+
+        AuraScript* GetAuraScript() const override
+        {
+            return new spell_gen_lifesteal_juggernaut_AuraScript();
+        }
+};
+
+class spell_no_damage_high_one_health : public SpellScriptLoader
+{
+    public:
+        spell_no_damage_high_one_health() : SpellScriptLoader("spell_no_damage_high_one_health") { }
+
+        class spell_no_damage_high_one_health_AuraScript : public AuraScript
+        {
+            PrepareAuraScript(spell_no_damage_high_one_health_AuraScript);
+
+            void OnAbsorb(AuraEffect* /*aurEff*/, DamageInfo& dmgInfo, uint32& absorbAmount)
+            {
+                if (dmgInfo.GetDamage() >= GetTarget()->GetHealth())
+                {
+                    absorbAmount = dmgInfo.GetDamage();
+                    // or absorbAmount = dmgInfo.GetDamage() - GetTarget()->GetHealth() + 1
+                }
+            }
+
+            void Register() override
+            {
+                OnEffectAbsorb += AuraEffectAbsorbFn(spell_no_damage_high_one_health_AuraScript::OnAbsorb, EFFECT_0);
+            }
+        };
+
+        AuraScript* GetAuraScript() const override
+        {
+            return new spell_no_damage_high_one_health_AuraScript();
+        }
+};
+
+class spell_no_damage_high_or_equal_one_health_percent : public SpellScriptLoader
+{
+    public:
+        spell_no_damage_high_or_equal_one_health_percent() : SpellScriptLoader("spell_no_damage_high_or_equal_one_health_percent") { }
+
+        class spell_no_damage_high_or_equal_one_health_percent_AuraScript : public AuraScript
+        {
+            PrepareAuraScript(spell_no_damage_high_or_equal_one_health_percent_AuraScript);
+
+            void CalculateAmount(AuraEffect const* /*aurEff*/, int32 & amount, bool & /*canBeRecalculated*/)
+            {
+                // Set absorbtion amount to unlimited
+                amount = -1;
+            }
+
+            void Absorb(AuraEffect* aurEff, DamageInfo & dmgInfo, uint32 & absorbAmount)
+            {
+                Unit* target = GetTarget()->ToUnit();
+                
+                int32 health10 = target->CountPctFromMaxHealth(1);
+
+                // hp > 10% - absorb hp till 10%
+                if (target->GetHealth() > health10)
+                    absorbAmount = dmgInfo.GetDamage() - target->GetHealth() + health10;
+                // hp lower than 10% - absorb everything
+                else
+                    absorbAmount = dmgInfo.GetDamage();
+            }
+
+            void Register() override
+            {
+                DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_no_damage_high_or_equal_one_health_percent_AuraScript::CalculateAmount, EFFECT_0, SPELL_AURA_SCHOOL_ABSORB);
+                OnEffectAbsorb += AuraEffectAbsorbFn(spell_no_damage_high_or_equal_one_health_percent_AuraScript::Absorb, EFFECT_0);
+            }
+        };
+
+        AuraScript* GetAuraScript() const override
+        {
+            return new spell_no_damage_high_or_equal_one_health_percent_AuraScript();
+        }
+};
+
+enum DarkLightRay
+{
+    SPELL_DARKLIGHT_RAY  = 183950
+};
+
+// 183951 - Sethe's Harsh Gaze
+class spell_gen_sethe_harsh_gaze : public SpellScriptLoader
+{
+    public:
+        spell_gen_sethe_harsh_gaze() : SpellScriptLoader("spell_gen_sethe_harsh_gaze") { }
+
+        class spell_gen_sethe_harsh_gaze_AuraScript : public AuraScript
+        {
+            PrepareAuraScript(spell_gen_sethe_harsh_gaze_AuraScript);
+
+            bool Validate(SpellInfo const* /*spellInfo*/) override
+            {
+                if (!sSpellMgr->GetSpellInfo(SPELL_DARKLIGHT_RAY))
+                    return false;
+                return true;
+            }
+
+            void OnProc(const AuraEffect* aurEff, ProcEventInfo& eventInfo)
+            {
+                if (Unit* caster = GetCaster())
+                {
+                    int32 dmg = CalculatePct(int32(eventInfo.GetDamageInfo()->GetDamage()), aurEff->GetAmount());
+                    GetCaster()->CastCustomSpell(SPELL_DARKLIGHT_RAY, SPELLVALUE_BASE_POINT0, dmg, GetTarget(), TRIGGERED_FULL_MASK, NULL, aurEff);
+                }
+            }
+            
+            void Register() override
+            {
+                OnEffectProc += AuraEffectProcFn(spell_gen_sethe_harsh_gaze_AuraScript::OnProc, EFFECT_0, SPELL_AURA_DUMMY);
+            }
+        };
+
+        AuraScript* GetAuraScript() const override
+        {
+            return new spell_gen_sethe_harsh_gaze_AuraScript();
+        }
+};
+
+// 181912 - Shadow Lord Iskar Focused Blast.
+class spell_gen_shadowlord_iskar_focused_blast : public SpellScriptLoader
+{
+    public:
+        spell_gen_shadowlord_iskar_focused_blast() : SpellScriptLoader("spell_gen_shadowlord_iskar_focused_blast") { }
+
+        class spell_gen_shadowlord_iskar_focused_blast_SpellScript : public SpellScript
+        {
+            PrepareSpellScript(spell_gen_shadowlord_iskar_focused_blast_SpellScript);
+
+            void HandleDummy(SpellEffIndex /* effIndex */)
+            {
+               GetCaster()->CastSpell(GetHitUnit(), uint32(GetEffectValue()), true);
+            }
+
+            void Register() override
+            {
+                OnEffectHitTarget += SpellEffectFn(spell_gen_shadowlord_iskar_focused_blast_SpellScript::HandleDummy, EFFECT_0, SPELL_EFFECT_DUMMY);
+            }
+        };
+
+        SpellScript* GetSpellScript() const override
+        {
+            return new spell_gen_shadowlord_iskar_focused_blast_SpellScript();
+        }
+};
+
+class spell_generic_target_position : public SpellScriptLoader
+{
+    public:
+        spell_generic_target_position() : SpellScriptLoader("spell_generic_target_position") { }
+
+        class spell_generic_target_position_SpellScript : public SpellScript
+        {
+            PrepareSpellScript(spell_generic_target_position_SpellScript);
+
+            void HandleDummy(SpellEffIndex /*effIndex*/)
+            {
+                if (WorldLocation const* pos = GetExplTargetDest())
+                    GetCaster()->CastSpell(pos->GetPositionX(), pos->GetPositionY(), pos->GetPositionZ(), uint32(GetEffectValue()), true);
+            }
+
+            void Register() override
+            {
+                OnEffectHitTarget += SpellEffectFn(spell_generic_target_position_SpellScript::HandleDummy, EFFECT_0, SPELL_EFFECT_DUMMY);
+            }
+        };
+
+        SpellScript* GetSpellScript() const override
+        {
+            return new spell_generic_target_position_SpellScript();
+        }
+};
+
+enum ChillheartWrackSoul
+{
+    SPELL_CHILLHEART_WRACK_SOUL          = 114658
+};
+
+class spell_gen_chillheart_wrack_soul : public SpellScriptLoader
+{
+    public:
+        spell_gen_chillheart_wrack_soul() : SpellScriptLoader("spell_gen_chillheart_wrack_soul") { }
+
+        class spell_gen_chillheart_wrack_soul_SpellScript : public SpellScript
+        {
+            PrepareSpellScript(spell_gen_chillheart_wrack_soul_SpellScript);
+
+            void HandleDummy(SpellEffIndex /* effIndex */)
+            {
+               GetHitUnit()->CastSpell(GetHitUnit(), SPELL_CHILLHEART_WRACK_SOUL, true);
+            }
+
+            void Register() override
+            {
+                OnEffectHitTarget += SpellEffectFn(spell_gen_chillheart_wrack_soul_SpellScript::HandleDummy, EFFECT_0, SPELL_EFFECT_DUMMY);
+            }
+        };
+
+        SpellScript* GetSpellScript() const override
+        {
+            return new spell_gen_chillheart_wrack_soul_SpellScript();
+        }
+};
+
 void AddSC_generic_spell_scripts()
 {
     new spell_gen_absorb0_hitlimit1();
@@ -4480,4 +5282,28 @@ void AddSC_generic_spell_scripts()
     new spell_gen_anetheron_summon_towering_infernal();
     new spell_gen_mark_of_kazrogal_hellfire();
     new spell_gen_azgalor_rain_of_fire_hellfire_citadel();
+    new spell_gen_endless_absorb();
+    new spell_gen_healing_from_damage();
+    new spell_gen_healing_from_healing();
+    new spell_gen_damage_from_healing();
+    new spell_gen_damage_from_damage();
+    new spell_gen_absorb_from_damage();
+    new spell_gen_absorb_from_healing();
+    new spell_gen_kings_guard_reflective_shield();
+    new spell_gen_subjugator_korul_darkness_calls();
+    new spell_gen_endless_night();
+    new spell_gen_eternal_night();
+    new spell_gen_periodic_dummy_aura_caster_on_target();
+    new spell_gen_periodic_dummy_aura_target_on_target();
+    new spell_gen_periodic_dummy_aura_target_on_caster();
+    new spell_gen_endless_absorb_bp1();
+    new spell_gen_endless_absorb_bp2();
+    new spell_generic_mana_damage();
+    new spell_gen_lifesteal_juggernaut();
+    new spell_no_damage_high_one_health();
+    new spell_no_damage_high_or_equal_one_health_percent();
+    new spell_gen_sethe_harsh_gaze();
+    new spell_gen_shadowlord_iskar_focused_blast();
+    new spell_generic_target_position();
+    new spell_gen_chillheart_wrack_soul();
 }

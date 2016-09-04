@@ -69,11 +69,22 @@ enum DeathKnightSpells
     SPELL_DK_SCENT_OF_BLOOD                     = 49509,
     SPELL_DK_SCENT_OF_BLOOD_TRIGGERED           = 50421,
     SPELL_DK_SCOURGE_STRIKE_TRIGGERED           = 70890,
+    DK_SPELL_DARK_INFUSION_STACKS               = 91342,
+    DK_SPELL_DARK_INFUSION_AURA                 = 93426,
+    DK_SPELL_DESECRATED_GROUND                  = 118009,
+    DK_SPELL_DESECRATED_GROUND_IMMUNE           = 115018,
+    DK_SPELL_REMORSELESS_WINTER_STUN            = 115001,
+    DK_SPELL_REMORSELESS_WINTER                 = 115000,
     SPELL_DK_SHADOW_OF_DEATH                    = 164047,
     SPELL_DK_SOUL_REAPER_DAMAGE                 = 114867,
     SPELL_DK_SOUL_REAPER_HASTE                  = 114868,
     SPELL_DK_T15_DPS_4P_BONUS                   = 138347,
     SPELL_DK_UNHOLY_PRESENCE                    = 48265,
+    SPELL_DK_DEFILE_DAMAGE                      = 156000,
+    SPELL_DK_SINDRAGOSA_BREATH                  = 155168,
+    SPELL_DK_T18_DPS_UNHOLY_4P_BONUS            = 187866,
+    SPELL_DK_CRAZED_MONSTROSITY_PET             = 187970,
+    SPELL_DK_CRAZED_MONSTROSITY_DK              = 187981,
     SPELL_DK_WILL_OF_THE_NECROPOLIS             = 157335
 };
 
@@ -1165,6 +1176,288 @@ public:
     }
 };
 
+// Remorseless Winter - 115000
+class spell_dk_remorseless_winter : public SpellScriptLoader
+{
+    public:
+        spell_dk_remorseless_winter() : SpellScriptLoader("spell_dk_remorseless_winter") { }
+
+        class spell_dk_remorseless_winter_SpellScript : public SpellScript
+        {
+            PrepareSpellScript(spell_dk_remorseless_winter_SpellScript);
+
+            void HandleOnHit()
+            {
+                if (Player* _player = GetCaster()->ToPlayer())
+                    if (Unit* target = GetHitUnit())
+                        if (Aura *remorselessWinter = target->GetAura(DK_SPELL_REMORSELESS_WINTER))
+                            if (remorselessWinter->GetStackAmount() == 5 && !target->HasAura(DK_SPELL_REMORSELESS_WINTER_STUN))
+                                _player->CastSpell(target, DK_SPELL_REMORSELESS_WINTER_STUN, true);
+            }
+
+            void Register() override
+            {
+                OnHit += SpellHitFn(spell_dk_remorseless_winter_SpellScript::HandleOnHit);
+            }
+        };
+
+        SpellScript* GetSpellScript() const override
+        {
+            return new spell_dk_remorseless_winter_SpellScript();
+        }
+};
+
+// Desecrated ground - 118009
+class spell_dk_desecrated_ground : public SpellScriptLoader
+{
+    public:
+        spell_dk_desecrated_ground() : SpellScriptLoader("spell_dk_desecrated_ground") { }
+
+        class spell_dk_desecrated_ground_AuraScript : public AuraScript
+        {
+            PrepareAuraScript(spell_dk_desecrated_ground_AuraScript);
+
+            void OnTick(AuraEffect const* /*aurEff*/)
+            {
+                if (GetCaster())
+                    if (DynamicObject* dynObj = GetCaster()->GetDynObject(DK_SPELL_DESECRATED_GROUND))
+                        if (GetCaster()->GetDistance(dynObj) <= 8.0f)
+                            GetCaster()->CastSpell(GetCaster(), DK_SPELL_DESECRATED_GROUND_IMMUNE, true);
+            }
+
+            void Register() override
+            {
+                OnEffectPeriodic += AuraEffectPeriodicFn(spell_dk_desecrated_ground_AuraScript::OnTick, EFFECT_1, SPELL_AURA_PERIODIC_DUMMY);
+            }
+        };
+
+        AuraScript* GetAuraScript() const override
+        {
+            return new spell_dk_desecrated_ground_AuraScript();
+        }
+};
+
+// 152280 - Defile
+/// 6.x
+class spell_dk_defile : public SpellScriptLoader
+{
+    public:
+        spell_dk_defile() : SpellScriptLoader("spell_dk_defile") { }
+
+        class spell_dk_defile_SpellScript : public SpellScript
+        {
+            PrepareSpellScript(spell_dk_defile_SpellScript);
+
+            void HandleDummy(SpellEffIndex /*effIndex*/)
+            {
+                if (WorldLocation const* pos = GetExplTargetDest())
+                    GetCaster()->CastSpell(pos->GetPositionX(), pos->GetPositionY(), pos->GetPositionZ(), 169018, true);
+            }
+
+            void Register() override
+            {
+                OnEffectHitTarget += SpellEffectFn(spell_dk_defile_SpellScript::HandleDummy, EFFECT_0, SPELL_EFFECT_DUMMY);
+            }
+        };
+
+        SpellScript* GetSpellScript() const override
+        {
+            return new spell_dk_defile_SpellScript();
+        }
+
+        class spell_dk_defile_AuraScript : public AuraScript
+        {
+            PrepareAuraScript(spell_dk_defile_AuraScript);
+
+            void HandleDummyTick(AuraEffect const* aurEff)
+            {
+                if (Unit* caster = GetCaster())
+                {
+                    int32 damage;
+                    switch (aurEff->GetTickNumber())
+                    {
+                        case 1:
+                            damage = 250;
+                            break;
+                        case 2:
+                            damage = 500;
+                            break;
+                        case 3:
+                            damage = 1000;
+                            break;
+                        case 4:
+                            damage = 1500;
+                            break;
+                        case 5:
+                            damage = 4000;
+                            break;
+                        case 6:
+                            damage = 12000;
+                            break;
+                        default:
+                            damage = 20000 + 1000 * (aurEff->GetTickNumber() - 7);
+                            break;
+                    }
+                    if (damage)
+                        caster->CastCustomSpell(SPELL_DK_DEFILE_DAMAGE, SPELLVALUE_BASE_POINT0, damage, GetTarget());
+                }
+            }
+
+            void Register() override
+            {
+                OnEffectPeriodic += AuraEffectPeriodicFn(spell_dk_defile_AuraScript::HandleDummyTick, EFFECT_2, SPELL_AURA_PERIODIC_DUMMY);
+            }
+        };
+
+        AuraScript* GetAuraScript() const override
+        {
+            return new spell_dk_defile_AuraScript();
+        }
+};
+
+// 155166 - Defile
+/// 6.x
+class spell_dk_sindragosa_breath : public SpellScriptLoader
+{
+    public:
+        spell_dk_sindragosa_breath() : SpellScriptLoader("spell_dk_sindragosa_breath") { }
+
+        class spell_dk_sindragosa_breath_AuraScript : public AuraScript
+        {
+            PrepareAuraScript(spell_dk_sindragosa_breath_AuraScript);
+
+            void OnProc(const AuraEffect* aurEff, ProcEventInfo& eventInfo)
+            {
+                if (Unit* caster = GetCaster())
+                {
+                    int32 dmg = CalculatePct(int32(eventInfo.GetDamageInfo()->GetDamage()), aurEff->GetAmount());
+                    caster->CastCustomSpell(SPELL_DK_SINDRAGOSA_BREATH, SPELLVALUE_BASE_POINT0, dmg, (Unit*)NULL, TRIGGERED_FULL_MASK, NULL, aurEff);
+                }
+            }
+            
+            void Register() override
+            {
+                OnEffectProc += AuraEffectProcFn(spell_dk_sindragosa_breath_AuraScript::OnProc, EFFECT_0, SPELL_AURA_DUMMY);
+            }
+        };
+
+        AuraScript* GetAuraScript() const override
+        {
+            return new spell_dk_sindragosa_breath_AuraScript();
+        }
+};
+
+// 63560 - Dark Transformation
+class spell_dk_dark_transformation: public SpellScriptLoader
+{
+    public:
+        spell_dk_dark_transformation() : SpellScriptLoader("spell_dk_dark_transformation") { }
+
+        enum
+        {
+            SPELL_DK_SHADOW_UNFUSION = 91342
+        };
+
+        class spell_dk_dark_transformation_SpellScript : public SpellScript
+        {
+            PrepareSpellScript(spell_dk_dark_transformation_SpellScript);
+
+            SpellCastResult CheckClass()
+            {
+                if (Aura* aura = GetCaster()->GetAura(SPELL_DK_SHADOW_UNFUSION))
+                    if (aura->GetStackAmount() >= 5)
+                        return SPELL_CAST_OK;
+
+                return SPELL_FAILED_CANT_DO_THAT_RIGHT_NOW;
+            }
+
+            void Register() override
+            {
+                OnCheckCast += SpellCheckCastFn(spell_dk_dark_transformation_SpellScript::CheckClass);
+            }
+        };
+
+        SpellScript* GetSpellScript() const override
+        {
+            return new spell_dk_dark_transformation_SpellScript();
+        }
+};
+
+
+// Shadow Infusion - 91342
+class spell_dk_shadow_infusion : public SpellScriptLoader
+{
+    public:
+        spell_dk_shadow_infusion() : SpellScriptLoader("spell_dk_shadow_infusion") { }
+
+        class spell_dk_shadow_infusion_AuraScript : public AuraScript
+        {
+            PrepareAuraScript(spell_dk_shadow_infusion_AuraScript);
+
+            enum
+            {
+                SPELL_DK_DARK_TRANS_DRIVER = 93426
+            };
+
+            void OnRemoveFusion(AuraEffect const* /*eff*/, AuraEffectHandleModes /*mode*/)
+            {
+                if (GetCaster()->GetTypeId() != TYPEID_UNIT)
+                    return;
+
+                GetCaster()->GetCharmerOrOwnerOrSelf()->RemoveAurasDueToSpell(SPELL_DK_DARK_TRANS_DRIVER);
+            }
+
+            void Register() override
+            {
+                OnEffectRemove += AuraEffectRemoveFn(spell_dk_shadow_infusion_AuraScript::OnRemoveFusion, EFFECT_0, SPELL_AURA_MOD_DAMAGE_PERCENT_DONE, AURA_EFFECT_HANDLE_REAL);
+            }
+        };
+
+        AuraScript* GetAuraScript() const override
+        {
+            return new spell_dk_shadow_infusion_AuraScript();
+        }
+};
+
+// Dark transformation - transform pet spell - 63560
+class spell_dk_dark_transformation_form : public SpellScriptLoader
+{
+    public:
+        spell_dk_dark_transformation_form() : SpellScriptLoader("spell_dk_dark_transformation_form") { }
+
+        class spell_dk_dark_transformation_form_SpellScript : public SpellScript
+        {
+            PrepareSpellScript(spell_dk_dark_transformation_form_SpellScript);
+
+            void HandleOnHit()
+            {
+                if (Player* _player = GetCaster()->ToPlayer())
+                {
+                    if (Unit* pet = GetHitUnit())
+                    {
+                        if (pet->HasAura(DK_SPELL_DARK_INFUSION_STACKS))
+                        {
+                            _player->RemoveAura(DK_SPELL_DARK_INFUSION_STACKS);
+                            pet->RemoveAura(DK_SPELL_DARK_INFUSION_STACKS);
+                            pet->CastSpell(pet, SPELL_DK_CRAZED_MONSTROSITY_PET, TRIGGERED_FULL_MASK);
+                            _player->CastSpell(_player, SPELL_DK_CRAZED_MONSTROSITY_DK, TRIGGERED_FULL_MASK);
+                        }
+                    }
+                }
+            }
+            
+            void Register() override
+            {
+                OnHit += SpellHitFn(spell_dk_dark_transformation_form_SpellScript::HandleOnHit);
+            }
+        };
+
+        SpellScript* GetSpellScript() const override
+        {
+            return new spell_dk_dark_transformation_form_SpellScript();
+        }
+};
+
 void AddSC_deathknight_spell_scripts()
 {
     new spell_dk_anti_magic_shell();
@@ -1190,4 +1483,11 @@ void AddSC_deathknight_spell_scripts()
     new spell_dk_vampiric_blood();
     new spell_dk_will_of_the_necropolis();
     new spell_dk_death_grip_initial();
+    new spell_dk_defile();
+    new spell_dk_sindragosa_breath();
+    new spell_dk_desecrated_ground();
+    new spell_dk_remorseless_winter();
+    new spell_dk_dark_transformation_form();
+    new spell_dk_dark_transformation();
+    new spell_dk_shadow_infusion();
 }
