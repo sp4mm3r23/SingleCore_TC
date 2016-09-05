@@ -5540,19 +5540,6 @@ SpellCastResult Spell::CheckCast(bool strict)
             continue;
         switch (effect->ApplyAuraName)
         {
-            case SPELL_AURA_MOD_POSSESS_PET:
-            {
-                if (m_caster->GetTypeId() != TYPEID_PLAYER)
-                    return SPELL_FAILED_NO_PET;
-
-                Pet* pet = m_caster->ToPlayer()->GetPet();
-                if (!pet)
-                    return SPELL_FAILED_NO_PET;
-
-                if (!pet->GetCharmerGUID().IsEmpty())
-                    return SPELL_FAILED_CHARMED;
-                break;
-            }
             case SPELL_AURA_MOD_POSSESS:
             case SPELL_AURA_MOD_CHARM:
             case SPELL_AURA_AOE_CHARM:
@@ -6707,7 +6694,6 @@ bool Spell::CheckEffectTarget(Unit const* target, SpellEffectInfo const* effect,
     {
         case SPELL_AURA_MOD_POSSESS:
         case SPELL_AURA_MOD_CHARM:
-        case SPELL_AURA_MOD_POSSESS_PET:
         case SPELL_AURA_AOE_CHARM:
             if (target->GetTypeId() == TYPEID_UNIT && target->IsVehicle())
                 return false;

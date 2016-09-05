@@ -7737,7 +7737,6 @@ void Unit::RemoveBindSightAuras()
 void Unit::RemoveCharmAuras()
 {
     RemoveAurasByType(SPELL_AURA_MOD_CHARM);
-    RemoveAurasByType(SPELL_AURA_MOD_POSSESS_PET);
     RemoveAurasByType(SPELL_AURA_MOD_POSSESS);
     RemoveAurasByType(SPELL_AURA_AOE_CHARM);
 }

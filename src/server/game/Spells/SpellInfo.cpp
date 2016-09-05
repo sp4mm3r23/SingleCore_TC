@@ -2403,7 +2403,6 @@ SpellSpecificType SpellInfo::GetSpellSpecific() const
                 switch (effect->ApplyAuraName)
                 {
                 case SPELL_AURA_MOD_CHARM:
-                case SPELL_AURA_MOD_POSSESS_PET:
                 case SPELL_AURA_MOD_POSSESS:
                 case SPELL_AURA_AOE_CHARM:
                     return SPELL_SPECIFIC_CHARM;
