@@ -825,28 +825,6 @@ namespace WorldPackets
             int32 OverrideLightID = 0;
         };
 
-        class AccountMountUpdate final : public ServerPacket
-        {
-        public:
-            AccountMountUpdate() : ServerPacket(SMSG_ACCOUNT_MOUNT_UPDATE) { }
-
-            WorldPacket const* Write() override;
-
-            bool IsFullUpdate = false;
-            MountContainer const* Mounts = nullptr;
-        };
-
-        class MountSetFavorite final : public ClientPacket
-        {
-        public:
-            MountSetFavorite(WorldPacket&& packet) : ClientPacket(CMSG_MOUNT_SET_FAVORITE, std::move(packet)) { }
-
-            void Read() override;
-
-            uint32 MountSpellID = 0;
-            bool IsFavorite = false;
-        };
-
         class DisplayGameError final : public ServerPacket
         {
         public:
