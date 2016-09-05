@@ -3467,17 +3467,6 @@ void SpellMgr::LoadSpellInfoCorrections()
                 break;
             // ENDOF ISLE OF CONQUEST SPELLS
             //
-            // FIRELANDS SPELLS
-            //
-            case 100941: // Dreadflame
-                spellInfo->Attributes |= SPELL_ATTR0_NEGATIVE_1;
-                break;
-            case 101126: // Heart of Ragnaros - Hack due to lack of sniffs to verify behavior
-                const_cast<SpellEffectInfo*>(spellInfo->GetEffect(EFFECT_0))->TargetA = SpellImplicitTargetInfo(TARGET_UNIT_CASTER);
-                const_cast<SpellEffectInfo*>(spellInfo->GetEffect(EFFECT_0))->TargetB = SpellImplicitTargetInfo(TARGET_DEST_NEARBY_ENTRY);
-                break;
-            // ENDOF FIRELANDS SPELLS
-            //
             case 102445: // Summon Master Li Fei
                 const_cast<SpellEffectInfo*>(spellInfo->GetEffect(EFFECT_0))->TargetA = SpellImplicitTargetInfo(TARGET_DEST_DB);
                 break;

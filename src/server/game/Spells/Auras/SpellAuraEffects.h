@@ -94,6 +94,8 @@ class TC_GAME_API AuraEffect
 
         void HandleProc(AuraApplication* aurApp, ProcEventInfo& eventInfo);
 
+        void CleanupTriggeredSpells(Unit* target);
+
         // add/remove SPELL_AURA_MOD_SHAPESHIFT (36) linked auras
         void HandleShapeshiftBoosts(Unit* target, bool apply) const;
 
