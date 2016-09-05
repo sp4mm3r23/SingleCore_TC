@@ -27,19 +27,6 @@ ByteBuffer& operator<<(ByteBuffer& data, WorldPackets::Achievement::EarnedAchiev
     return data;
 }
 
-ByteBuffer& WorldPackets::Achievement::operator<<(ByteBuffer& data, CriteriaProgress const& criteria)
-{
-    data << uint32(criteria.Id);
-    data << uint64(criteria.Quantity);
-    data << criteria.Player;
-    data.AppendPackedTime(criteria.Date);
-    data << uint32(criteria.TimeFromStart);
-    data << uint32(criteria.TimeFromCreate);
-    data.WriteBits(criteria.Flags, 4);
-    data.FlushBits();
-    return data;
-}
-
 ByteBuffer& operator<<(ByteBuffer& data, WorldPackets::Achievement::AllAchievements const& allAchievements)
 {
     data << uint32(allAchievements.Earned.size());
@@ -49,7 +36,16 @@ ByteBuffer& operator<<(ByteBuffer& data, WorldPackets::Achievement::AllAchieveme
         data << earned;
 
     for (WorldPackets::Achievement::CriteriaProgress const& progress : allAchievements.Progress)
-        data << progress;
+    {
+        data << uint32(progress.Id);
+        data << uint64(progress.Quantity);
+        data << progress.Player;
+        data.AppendPackedTime(progress.Date);
+        data << uint32(progress.TimeFromStart);
+        data << uint32(progress.TimeFromCreate);
+        data.WriteBits(progress.Flags, 4);
+        data.FlushBits();
+    }
 
     return data;
 }

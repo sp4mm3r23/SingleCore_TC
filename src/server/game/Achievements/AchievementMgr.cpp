@@ -63,29 +63,25 @@ uint32 AchievementMgr::GetAchievementPoints() const
 
 bool AchievementMgr::CanUpdateCriteriaTree(Criteria const* criteria, CriteriaTree const* tree, Player* referencePlayer) const
 {
-    AchievementEntry const* achievement = tree->Achievement;
-    if (!achievement)
-        return false;
-
-    if (HasAchieved(achievement->ID))
+    if (HasAchieved(tree->Achievement->ID))
     {
         TC_LOG_TRACE("criteria.achievement", "AchievementMgr::CanUpdateCriteriaTree: (Id: %u Type %s Achievement %u) Achievement already earned",
-            criteria->ID, CriteriaMgr::GetCriteriaTypeString(criteria->Entry->Type), achievement->ID);
+            criteria->ID, CriteriaMgr::GetCriteriaTypeString(criteria->Entry->Type), tree->Achievement->ID);
         return false;
     }
 
-    if (achievement->MapID != -1 && referencePlayer->GetMapId() != uint32(achievement->MapID))
+    if (tree->Achievement->MapID != -1 && referencePlayer->GetMapId() != uint32(tree->Achievement->MapID))
     {
         TC_LOG_TRACE("criteria.achievement", "AchievementMgr::CanUpdateCriteriaTree: (Id: %u Type %s Achievement %u) Wrong map",
-            criteria->ID, CriteriaMgr::GetCriteriaTypeString(criteria->Entry->Type), achievement->ID);
+            criteria->ID, CriteriaMgr::GetCriteriaTypeString(criteria->Entry->Type), tree->Achievement->ID);
         return false;
     }
 
-    if ((achievement->Faction == ACHIEVEMENT_FACTION_HORDE    && referencePlayer->GetTeam() != HORDE) ||
-        (achievement->Faction == ACHIEVEMENT_FACTION_ALLIANCE && referencePlayer->GetTeam() != ALLIANCE))
+    if ((tree->Achievement->Faction == ACHIEVEMENT_FACTION_HORDE    && referencePlayer->GetTeam() != HORDE) ||
+        (tree->Achievement->Faction == ACHIEVEMENT_FACTION_ALLIANCE && referencePlayer->GetTeam() != ALLIANCE))
     {
         TC_LOG_TRACE("criteria.achievement", "AchievementMgr::CanUpdateCriteriaTree: (Id: %u Type %s Achievement %u) Wrong faction",
-            criteria->ID, CriteriaMgr::GetCriteriaTypeString(criteria->Entry->Type), achievement->ID);
+            criteria->ID, CriteriaMgr::GetCriteriaTypeString(criteria->Entry->Type), tree->Achievement->ID);
         return false;
     }
 
@@ -114,35 +110,27 @@ bool AchievementMgr::CanCompleteCriteriaTree(CriteriaTree const* tree)
 
 void AchievementMgr::CompletedCriteriaTree(CriteriaTree const* tree, Player* referencePlayer)
 {
-    AchievementEntry const* achievement = tree->Achievement;
-    if (!achievement)
-        return;
-
     // counter can never complete
-    if (achievement->Flags & ACHIEVEMENT_FLAG_COUNTER)
+    if (tree->Achievement->Flags & ACHIEVEMENT_FLAG_COUNTER)
         return;
 
     // already completed and stored
-    if (HasAchieved(achievement->ID))
+    if (HasAchieved(tree->Achievement->ID))
         return;
 
-    if (IsCompletedAchievement(achievement))
-        CompletedAchievement(achievement, referencePlayer);
+    if (IsCompletedAchievement(tree->Achievement))
+        CompletedAchievement(tree->Achievement, referencePlayer);
 }
 
 void AchievementMgr::AfterCriteriaTreeUpdate(CriteriaTree const* tree, Player* referencePlayer)
 {
-    AchievementEntry const* achievement = tree->Achievement;
-    if (!achievement)
-        return;
-
     // check again the completeness for SUMM and REQ COUNT achievements,
     // as they don't depend on the completed criteria but on the sum of the progress of each individual criteria
-    if (achievement->Flags & ACHIEVEMENT_FLAG_SUMM)
-        if (IsCompletedAchievement(achievement))
-            CompletedAchievement(achievement, referencePlayer);
+    if (tree->Achievement->Flags & ACHIEVEMENT_FLAG_SUMM)
+        if (IsCompletedAchievement(tree->Achievement))
+            CompletedAchievement(tree->Achievement, referencePlayer);
 
-    if (std::vector<AchievementEntry const*> const* achRefList = sAchievementMgr->GetAchievementByReferencedId(achievement->ID))
+    if (std::vector<AchievementEntry const*> const* achRefList = sAchievementMgr->GetAchievementByReferencedId(tree->Achievement->ID))
         for (AchievementEntry const* refAchievement : *achRefList)
             if (IsCompletedAchievement(refAchievement))
                 CompletedAchievement(refAchievement, referencePlayer);
