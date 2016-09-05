@@ -302,6 +302,30 @@ LOCK TABLES `battlenet_account_heirlooms` WRITE;
 UNLOCK TABLES;
 
 --
+-- Table structure for table `battlenet_account_mounts`
+--
+
+DROP TABLE IF EXISTS `battlenet_account_mounts`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `battlenet_account_mounts` (
+  `accountId` int(11) unsigned NOT NULL,
+  `spellId` int(11) NOT NULL,
+  `isFavourite` tinyint(1) NOT NULL,
+  PRIMARY KEY (`accountId`,`spellId`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `battlenet_account_mounts`
+--
+
+LOCK TABLES `battlenet_account_mounts` WRITE;
+/*!40000 ALTER TABLE `battlenet_account_mounts` DISABLE KEYS */;
+/*!40000 ALTER TABLE `battlenet_account_mounts` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `battlenet_account_toys`
 --
 
