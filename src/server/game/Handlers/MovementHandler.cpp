@@ -370,6 +370,10 @@ void WorldSession::HandleMovementOpcodes(WorldPackets::Movement::ClientPlayerMov
     if (opcode == CMSG_MOVE_FALL_LAND && plrMover && !plrMover->IsInFlight())
         plrMover->HandleFall(movementInfo);
 
+    // Handle gliding flag addition of the double jump
+	if (opcode == CMSG_MOVE_DOUBLE_JUMP && plrMover && !plrMover->IsInFlight())
+		plrMover->AddExtraUnitMovementFlag(MOVEMENTFLAG2_CAN_GLIDE);
+
     if (plrMover && ((movementInfo.flags & MOVEMENTFLAG_SWIMMING) != 0) != plrMover->IsInWater())
     {
         // now client not include swimming flag in case jumping under water

@@ -760,3 +760,11 @@ WorldPacket const* WorldPackets::Movement::ResumeToken::Write()
 
     return &_worldPacket;
 }
+
+WorldPacket const* WorldPackets::Movement::EnableDJump::Write()
+{
+	_worldPacket << MoverGUID;
+	_worldPacket << uint32(SequenceIndex);
+
+	return &_worldPacket;
+}

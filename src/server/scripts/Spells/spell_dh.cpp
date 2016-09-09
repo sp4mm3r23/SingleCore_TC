@@ -25,6 +25,9 @@
 #include "SpellAuraEffects.h"
 #include "ScriptMgr.h"
 #include "GridNotifiers.h"
+#include "MovementPackets.h"
+#include "WorldSession.h"
+#include "Opcodes.h"
 
 enum DemonHunterSpells
 {
@@ -68,6 +71,38 @@ class spell_dh_chaos_strike : public SpellScriptLoader
         {
             return new spell_dh_chaos_strike_AuraScript();
         }
+};
+
+// 196055 - Double Jump
+class spell_dh_double_jump : public SpellScriptLoader
+{
+public:
+    spell_dh_double_jump() : SpellScriptLoader("spell_dh_double_jump") { }
+
+    class spell_dh_double_jump_AuraScript : public AuraScript
+    {
+        PrepareAuraScript(spell_dh_double_jump_AuraScript);
+
+        void AfterApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+        {
+            if (Unit* caster = GetCaster())
+                if (caster->GetTypeId() == TYPEID_PLAYER)
+                    caster->ToPlayer()->SendEnableDoubleJump();
+
+            // some debugging to track down that shit
+            TC_LOG_ERROR("entities.player", "Applied double jump aura.");
+        }
+
+        void Register() override
+        {
+            AfterEffectApply += AuraEffectApplyFn(spell_dh_double_jump_AuraScript::AfterApply, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        }
+    };
+
+    AuraScript* GetAuraScript() const override
+    {
+        return new spell_dh_double_jump_AuraScript();
+    }
 };
 
 // 195072 - Fel Rush
@@ -187,6 +222,7 @@ public:
 void AddSC_demon_hunter_spell_scripts()
 {
     new spell_dh_chaos_strike();
+	new spell_dh_double_jump();
     new spell_dh_fel_rush();
     new spell_dh_fel_rush_aura();
     new spell_dh_demon_blades();

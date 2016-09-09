@@ -27319,3 +27319,11 @@ uint32 Player::DoRandomRoll(uint32 minimum, uint32 maximum)
 
     return roll;
 }
+
+void Player::SendEnableDoubleJump() const
+{
+	WorldPackets::Movement::EnableDJump packet;
+	packet.MoverGUID = GetGUID();
+	packet.SequenceIndex = m_movementCounter;
+	GetSession()->SendPacket(packet.Write(), true);
+}

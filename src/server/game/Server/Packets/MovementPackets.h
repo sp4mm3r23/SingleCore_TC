@@ -536,6 +536,17 @@ namespace WorldPackets
             uint32 SequenceIndex = 1;
             uint32 Reason = 1;
         };
+
+		class EnableDJump final : public ServerPacket
+		{
+		public:
+			EnableDJump() : ServerPacket(SMSG_ENABLE_DOUBLE_JUMP, 4 + 1) { }
+
+			WorldPacket const* Write() override;
+
+			ObjectGuid MoverGUID;
+			uint32 SequenceIndex = 0;
+		};
     }
 
     ByteBuffer& operator<<(ByteBuffer& data, Movement::MonsterSplineFilterKey const& monsterSplineFilterKey);
