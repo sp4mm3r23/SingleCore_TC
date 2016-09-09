@@ -502,6 +502,21 @@ bool Condition::Meets(ConditionSourceInfo& sourceInfo) const
                 condMeets = player->IsInFlight();
             break;
         }
+        case CONDITION_QUESTSTATE:
+        {
+            if (Player* player = object->ToPlayer())
+            {
+                if (
+                    ((ConditionValue2 & (1 << QUEST_STATUS_NONE)) && (player->GetQuestStatus(ConditionValue1) == QUEST_STATUS_NONE)) ||
+                    ((ConditionValue2 & (1 << QUEST_STATUS_COMPLETE)) && (player->GetQuestStatus(ConditionValue1) == QUEST_STATUS_COMPLETE)) ||
+                    ((ConditionValue2 & (1 << QUEST_STATUS_INCOMPLETE)) && (player->GetQuestStatus(ConditionValue1) == QUEST_STATUS_INCOMPLETE)) ||
+                    ((ConditionValue2 & (1 << QUEST_STATUS_FAILED)) && (player->GetQuestStatus(ConditionValue1) == QUEST_STATUS_FAILED)) ||
+                    ((ConditionValue2 & (1 << QUEST_STATUS_REWARDED)) && player->GetQuestRewardStatus(ConditionValue1))
+                )
+                    condMeets = true;
+            }
+            break;
+        }
         default:
             condMeets = false;
             break;
@@ -696,6 +711,9 @@ uint32 Condition::GetSearcherTypeMaskForCondition() const
             mask |= GRID_MAP_TYPE_MASK_PLAYER;
             break;
         case CONDITION_TAXI:
+            mask |= GRID_MAP_TYPE_MASK_PLAYER;
+            break;
+        case CONDITION_QUESTSTATE:
             mask |= GRID_MAP_TYPE_MASK_PLAYER;
             break;
         default:
@@ -1951,6 +1969,13 @@ bool ConditionMgr::isConditionTypeValid(Condition* cond) const
             }
             break;
         }
+        case CONDITION_QUESTSTATE:
+            if (cond->ConditionValue2 >= (1 << MAX_QUEST_STATUS))
+            {
+                TC_LOG_ERROR("sql.sql", "%s has invalid state mask (%u), skipped.", cond->ToString(true).c_str(), cond->ConditionValue2);
+                return false;
+            }
+            // intentional missing break
         case CONDITION_QUESTREWARDED:
         case CONDITION_QUESTTAKEN:
         case CONDITION_QUEST_NONE:
