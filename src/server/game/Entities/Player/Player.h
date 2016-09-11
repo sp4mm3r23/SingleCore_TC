@@ -2187,8 +2187,6 @@ class TC_GAME_API Player : public Unit, public GridObject<Player>
         void SendNotifyLootItemRemoved(ObjectGuid owner, ObjectGuid lootObj, uint8 lootSlot) const;
         void SendNotifyLootMoneyRemoved(ObjectGuid lootObj) const;
 
-		void SendEnableDoubleJump() const;
-
         /*********************************************************/
         /***               BATTLEGROUND SYSTEM                 ***/
         /*********************************************************/

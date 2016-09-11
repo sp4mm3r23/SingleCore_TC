@@ -78,7 +78,6 @@ public:
             { "anim",          rbac::RBAC_PERM_COMMAND_DEBUG_ANIM,          false, &HandleDebugAnimCommand,             "" },
             { "arena",         rbac::RBAC_PERM_COMMAND_DEBUG_ARENA,         false, &HandleDebugArenaCommand,            "" },
             { "bg",            rbac::RBAC_PERM_COMMAND_DEBUG_BG,            false, &HandleDebugBattlegroundCommand,     "" },
-			{ "djump",         rbac::RBAC_PERM_COMMAND_DEBUG_BG,            false, &HandleDebugDJumpCommand,            "" },
             { "getitemstate",  rbac::RBAC_PERM_COMMAND_DEBUG_GETITEMSTATE,  false, &HandleDebugGetItemStateCommand,     "" },
             { "lootrecipient", rbac::RBAC_PERM_COMMAND_DEBUG_LOOTRECIPIENT, false, &HandleDebugGetLootRecipientCommand, "" },
             { "getvalue",      rbac::RBAC_PERM_COMMAND_DEBUG_GETVALUE,      false, &HandleDebugGetValueCommand,         "" },
@@ -794,13 +793,6 @@ public:
         sBattlegroundMgr->ToggleTesting();
         return true;
     }
-
-	static bool HandleDebugDJumpCommand(ChatHandler* handler, char const* /*args*/)
-	{
-		if (Player* player = handler->GetSession()->GetPlayer())
-			player->SendEnableDoubleJump();
-		return true;
-	}
 
     static bool HandleDebugArenaCommand(ChatHandler* /*handler*/, char const* /*args*/)
     {
