@@ -26,6 +26,10 @@
 #include "Pet.h"
 #include "Player.h"
 
+//npcbot
+#include "botmgr.h"
+//end npcbot
+
  // == KillRewarder ====================================================
  // KillRewarder encapsulates logic of rewarding player upon kill with:
  // * XP;
@@ -155,6 +159,17 @@ inline void KillRewarder::_RewardXP(Player* player, float rate)
         xp *= player->GetTotalAuraMultiplier(SPELL_AURA_MOD_XP_PCT);
         xp *= player->GetTotalAuraMultiplierByMiscValue(SPELL_AURA_MOD_XP_FROM_CREATURE_TYPE, int32(_victim->GetCreatureType()));
 
+        //npcbot 4.2.2.1. Apply NpcBot XP reduction
+        if (player->GetNpcBotsCount() > 1)
+        {
+            if (uint8 xp_reduction = BotMgr::GetNpcBotXpReduction())
+            {
+                uint32 ratePct = std::max<int32>(100 - ((player->GetNpcBotsCount() - 1) * xp_reduction), 10);
+                xp = xp * ratePct / 100;
+            }
+        }
+        //end npcbot
+		
         // 4.2.3. Give XP to player.
         player->GiveXP(xp, _victim, _groupRate);
         if (Pet* pet = player->GetPet())
