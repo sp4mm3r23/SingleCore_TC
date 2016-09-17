@@ -1491,6 +1491,9 @@ void World::LoadConfigSettings(bool reload)
 
 	// lasyan3 patches
 	m_int_configs[CONFIG_QUEST_AUTOCOMPLETE_DELAY] = sConfigMgr->GetIntDefault("Custom.AutoCompleteQuestDelay", 0);
+	m_float_configs[CONFIG_SPEED_GAME] = sConfigMgr->GetFloatDefault("Custom.SpeedGame", 1.0f);
+	m_bool_configs[CONFIG_NO_CAST_TIME] = sConfigMgr->GetBoolDefault("Custom.NoCastTime", false);
+	m_bool_configs[CONFIG_HURT_IN_REAL_TIME] = sConfigMgr->GetBoolDefault("Custom.HurtInRealTime", false);
 
     // call ScriptMgr if we're reloading the configuration
     if (reload)

@@ -27,6 +27,7 @@
 #include "Vehicle.h"
 #include "Pet.h"
 #include "InstanceScript.h"
+#include "World.h"
 
 uint32 GetTargetFlagMask(SpellTargetObjectTypes objType)
 {
@@ -2493,7 +2494,10 @@ uint32 SpellInfo::CalcCastTime(uint8 level, Spell* spell /*= NULL*/) const
     if (Attributes & SPELL_ATTR0_REQ_AMMO && (!IsAutoRepeatRangedSpell()) && !(AttributesEx9 & SPELL_ATTR9_AIMED_SHOT))
         castTime += 500;
 
-    return (castTime > 0) ? uint32(castTime) : 0;
+    if (!sWorld->getBoolConfig(CONFIG_NO_CAST_TIME))
+		return (castTime > 0) ? uint32(castTime) : 0;
+	else
+		return 0;
 }
 
 uint32 SpellInfo::GetMaxTicks(uint32 difficulty) const
