@@ -1,0 +1,7 @@
+REPLACE INTO `game_tele` (`id`, `position_x`, `position_y`, `position_z`, `orientation`, `map`, `name`) VALUES (1575, -828.835, 4371.91, 738.636, 1.88158, 1220, 'dalbi');
+REPLACE INTO `game_tele` (`id`, `position_x`, `position_y`, `position_z`, `orientation`, `map`, `name`) VALUES (1576, -218.951, 5600.9, 61.1105, 3.32418, 1220, 'azsuna');
+REPLACE INTO `game_tele` (`id`, `position_x`, `position_y`, `position_z`, `orientation`, `map`, `name`) VALUES (1577, 2795.81, 7279.47, 21.6704, 4.75753, 1220, 'val\'sharah');
+REPLACE INTO `game_tele` (`id`, `position_x`, `position_y`, `position_z`, `orientation`, `map`, `name`) VALUES (1578, 4492.69, 4836.35, 661.706, 1.37009, 1220, 'Highmountain');
+REPLACE INTO `game_tele` (`id`, `position_x`, `position_y`, `position_z`, `orientation`, `map`, `name`) VALUES (1579, 3854.78, 2020.04, 242.638, 3.2904, 1220, 'Stormheim');
+REPLACE INTO `game_tele` (`id`, `position_x`, `position_y`, `position_z`, `orientation`, `map`, `name`) VALUES (1580, 1708.83, 4637.75, 124.004, 5.25153, 1220, 'suramar');
+REPLACE INTO `game_tele` (`id`, `position_x`, `position_y`, `position_z`, `orientation`, `map`, `name`) VALUES (1581, -1306.66, 1741.4, 7.32331, 0.0914592, 1220, 'thebrokenshore');
