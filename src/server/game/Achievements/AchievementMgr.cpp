@@ -220,6 +220,11 @@ void PlayerAchievementMgr::LoadFromDB(PreparedQueryResult achievementResult, Pre
             if (!achievement)
                 continue;
 
+			/** World of Warcraft Armory **/
+			if (sWorld->getBoolConfig(CONFIG_ARMORY_ENABLE))
+			_owner->CreateWowarmoryFeed(1, achievement->ID, 0, 0);
+			/** World of Warcraft Armory **/
+
             CompletedAchievementData& ca = _completedAchievements[achievementid];
             ca.Date = time_t(fields[1].GetUInt32());
             ca.Changed = false;

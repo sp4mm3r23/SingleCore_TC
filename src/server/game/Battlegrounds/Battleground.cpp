@@ -154,6 +154,7 @@ Battleground::Battleground()
     m_StartMaxDist      = 0.0f;
     ScriptId            = 0;
 
+
     m_ArenaTeamIds[TEAM_ALLIANCE]   = 0;
     m_ArenaTeamIds[TEAM_HORDE]      = 0;
 
@@ -548,6 +549,7 @@ inline void Battleground::_ProcessJoin(uint32 diff)
                     // Correctly display EnemyUnitFrame
                     player->SetByteValue(PLAYER_BYTES_4, PLAYER_BYTES_4_OFFSET_ARENA_FACTION, player->GetBGTeam());
 
+
                     player->RemoveAurasDueToSpell(SPELL_ARENA_PREPARATION);
                     player->ResetAllPowers();
                     if (!player->IsGameMaster())
@@ -569,6 +571,7 @@ inline void Battleground::_ProcessJoin(uint32 diff)
                         }
                     }
                 }
+
 
             CheckWinConditions();
         }
@@ -844,6 +847,8 @@ void Battleground::EndBattleground(uint32 winner)
             stmt->setUInt32(6,  score->second->GetBonusHonor());
             stmt->setUInt32(7,  score->second->GetDamageDone());
             stmt->setUInt32(8,  score->second->GetHealingDone());
+            stmt->setUInt32(8,  score->second->GetDamageTaken());
+            stmt->setUInt32(8,  score->second->GetHealingTaken());
             stmt->setUInt32(9,  score->second->GetAttr1());
             stmt->setUInt32(10, score->second->GetAttr2());
             stmt->setUInt32(11, score->second->GetAttr3());
@@ -852,6 +857,11 @@ void Battleground::EndBattleground(uint32 winner)
 
             CharacterDatabase.Execute(stmt);
         }
+
+
+
+
+
 
         // Reward winner team
         if (team == winner)

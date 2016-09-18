@@ -48,7 +48,11 @@ enum ScoreType
 
     // SOTA
     SCORE_DESTROYED_DEMOLISHER  = 16,
-    SCORE_DESTROYED_WALL        = 17
+    SCORE_DESTROYED_WALL        = 17,
+    /** World of Warcraft Armory **/
+    SCORE_DAMAGE_TAKEN          = 18,
+    SCORE_HEALING_TAKEN         = 19
+    /** World of Warcraft Armory **/
 };
 
 struct BattlegroundScore
@@ -58,7 +62,7 @@ struct BattlegroundScore
 
     protected:
         BattlegroundScore(ObjectGuid playerGuid, uint32 team) : PlayerGuid(playerGuid), TeamId(team == ALLIANCE ? 1 : 0),
-            KillingBlows(0), Deaths(0), HonorableKills(0), BonusHonor(0), DamageDone(0), HealingDone(0) { }
+            KillingBlows(0), Deaths(0), HonorableKills(0), BonusHonor(0), DamageDone(0), HealingDone(0), DamageTaken(0), HealingTaken(0) { }
 
         virtual ~BattlegroundScore() { }
 
@@ -84,6 +88,14 @@ struct BattlegroundScore
                 case SCORE_HEALING_DONE:    // Healing Done
                     HealingDone += value;
                     break;
+    /** World of Warcraft Armory **/
+                case SCORE_DAMAGE_TAKEN:    // Damage Taken
+                    DamageTaken += value;
+                    break;
+                case SCORE_HEALING_TAKEN:    // Healing Taken
+                    HealingTaken += value;
+                    break;
+    /** World of Warcraft Armory **/
                 default:
                     ASSERT(false && "Not implemented Battleground score type!");
                     break;
@@ -101,12 +113,17 @@ struct BattlegroundScore
         uint32 GetBonusHonor() const      { return BonusHonor; }
         uint32 GetDamageDone() const      { return DamageDone; }
         uint32 GetHealingDone() const     { return HealingDone; }
-
+    /** World of Warcraft Armory **/
+        uint32 GetDamageTaken() const     { return DamageTaken; }
+        uint32 GetHealingTaken() const    { return HealingTaken; }
+    /** World of Warcraft Armory **/
         virtual uint32 GetAttr1() const { return 0; }
         virtual uint32 GetAttr2() const { return 0; }
         virtual uint32 GetAttr3() const { return 0; }
         virtual uint32 GetAttr4() const { return 0; }
         virtual uint32 GetAttr5() const { return 0; }
+        virtual uint32 GetAttr6() const { return 0; }
+        virtual uint32 GetAttr7() const { return 0; }
 
         ObjectGuid PlayerGuid;
         uint8 TeamId;
@@ -118,6 +135,8 @@ struct BattlegroundScore
         uint32 BonusHonor;
         uint32 DamageDone;
         uint32 HealingDone;
+        uint32 DamageTaken;
+        uint32 HealingTaken;
 };
 
 #endif // TRINITY_BATTLEGROUND_SCORE_H

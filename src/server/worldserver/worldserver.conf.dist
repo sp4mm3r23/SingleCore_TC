@@ -4161,5 +4161,12 @@ Boss.Announcer.Enable = 1
 
 DoubleXP.Enable = 1
 
+#    Armory.Enable
+#        Description: Activates the WowArmory.
+#        Default:     0 - (Disable)
+#                     1 - (Enable)
+
+Armory.Enable = 1
+
 #
 ###################################################################################################
