@@ -4175,7 +4175,7 @@ Armory.Enable = 1
 # Default : 0 (No honor when you kill a guard)
 #
 
-Custom.GainHonorOnGuardKill = 10
+Custom.GainHonorOnGuardKill = 0
 
 #
 # Custom.GainHonorOnEliteKill
@@ -4183,7 +4183,7 @@ Custom.GainHonorOnGuardKill = 10
 # Default : 0 (No honor when you kill an elite mob)
 #
 
-Custom.GainHonorOnEliteKill = 5
+Custom.GainHonorOnEliteKill = 0
 
 #
 ###################################################################################################
