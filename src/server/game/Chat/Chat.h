@@ -24,6 +24,7 @@
 #include "WorldSession.h"
 #include "RBAC.h"
 #include "Packets/ChatPackets.h"
+#include "../TriniChat/IRCClient.h"
 
 #include <vector>
 
@@ -172,5 +173,7 @@ class TC_GAME_API CliHandler : public ChatHandler
         void* m_callbackArg;
         Print* m_print;
 };
+
+char const *fmtstring(char const *format, ...);
 
 #endif

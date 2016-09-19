@@ -38,6 +38,7 @@
 #include "ScriptMgr.h"
 #include "AccountMgr.h"
 #include "ChatPackets.h"
+#include "IRCClient.h"
 
 void WorldSession::HandleChatMessageOpcode(WorldPackets::Chat::ChatMessage& chatMessage)
 {
@@ -359,6 +360,7 @@ void WorldSession::HandleChatMessage(ChatMsg type, uint32 lang, std::string msg,
 
             if (ChannelMgr* cMgr = ChannelMgr::ForTeam(sender->GetTeam()))
             {
+				sIRC->Send_WoW_IRC(sender, channel, msg);
                 if (Channel* chn = cMgr->GetChannel(target, sender))
                 {
                     sScriptMgr->OnPlayerChat(sender, type, lang, msg, chn);

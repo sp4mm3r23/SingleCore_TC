@@ -27,6 +27,7 @@
 #include "Util.h"
 #include "AccountMgr.h"
 #include "AuctionHousePackets.h"
+#include "IRCClient.h"
 
 //void called when player click on auctioneer npc
 void WorldSession::HandleAuctionHelloOpcode(WorldPackets::AuctionHouse::AuctionHelloRequest& packet)
@@ -543,7 +544,8 @@ void WorldSession::HandleAuctionRemoveItem(WorldPackets::AuctionHouse::AuctionRe
     SendAuctionCommandResult(auction, AUCTION_CANCEL, ERR_AUCTION_OK);
 
     // Now remove the auction
-
+    uint32 item;
+    recvData >> item;
     player->SaveInventoryAndGoldToDB(trans);
     auction->DeleteFromDB(trans);
     CharacterDatabase.CommitTransaction(trans);
