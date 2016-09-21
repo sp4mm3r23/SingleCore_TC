@@ -33,6 +33,7 @@
 #include "Group.h"
 #include "Opcodes.h"
 #include "WorldSession.h"
+#include "MercenaryMgr.h"
 
 #define PET_XP_FACTOR 0.05f
 
@@ -313,6 +314,8 @@ bool Pet::LoadPetFromDB(Player* owner, uint32 petEntry, uint32 petnumber, bool c
     owner->SetMinion(this, true);
     map->AddToMap(this->ToCreature());
 
+	sMercenaryMgr->OnSummon(owner);
+
     uint32 timediff = uint32(time(NULL) - fields[13].GetUInt32());
     _LoadAuras(timediff);
 
@@ -512,6 +515,8 @@ void Pet::DeleteFromDB(uint32 guidlow)
     trans->Append(stmt);
 
     CharacterDatabase.CommitTransaction(trans);
+
+    sMercenaryMgr->OnDelete(guidlow);
 }
 
 void Pet::setDeathState(DeathState s)                       // overwrite virtual Creature::setDeathState and Unit::setDeathState

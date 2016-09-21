@@ -96,6 +96,7 @@ TC_GAME_API extern DB2Storage<ItemArmorQualityEntry>                sItemArmorQu
 TC_GAME_API extern DB2Storage<ItemArmorShieldEntry>                 sItemArmorShieldStore;
 TC_GAME_API extern DB2Storage<ItemArmorTotalEntry>                  sItemArmorTotalStore;
 TC_GAME_API extern DB2Storage<ItemBagFamilyEntry>                   sItemBagFamilyStore;
+TC_GAME_API extern DB2Storage<ItemDisplayInfoEntry>                 sItemDisplayInfoStore;
 TC_GAME_API extern DB2Storage<ItemClassEntry>                       sItemClassStore;
 TC_GAME_API extern DB2Storage<ItemDamageAmmoEntry>                  sItemDamageAmmoStore;
 TC_GAME_API extern DB2Storage<ItemDamageOneHandEntry>               sItemDamageOneHandStore;
@@ -167,6 +168,7 @@ TC_GAME_API extern DB2Storage<SpellRangeEntry>                      sSpellRangeS
 TC_GAME_API extern DB2Storage<SpellReagentsEntry>                   sSpellReagentsStore;
 TC_GAME_API extern DB2Storage<SpellScalingEntry>                    sSpellScalingStore;
 TC_GAME_API extern DB2Storage<SpellShapeshiftEntry>                 sSpellShapeshiftStore;
+TC_GAME_API extern DB2Storage<SpellIconEntry>                       sSpellIconStore;
 TC_GAME_API extern DB2Storage<SpellShapeshiftFormEntry>             sSpellShapeshiftFormStore;
 TC_GAME_API extern DB2Storage<SpellTargetRestrictionsEntry>         sSpellTargetRestrictionsStore;
 TC_GAME_API extern DB2Storage<SpellTotemsEntry>                     sSpellTotemsStore;

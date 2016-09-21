@@ -1362,6 +1362,12 @@ struct ItemDisenchantLootEntry
     uint8 ItemQuality;
 };
 
+struct ItemDisplayInfoEntry
+{
+	uint32 ID;
+	char const* inventoryIcon;
+};
+
 struct ItemEffectEntry
 {
     uint32 ID;
@@ -2273,6 +2279,12 @@ struct SpellFocusObjectEntry
 {
     uint32 ID;
     LocalizedString* Name;
+};
+
+struct SpellIconEntry
+{
+	uint32 ID;
+	char const* spellIcon;
 };
 
 struct SpellInterruptsEntry

@@ -306,7 +306,7 @@ void WorldSession::HandleGossipSelectOptionOpcode(WorldPackets::NPC::GossipSelec
     Item* item = nullptr;
     Creature* unit = nullptr;
     GameObject* go = nullptr;
-    if (packet.GossipUnit.IsCreatureOrVehicle())
+    if (packet.GossipUnit.IsCreatureOrVehicle() || packet.GossipUnit.IsCreatureOrPet)
     {
         unit = GetPlayer()->GetNPCIfCanInteractWith(packet.GossipUnit, UNIT_NPC_FLAG_GOSSIP);
         if (!unit)

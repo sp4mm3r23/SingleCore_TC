@@ -123,6 +123,7 @@ DB2Storage<ItemDamageTwoHandCasterEntry>        sItemDamageTwoHandCasterStore("I
 DB2Storage<ItemDisenchantLootEntry>             sItemDisenchantLootStore("ItemDisenchantLoot.db2", ItemDisenchantLootMeta::Instance(), HOTFIX_SEL_ITEM_DISENCHANT_LOOT);
 DB2Storage<ItemEffectEntry>                     sItemEffectStore("ItemEffect.db2", ItemEffectMeta::Instance(), HOTFIX_SEL_ITEM_EFFECT);
 DB2Storage<ItemEntry>                           sItemStore("Item.db2", ItemMeta::Instance(), HOTFIX_SEL_ITEM);
+DB2Storage<ItemDisplayInfoEntry>                sItemDisplayInfoStore("ItemDisplayInfo.db2", ItemDisplayInfoMeta:Instance(), HOTFIX_SEL_ITEM_DISPLAY_INFO);
 DB2Storage<ItemExtendedCostEntry>               sItemExtendedCostStore("ItemExtendedCost.db2", ItemExtendedCostMeta::Instance(), HOTFIX_SEL_ITEM_EXTENDED_COST);
 DB2Storage<ItemLimitCategoryEntry>              sItemLimitCategoryStore("ItemLimitCategory.db2", ItemLimitCategoryMeta::Instance(), HOTFIX_SEL_ITEM_LIMIT_CATEGORY);
 DB2Storage<ItemModifiedAppearanceEntry>         sItemModifiedAppearanceStore("ItemModifiedAppearance.db2", ItemModifiedAppearanceMeta::Instance(), HOTFIX_SEL_ITEM_MODIFIED_APPEARANCE);
@@ -203,6 +204,7 @@ DB2Storage<SpellRangeEntry>                     sSpellRangeStore("SpellRange.db2
 DB2Storage<SpellReagentsEntry>                  sSpellReagentsStore("SpellReagents.db2", SpellReagentsMeta::Instance(), HOTFIX_SEL_SPELL_REAGENTS);
 DB2Storage<SpellScalingEntry>                   sSpellScalingStore("SpellScaling.db2", SpellScalingMeta::Instance(), HOTFIX_SEL_SPELL_SCALING);
 DB2Storage<SpellShapeshiftEntry>                sSpellShapeshiftStore("SpellShapeshift.db2", SpellShapeshiftMeta::Instance(), HOTFIX_SEL_SPELL_SHAPESHIFT);
+//DB2Storage<SpellIconEntry>                      sSpellIconStore("SpellIcon.db2", SpellIconMeta::Instance(), HOTFIX_SEL_SPELL_ICON);
 DB2Storage<SpellShapeshiftFormEntry>            sSpellShapeshiftFormStore("SpellShapeshiftForm.db2", SpellShapeshiftFormMeta::Instance(), HOTFIX_SEL_SPELL_SHAPESHIFT_FORM);
 DB2Storage<SpellTargetRestrictionsEntry>        sSpellTargetRestrictionsStore("SpellTargetRestrictions.db2", SpellTargetRestrictionsMeta::Instance(), HOTFIX_SEL_SPELL_TARGET_RESTRICTIONS);
 DB2Storage<SpellTotemsEntry>                    sSpellTotemsStore("SpellTotems.db2", SpellTotemsMeta::Instance(), HOTFIX_SEL_SPELL_TOTEMS);
@@ -387,6 +389,7 @@ void DB2Manager::LoadStores(std::string const& dataPath, uint32 defaultLocale)
     LOAD_DB2(sItemArmorShieldStore);
     LOAD_DB2(sItemArmorTotalStore);
     LOAD_DB2(sItemBagFamilyStore);
+	LOAD_DB2(sItemDisplayInfoStore);
     LOAD_DB2(sItemBonusStore);
     LOAD_DB2(sItemBonusListLevelDeltaStore);
     LOAD_DB2(sItemBonusTreeNodeStore);
@@ -481,6 +484,7 @@ void DB2Manager::LoadStores(std::string const& dataPath, uint32 defaultLocale)
     LOAD_DB2(sSpellReagentsStore);
     LOAD_DB2(sSpellScalingStore);
     LOAD_DB2(sSpellShapeshiftStore);
+	LOAD_DB2(sSpellIconStore);
     LOAD_DB2(sSpellShapeshiftFormStore);
     LOAD_DB2(sSpellTargetRestrictionsStore);
     LOAD_DB2(sSpellTotemsStore);
