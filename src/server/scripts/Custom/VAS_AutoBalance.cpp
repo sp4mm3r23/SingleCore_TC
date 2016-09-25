@@ -48,7 +48,7 @@ struct AutoBalanceCreatureInfo
 	float DamageMultiplier;
 };
 
-static std::map<uint32, AutoBalanceCreatureInfo> CreatureInfo; // A hook should be added to remove the mapped entry when the creature is dead or this should be added into the creature object
+static std::map<ObjectGuid, AutoBalanceCreatureInfo> CreatureInfo; // A hook should be added to remove the mapped entry when the creature is dead or this should be added into the creature object
 static std::map<int, int> forcedCreatureIds;                   // The map values correspond with the VAS.AutoBalance.XX.Name entries in the configuration file.
 
 int GetValidDebugLevel()
@@ -359,7 +359,7 @@ class VAS_AutoBalance_AllCreatureScript : public AllCreatureScript
 		if (creature->GetMap()->IsDungeon())
 		{
 			ModifyCreatureAttributes(creature);
-			CreatureInfo(creature->GetGUID()).instancePlayerCount = creature->GetMap()->GetPlayersCountExceptGMs();
+			CreatureInfo[creature->GetGUID()].instancePlayerCount = creature->GetMap()->GetPlayersCountExceptGMs();
 		}
 	}
 	
