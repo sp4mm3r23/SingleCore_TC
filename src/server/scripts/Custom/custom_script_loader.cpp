@@ -17,6 +17,7 @@
 
 // This is where scripts' loading functions should be declared:
 void AddSC_solocraft();
+void AddSC_VAS_AutoBalance();
 void AddSC_FireWorksOnLevelUp();
 void AddSC_Player_Boa();
 void AddSC_gon_playerscripts();
@@ -31,6 +32,7 @@ void AddSC_Npc_Beastmaster();
 void AddCustomScripts()
 {
 	AddSC_solocraft();
+	AddSC_VAS_AutoBalance();
 	AddSC_FireWorksOnLevelUp();
 	AddSC_Player_Boa();
 	AddSC_gon_playerscripts();
