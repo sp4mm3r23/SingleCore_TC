@@ -97,6 +97,10 @@ template<>
 struct is_script_database_bound<AchievementCriteriaScript>
     : std::true_type { };
 
+template<>
+struct is_script_database_bound<SceneScript>
+    : std::true_type { };
+
 enum Spells
 {
     SPELL_HOTSWAP_VISUAL_SPELL_EFFECT = 40162 // 59084
@@ -2360,6 +2364,43 @@ void ScriptMgr::ModifySpellDamageTaken(Unit* target, Unit* attacker, int32& dama
     FOREACH_SCRIPT(PlayerScript)->ModifySpellDamageTaken(target, attacker, damage);
 }
 
+// Scene
+void ScriptMgr::OnSceneStart(Player* player, uint32 sceneInstanceID, SceneTemplate const* sceneTemplate)
+{
+    ASSERT(player);
+    ASSERT(sceneTemplate);
+
+    GET_SCRIPT(SceneScript, sceneTemplate->ScriptId, tmpscript);
+    tmpscript->OnSceneStart(player, sceneInstanceID, sceneTemplate);
+}
+
+void ScriptMgr::OnSceneTrigger(Player* player, uint32 sceneInstanceID, SceneTemplate const* sceneTemplate, std::string const& triggerName)
+{
+    ASSERT(player);
+    ASSERT(sceneTemplate);
+
+    GET_SCRIPT(SceneScript, sceneTemplate->ScriptId, tmpscript);
+    tmpscript->OnSceneTriggerEvent(player, sceneInstanceID, sceneTemplate, triggerName);
+}
+
+void ScriptMgr::OnSceneCancel(Player* player, uint32 sceneInstanceID, SceneTemplate const* sceneTemplate)
+{
+    ASSERT(player);
+    ASSERT(sceneTemplate);
+
+    GET_SCRIPT(SceneScript, sceneTemplate->ScriptId, tmpscript);
+    tmpscript->OnSceneCancel(player, sceneInstanceID, sceneTemplate);
+}
+
+void ScriptMgr::OnSceneComplete(Player* player, uint32 sceneInstanceID, SceneTemplate const* sceneTemplate)
+{
+    ASSERT(player);
+    ASSERT(sceneTemplate);
+
+    GET_SCRIPT(SceneScript, sceneTemplate->ScriptId, tmpscript);
+    tmpscript->OnSceneComplete(player, sceneInstanceID, sceneTemplate);
+}
+
 void ScriptMgr::ModifyHealRecieved(Unit* target, Unit* attacker, uint32& damage)
 {
 	FOREACH_SCRIPT(UnitScript)->ModifyHealRecieved(target, attacker, damage);
@@ -2531,6 +2572,12 @@ AccountScript::AccountScript(const char* name)
     ScriptRegistry<AccountScript>::Instance()->AddScript(this);
 }
 
+SceneScript::SceneScript(const char* name)
+    : ScriptObject(name)
+{
+    ScriptRegistry<SceneScript>::Instance()->AddScript(this);
+}
+
 GuildScript::GuildScript(const char* name)
     : ScriptObject(name)
 {
@@ -2572,3 +2619,4 @@ template class TC_GAME_API ScriptRegistry<GuildScript>;
 template class TC_GAME_API ScriptRegistry<GroupScript>;
 template class TC_GAME_API ScriptRegistry<UnitScript>;
 template class TC_GAME_API ScriptRegistry<AccountScript>;
+template class TC_GAME_API ScriptRegistry<SceneScript>;

@@ -71,6 +71,7 @@ struct Condition;
 struct ItemTemplate;
 struct MapEntry;
 struct OutdoorPvPData;
+struct SceneTemplate;
 
 #define VISIBLE_RANGE       166.0f                          //MAX visible range (size of grid)
 
@@ -883,6 +884,26 @@ class TC_GAME_API GroupScript : public ScriptObject
         virtual void OnDisband(Group* /*group*/) { }
 };
 
+class TC_GAME_API SceneScript : public ScriptObject
+{
+    protected:
+
+        SceneScript(const char* name);
+
+    public:
+        // Called when a player start a scene
+        virtual void OnSceneStart(Player* /*player*/, uint32 /*sceneInstanceID*/, SceneTemplate const* /*sceneTemplate*/) { }
+
+        // Called when a player receive trigger from scene
+        virtual void OnSceneTriggerEvent(Player* /*player*/, uint32 /*sceneInstanceID*/, SceneTemplate const* /*sceneTemplate*/, std::string const& /*triggerName*/) { }
+
+        // Called when a scene is canceled
+        virtual void OnSceneCancel(Player* /*player*/, uint32 /*sceneInstanceID*/, SceneTemplate const* /*sceneTemplate*/) { }
+
+        // Called when a scene is completed
+        virtual void OnSceneComplete(Player* /*player*/, uint32 /*sceneInstanceID*/, SceneTemplate const* /*sceneTemplate*/) { }
+};
+
 // Manages registration, loading, and execution of scripts.
 class TC_GAME_API ScriptMgr
 {
@@ -1179,6 +1200,12 @@ class TC_GAME_API ScriptMgr
         void ModifySpellDamageTaken(Unit* target, Unit* attacker, int32& damage);
 		void ModifyHealRecieved(Unit* target, Unit* attacker, uint32& addHealth);
 		uint32 DealDamage(Unit* AttackerUnit, Unit *pVictim, uint32 damage, DamageEffectType damagetype);
+
+    public: /* SceneScript */
+        void OnSceneStart(Player* player, uint32 sceneInstanceID, SceneTemplate const* sceneTemplate);
+        void OnSceneTrigger(Player* player, uint32 sceneInstanceID, SceneTemplate const* sceneTemplate, std::string const& triggerName);
+        void OnSceneCancel(Player* player, uint32 sceneInstanceID, SceneTemplate const* sceneTemplate);
+        void OnSceneComplete(Player* player, uint32 sceneInstanceID, SceneTemplate const* sceneTemplate);
 
     private:
         uint32 _scriptCount;
