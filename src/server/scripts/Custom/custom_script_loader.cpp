@@ -26,6 +26,7 @@ void AddSC_announce_login();
 void AddSC_Boss_Announcer();
 void AddSC_XpWeekend();
 void AddSC_Npc_Beastmaster();
+void AddSC_NPC_Teleport();
 
 // The name of this function should match:
 // void Add${NameOfDirectory}Scripts()
@@ -41,4 +42,5 @@ void AddCustomScripts()
 	AddSC_Boss_Announcer();
 	AddSC_XpWeekend();
 	AddSC_Npc_Beastmaster();
+	AddSC_NPC_Teleport();
 }
