@@ -1767,6 +1767,8 @@ bool ScriptMgr::CanSpawn(ObjectGuid::LowType spawnId, uint32 entry, CreatureTemp
     ASSERT(actTemplate);
 
     CreatureTemplate const* baseTemplate = sObjectMgr->GetCreatureTemplate(entry);
+    if (!baseTemplate)
+        baseTemplate = actTemplate;
     GET_SCRIPT_RET(CreatureScript, baseTemplate->ScriptID, tmpscript, true);
     return tmpscript->CanSpawn(spawnId, entry, baseTemplate, actTemplate, cData, map);
 }
@@ -2689,9 +2691,9 @@ void ScriptMgr::ModifySpellDamageTaken(Unit* target, Unit* attacker, int32& dama
     FOREACH_SCRIPT(PlayerScript)->ModifySpellDamageTaken(target, attacker, damage);
 }
 
-void ScriptMgr::ModifyHealRecieved(Unit* target, Unit* attacker, uint32& damage)
+void ScriptMgr::ModifyHealRecieved(HealInfo& healInfo)
 {
-	FOREACH_SCRIPT(UnitScript)->ModifyHealRecieved(target, attacker, damage);
+	FOREACH_SCRIPT(UnitScript)->ModifyHealRecieved(healInfo);
 }
 
 AllMapScript::AllMapScript(const char* name)
