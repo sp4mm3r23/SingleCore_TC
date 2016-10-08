@@ -2371,9 +2371,9 @@ void ScriptMgr::ModifySpellDamageTaken(Unit* target, Unit* attacker, int32& dama
     FOREACH_SCRIPT(PlayerScript)->ModifySpellDamageTaken(target, attacker, damage);
 }
 
-void ScriptMgr::ModifyHealRecieved(Unit* target, Unit* attacker, uint32& damage)
+void ScriptMgr::ModifyHealRecieved(HealInfo& healInfo)
 {
-	FOREACH_SCRIPT(UnitScript)->ModifyHealRecieved(target, attacker, damage);
+	FOREACH_SCRIPT(UnitScript)->ModifyHealRecieved(healInfo);
 }
 
 AllMapScript::AllMapScript(const char* name)
