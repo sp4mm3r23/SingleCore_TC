@@ -352,7 +352,7 @@ class TC_GAME_API Spell
         void EffectCastButtons(SpellEffIndex effIndex);
         void EffectRechargeManaGem(SpellEffIndex effIndex);
 
-        typedef std::set<Aura*> UsedSpellMods;
+        typedef std::unordered_set<Aura*> UsedSpellMods;
 
         Spell(Unit* caster, SpellInfo const* info, TriggerCastFlags triggerFlags, ObjectGuid originalCasterGUID = ObjectGuid::Empty, bool skipCheck = false);
         ~Spell();
@@ -507,6 +507,7 @@ class TC_GAME_API Spell
         void CancelGlobalCooldown();
 
         void SendLoot(ObjectGuid guid, LootType loottype);
+        std::pair<float, float> GetMinMaxRange(bool strict);
 
         Unit* const m_caster;
 
@@ -526,7 +527,6 @@ class TC_GAME_API Spell
         int32 m_channeledDuration;                          // Calculated channeled spell duration in order to calculate correct pushback.
         bool m_canReflect;                                  // can reflect this spell?
         bool m_autoRepeat;
-        bool m_isDelayedInstantCast;                        // whether this is a creature's delayed instant cast
         uint8 m_runesState;
 
         uint8 m_delayAtDamageCount;
@@ -561,10 +561,6 @@ class TC_GAME_API Spell
         // used in effects handlers
         Aura* m_spellAura;
 
-        // this is set in Spell Hit, but used in Apply Aura handler
-        DiminishingLevels m_diminishLevel;
-        DiminishingGroup m_diminishGroup;
-
         // -------------------------------------------
         GameObject* focusObject;
 
@@ -577,8 +573,8 @@ class TC_GAME_API Spell
         // ******************************************
         uint32 m_procAttacker;                // Attacker trigger flags
         uint32 m_procVictim;                  // Victim   trigger flags
-        uint32 m_procEx;
-        void   prepareDataForTriggerSystem(AuraEffect const* triggeredByAura);
+        uint32 m_hitMask;
+        void   prepareDataForTriggerSystem();
 
         // *****************************************
         // Spell target subsystem

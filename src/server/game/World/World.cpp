@@ -600,7 +600,10 @@ void World::LoadConfigSettings(bool reload)
     }
     m_int_configs[CONFIG_CHAT_CHANNEL_LEVEL_REQ] = sConfigMgr->GetIntDefault("ChatLevelReq.Channel", 1);
     m_int_configs[CONFIG_CHAT_WHISPER_LEVEL_REQ] = sConfigMgr->GetIntDefault("ChatLevelReq.Whisper", 1);
+    m_int_configs[CONFIG_CHAT_EMOTE_LEVEL_REQ] = sConfigMgr->GetIntDefault("ChatLevelReq.Emote", 1);
     m_int_configs[CONFIG_CHAT_SAY_LEVEL_REQ] = sConfigMgr->GetIntDefault("ChatLevelReq.Say", 1);
+    m_int_configs[CONFIG_CHAT_YELL_LEVEL_REQ] = sConfigMgr->GetIntDefault("ChatLevelReq.Yell", 1);
+    m_int_configs[CONFIG_PARTY_LEVEL_REQ] = sConfigMgr->GetIntDefault("PartyLevelReq", 1);
     m_int_configs[CONFIG_TRADE_LEVEL_REQ] = sConfigMgr->GetIntDefault("LevelReq.Trade", 1);
     m_int_configs[CONFIG_TICKET_LEVEL_REQ] = sConfigMgr->GetIntDefault("LevelReq.Ticket", 1);
     m_int_configs[CONFIG_AUCTION_LEVEL_REQ] = sConfigMgr->GetIntDefault("LevelReq.Auction", 1);
@@ -876,6 +879,7 @@ void World::LoadConfigSettings(bool reload)
     m_bool_configs[CONFIG_CAST_UNSTUCK] = sConfigMgr->GetBoolDefault("CastUnstuck", true);
     m_int_configs[CONFIG_INSTANCE_RESET_TIME_HOUR]  = sConfigMgr->GetIntDefault("Instance.ResetTimeHour", 4);
     m_int_configs[CONFIG_INSTANCE_UNLOAD_DELAY] = sConfigMgr->GetIntDefault("Instance.UnloadDelay", 30 * MINUTE * IN_MILLISECONDS);
+    m_int_configs[CONFIG_DAILY_QUEST_RESET_TIME_HOUR] = sConfigMgr->GetIntDefault("Quests.DailyResetTime", 3);
 
     m_int_configs[CONFIG_MAX_PRIMARY_TRADE_SKILL] = sConfigMgr->GetIntDefault("MaxPrimaryTradeSkill", 2);
     m_int_configs[CONFIG_MIN_PETITION_SIGNS] = sConfigMgr->GetIntDefault("MinPetitionSigns", 9);
@@ -1079,6 +1083,17 @@ void World::LoadConfigSettings(bool reload)
     m_bool_configs[CONFIG_BATTLEGROUND_QUEUE_ANNOUNCER_PLAYERONLY]   = sConfigMgr->GetBoolDefault("Battleground.QueueAnnouncer.PlayerOnly", false);
     m_bool_configs[CONFIG_BATTLEGROUND_STORE_STATISTICS_ENABLE]      = sConfigMgr->GetBoolDefault("Battleground.StoreStatistics.Enable", false);
     m_bool_configs[CONFIG_BATTLEGROUND_TRACK_DESERTERS]              = sConfigMgr->GetBoolDefault("Battleground.TrackDeserters.Enable", false);
+    m_int_configs[CONFIG_BATTLEGROUND_REPORT_AFK]                    = sConfigMgr->GetIntDefault("Battleground.ReportAFK", 3);
+    if (m_int_configs[CONFIG_BATTLEGROUND_REPORT_AFK] < 1)
+    {
+        TC_LOG_ERROR("server.loading", "Battleground.ReportAFK (%d) must be >0. Using 3 instead.", m_int_configs[CONFIG_BATTLEGROUND_REPORT_AFK]);
+        m_int_configs[CONFIG_BATTLEGROUND_REPORT_AFK] = 3;
+    }
+    if (m_int_configs[CONFIG_BATTLEGROUND_REPORT_AFK] > 9)
+    {
+        TC_LOG_ERROR("server.loading", "Battleground.ReportAFK (%d) must be <10. Using 3 instead.", m_int_configs[CONFIG_BATTLEGROUND_REPORT_AFK]);
+        m_int_configs[CONFIG_BATTLEGROUND_REPORT_AFK] = 3;
+    }
     m_int_configs[CONFIG_BATTLEGROUND_INVITATION_TYPE]               = sConfigMgr->GetIntDefault ("Battleground.InvitationType", 0);
     m_int_configs[CONFIG_BATTLEGROUND_PREMATURE_FINISH_TIMER]        = sConfigMgr->GetIntDefault ("Battleground.PrematureFinishTimer", 5 * MINUTE * IN_MILLISECONDS);
     m_int_configs[CONFIG_BATTLEGROUND_PREMADE_GROUP_WAIT_FOR_MATCH]  = sConfigMgr->GetIntDefault ("Battleground.PremadeGroupWaitForMatch", 30 * MINUTE * IN_MILLISECONDS);
@@ -1484,6 +1499,12 @@ void World::SetInitialWorldSettings()
     TC_LOG_INFO("server.loading", "Loading SpellInfo custom attributes...");
     sSpellMgr->LoadSpellInfoCustomAttributes();
 
+    TC_LOG_INFO("server.loading", "Loading SpellInfo SpellSpecific and AuraState...");
+    sSpellMgr->LoadSpellInfoSpellSpecificAndAuraState();
+
+    TC_LOG_INFO("server.loading", "Loading SpellInfo diminishing infos...");
+    sSpellMgr->LoadSpellInfoDiminishing();
+
     TC_LOG_INFO("server.loading", "Loading GameObject models...");
     LoadGameObjectModelList(m_dataPath);
 
@@ -1525,6 +1546,9 @@ void World::SetInitialWorldSettings()
     TC_LOG_INFO("server.loading", "Loading Game Object Templates...");         // must be after LoadPageTexts
     sObjectMgr->LoadGameObjectTemplate();
 
+    TC_LOG_INFO("server.loading", "Loading Game Object template addons...");
+    sObjectMgr->LoadGameObjectTemplateAddons();
+
     TC_LOG_INFO("server.loading", "Loading Transport templates...");
     sTransportMgr->LoadTransportTemplates();
 
@@ -1542,9 +1566,6 @@ void World::SetInitialWorldSettings()
 
     TC_LOG_INFO("server.loading", "Loading Spell Learn Spells...");
     sSpellMgr->LoadSpellLearnSpells();
-
-    TC_LOG_INFO("server.loading", "Loading Spell Proc Event conditions...");
-    sSpellMgr->LoadSpellProcEvents();
 
     TC_LOG_INFO("server.loading", "Loading Spell Proc conditions and data...");
     sSpellMgr->LoadSpellProcs();
@@ -1930,6 +1951,9 @@ void World::SetInitialWorldSettings()
     // Delete all custom channels which haven't been used for PreserveCustomChannelDuration days.
     Channel::CleanOldChannelsInDB();
 
+    TC_LOG_INFO("server.loading", "Initializing Opcodes...");
+    opcodeTable.Initialize();
+
     TC_LOG_INFO("server.loading", "Starting Arena Season...");
     sGameEventMgr->StartArenaSeason();
 
@@ -2141,7 +2165,7 @@ void World::Update(uint32 diff)
     if (m_gameTime > m_NextDailyQuestReset)
     {
         ResetDailyQuests();
-        m_NextDailyQuestReset += DAY;
+        InitDailyQuestResetTime(false);
     }
 
     /// Handle weekly quests reset time
@@ -2245,6 +2269,7 @@ void World::Update(uint32 diff)
 
             stmt->setUInt32(0, sWorld->getIntConfig(CONFIG_LOGDB_CLEARTIME));
             stmt->setUInt32(1, uint32(time(0)));
+            stmt->setUInt32(2, realm.Id.Realm);
 
             LoginDatabase.Execute(stmt);
         }
@@ -2805,22 +2830,24 @@ void World::ShutdownMsg(bool show, Player* player, const std::string& reason)
 }
 
 /// Cancel a planned server shutdown
-void World::ShutdownCancel()
+uint32 World::ShutdownCancel()
 {
     // nothing cancel or too later
     if (!m_ShutdownTimer || m_stopEvent)
-        return;
+        return 0;
 
     ServerMessageType msgid = (m_ShutdownMask & SHUTDOWN_MASK_RESTART) ? SERVER_MSG_RESTART_CANCELLED : SERVER_MSG_SHUTDOWN_CANCELLED;
 
+    uint32 oldTimer = m_ShutdownTimer;
     m_ShutdownMask = 0;
     m_ShutdownTimer = 0;
     m_ExitCode = SHUTDOWN_EXIT_CODE;                       // to default value
     SendServerMessage(msgid);
 
-    TC_LOG_DEBUG("misc", "Server %s cancelled.", (m_ShutdownMask & SHUTDOWN_MASK_RESTART ? "restart" : "shuttingdown"));
+    TC_LOG_DEBUG("misc", "Server %s cancelled.", (m_ShutdownMask & SHUTDOWN_MASK_RESTART ? "restart" : "shutdown"));
 
     sScriptMgr->OnShutdownCancel();
+    return oldTimer;
 }
 
 /// Send a server message to the user(s)
@@ -2957,16 +2984,20 @@ void World::_UpdateRealmCharCount(PreparedQueryResult resultCharCount)
         uint32 accountId = fields[0].GetUInt32();
         uint8 charCount = uint8(fields[1].GetUInt64());
 
+        SQLTransaction trans = LoginDatabase.BeginTransaction();
+
         PreparedStatement* stmt = LoginDatabase.GetPreparedStatement(LOGIN_DEL_REALM_CHARACTERS_BY_REALM);
         stmt->setUInt32(0, accountId);
         stmt->setUInt32(1, realm.Id.Realm);
-        LoginDatabase.Execute(stmt);
+        trans->Append(stmt);
 
         stmt = LoginDatabase.GetPreparedStatement(LOGIN_INS_REALM_CHARACTERS);
         stmt->setUInt8(0, charCount);
         stmt->setUInt32(1, accountId);
         stmt->setUInt32(2, realm.Id.Realm);
-        LoginDatabase.Execute(stmt);
+        trans->Append(stmt);
+
+        LoginDatabase.CommitTransaction(trans);
     }
 }
 
@@ -2977,25 +3008,25 @@ void World::InitWeeklyQuestResetTime()
     m_NextWeeklyQuestReset = wstime < curtime ? curtime : time_t(wstime);
 }
 
-void World::InitDailyQuestResetTime()
+void World::InitDailyQuestResetTime(bool loading)
 {
-    time_t mostRecentQuestTime;
+    time_t mostRecentQuestTime = 0;
 
-    QueryResult result = CharacterDatabase.Query("SELECT MAX(time) FROM character_queststatus_daily");
-    if (result)
+    if (loading)
     {
-        Field* fields = result->Fetch();
-        mostRecentQuestTime = time_t(fields[0].GetUInt32());
+        QueryResult result = CharacterDatabase.Query("SELECT MAX(time) FROM character_queststatus_daily");
+        if (result)
+        {
+            Field* fields = result->Fetch();
+            mostRecentQuestTime = time_t(fields[0].GetUInt32());
+        }
     }
-    else
-        mostRecentQuestTime = 0;
 
-    // client built-in time for reset is 6:00 AM
     // FIX ME: client not show day start time
     time_t curTime = time(NULL);
     tm localTm;
     localtime_r(&curTime, &localTm);
-    localTm.tm_hour = 6;
+    localTm.tm_hour = getIntConfig(CONFIG_DAILY_QUEST_RESET_TIME_HOUR);
     localTm.tm_min  = 0;
     localTm.tm_sec  = 0;
 
@@ -3274,6 +3305,9 @@ void World::setWorldState(uint32 index, uint64 value)
     WorldStatesMap::const_iterator it = m_worldstates.find(index);
     if (it != m_worldstates.end())
     {
+        if (it->second == value)
+            return;
+
         PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_UPD_WORLDSTATE);
 
         stmt->setUInt32(0, uint32(value));

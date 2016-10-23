@@ -542,7 +542,11 @@ void BossAI::UpdateAI(uint32 diff)
         return;
 
     while (uint32 eventId = events.ExecuteEvent())
+    {
         ExecuteEvent(eventId);
+        if (me->HasUnitState(UNIT_STATE_CASTING))
+            return;
+    }
 
     DoMeleeAttackIfReady();
 }
@@ -565,16 +569,7 @@ void BossAI::_DespawnAtEvade(uint32 delayToRespawn, Creature* who)
         return;
     }
 
-    uint32 corpseDelay = who->GetCorpseDelay();
-    uint32 respawnDelay = who->GetRespawnDelay();
-
-    who->SetCorpseDelay(1);
-    who->SetRespawnDelay(delayToRespawn - 1);
-
-    who->DespawnOrUnsummon();
-
-    who->SetCorpseDelay(corpseDelay);
-    who->SetRespawnDelay(respawnDelay);
+    who->DespawnOrUnsummon(0, Seconds(delayToRespawn));
 
     if (instance && who == me)
         instance->SetBossState(_bossId, FAIL);
@@ -632,33 +627,11 @@ void WorldBossAI::UpdateAI(uint32 diff)
         return;
 
     while (uint32 eventId = events.ExecuteEvent())
+    {
         ExecuteEvent(eventId);
+        if (me->HasUnitState(UNIT_STATE_CASTING))
+            return;
+    }
 
     DoMeleeAttackIfReady();
-}
-
-// SD2 grid searchers.
-Creature* GetClosestCreatureWithEntry(WorldObject* source, uint32 entry, float maxSearchRange, bool alive /*= true*/)
-{
-    return source->FindNearestCreature(entry, maxSearchRange, alive);
-}
-
-GameObject* GetClosestGameObjectWithEntry(WorldObject* source, uint32 entry, float maxSearchRange)
-{
-    return source->FindNearestGameObject(entry, maxSearchRange);
-}
-
-void GetCreatureListWithEntryInGrid(std::list<Creature*>& list, WorldObject* source, uint32 entry, float maxSearchRange)
-{
-    source->GetCreatureListWithEntryInGrid(list, entry, maxSearchRange);
-}
-
-void GetGameObjectListWithEntryInGrid(std::list<GameObject*>& list, WorldObject* source, uint32 entry, float maxSearchRange)
-{
-    source->GetGameObjectListWithEntryInGrid(list, entry, maxSearchRange);
-}
-
-void GetPlayerListInGrid(std::list<Player*>& list, WorldObject* source, float maxSearchRange)
-{
-    source->GetPlayerListInGrid(list, maxSearchRange);
 }

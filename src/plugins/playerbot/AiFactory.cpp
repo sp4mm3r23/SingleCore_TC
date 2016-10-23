@@ -134,7 +134,7 @@ void AiFactory::AddDefaultCombatStrategies(Player* player, PlayerbotAI* const fa
             break;
         case CLASS_PALADIN:
             if (tab == 1)
-                engine->addStrategies("tank", "tank aoe", "barmor", NULL);
+                engine->addStrategies("tank", "tank aoe", "bthreat", NULL);
             else
                 engine->addStrategies("dps", "bdps", "threat", NULL);
             break;
@@ -172,11 +172,20 @@ void AiFactory::AddDefaultCombatStrategies(Player* player, PlayerbotAI* const fa
             break;
     }
 
-    if (sRandomPlayerbotMgr.IsRandomBot(player) && !player->GetGroup())
+    if (sRandomPlayerbotMgr.IsRandomBot(player))
     {
-        engine->ChangeStrategy(sPlayerbotAIConfig.randomBotCombatStrategies);
-        if (player->getClass() == CLASS_DRUID && player->getLevel() < 20)
-            engine->addStrategies("bear", NULL);
+        if (!player->GetGroup())
+        {
+            engine->ChangeStrategy(sPlayerbotAIConfig.randomBotCombatStrategies);
+            if (player->getClass() == CLASS_DRUID && player->getLevel() < 20)
+            {
+                engine->addStrategies("bear", NULL);
+            }
+        }
+    }
+    else
+    {
+        engine->ChangeStrategy(sPlayerbotAIConfig.combatStrategies);
     }
 }
 
@@ -192,9 +201,19 @@ void AiFactory::AddDefaultNonCombatStrategies(Player* player, PlayerbotAI* const
 
     switch (player->getClass()){
         case CLASS_PALADIN:
+            if (tab == 1)
+                nonCombatEngine->addStrategy("bthreat");
+            else
+                nonCombatEngine->addStrategy("bdps");
+            break;
         case CLASS_HUNTER:
+            nonCombatEngine->addStrategy("bdps");
+            break;
         case CLASS_SHAMAN:
-            nonCombatEngine->addStrategy("bmana");
+            if (tab == 0 || tab == 2)
+                nonCombatEngine->addStrategy("bmana");
+            else
+                nonCombatEngine->addStrategy("bdps");
             break;
         case CLASS_MAGE:
             if (tab == 1)
@@ -218,11 +237,17 @@ void AiFactory::AddDefaultNonCombatStrategies(Player* player, PlayerbotAI* const
 		nonCombatEngine->addStrategies("nc", "attack weak", "food", "stay", "chat",
 			"default", "quest", "loot", "gather", "duel", "emote", "follow", "lfg", "bg", NULL);
 	}
-    if (sRandomPlayerbotMgr.IsRandomBot(player) && !player->GetGroup())
+    if (sRandomPlayerbotMgr.IsRandomBot(player))
     {
-        nonCombatEngine->ChangeStrategy(sPlayerbotAIConfig.randomBotNonCombatStrategies);
+        if (!player->GetGroup())
+        {
+            nonCombatEngine->ChangeStrategy(sPlayerbotAIConfig.randomBotNonCombatStrategies);
+        }
     }
-
+    else
+    {
+        nonCombatEngine->ChangeStrategy(sPlayerbotAIConfig.nonCombatStrategies);
+    }
 }
 
 Engine* AiFactory::createNonCombatEngine(Player* player, PlayerbotAI* const facade, AiObjectContext* AiObjectContext) {

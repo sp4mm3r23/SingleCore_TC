@@ -485,8 +485,6 @@ void WorldSession::HandleLogoutCancelOpcode(WorldPacket& /*recvData*/)
         //! DISABLE_ROTATE
         GetPlayer()->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_STUNNED);
     }
-
-    TC_LOG_DEBUG("network", "WORLD: Sent SMSG_LOGOUT_CANCEL_ACK Message");
 }
 
 void WorldSession::HandleTogglePvP(WorldPacket& recvData)
@@ -1444,7 +1442,7 @@ void WorldSession::HandleFarSightOpcode(WorldPacket& recvData)
         if (WorldObject* target = _player->GetViewpoint())
             _player->SetSeer(target);
         else
-            TC_LOG_ERROR("network", "Player %s (%s) requests non-existing seer %s", _player->GetName().c_str(), _player->GetGUID().ToString().c_str(), _player->GetGuidValue(PLAYER_FARSIGHT).ToString().c_str());
+            TC_LOG_DEBUG("network", "Player %s (%s) requests non-existing seer %s", _player->GetName().c_str(), _player->GetGUID().ToString().c_str(), _player->GetGuidValue(PLAYER_FARSIGHT).ToString().c_str());
     }
     else
     {
@@ -1659,7 +1657,7 @@ void WorldSession::HandleMoveSetCanFlyAckOpcode(WorldPacket& recvData)
 
     recvData.read_skip<float>();                           // unk2
 
-    _player->m_mover->m_movementInfo.flags = movementInfo.GetMovementFlags();
+    _player->m_unitMovedByMe->m_movementInfo.flags = movementInfo.GetMovementFlags();
 }
 
 void WorldSession::HandleRequestPetInfoOpcode(WorldPacket& /*recvData */)
@@ -1777,9 +1775,9 @@ void WorldSession::HandleHearthAndResurrect(WorldPacket& /*recvData*/)
     if (_player->IsInFlight())
         return;
 
-    if (/*Battlefield* bf = */sBattlefieldMgr->GetBattlefieldToZoneId(_player->GetZoneId()))
+    if (Battlefield* bf = sBattlefieldMgr->GetBattlefieldToZoneId(_player->GetZoneId()))
     {
-        // bf->PlayerAskToLeave(_player); FIXME
+        bf->PlayerAskToLeave(_player);
         return;
     }
 

@@ -480,7 +480,7 @@ void Object::BuildMovementUpdate(ByteBuffer* data, uint16 flags) const
 
     // 0x200
     if (flags & UPDATEFLAG_ROTATION)
-        *data << int64(ToGameObject()->GetRotation());
+        *data << int64(ToGameObject()->GetPackedWorldRotation());
 }
 
 void Object::BuildValuesUpdate(uint8 updateType, ByteBuffer* data, Player* target) const
@@ -1363,24 +1363,21 @@ bool WorldObject::IsInRange3d(float x, float y, float z, float minRange, float m
     return distsq < maxdist * maxdist;
 }
 
-bool WorldObject::IsInBetween(const WorldObject* obj1, const WorldObject* obj2, float size) const
+bool WorldObject::IsInBetween(Position const& pos1, Position const& pos2, float size) const
 {
-    if (!obj1 || !obj2)
-        return false;
-
-    float dist = GetExactDist2d(obj1->GetPositionX(), obj1->GetPositionY());
+    float dist = GetExactDist2d(pos1);
 
     // not using sqrt() for performance
-    if ((dist * dist) >= obj1->GetExactDist2dSq(obj2->GetPositionX(), obj2->GetPositionY()))
+    if ((dist * dist) >= pos1.GetExactDist2dSq(pos2))
         return false;
 
     if (!size)
         size = GetObjectSize() / 2;
 
-    float angle = obj1->GetAngle(obj2);
+    float angle = pos1.GetAngle(pos2);
 
     // not using sqrt() for performance
-    return (size * size) >= GetExactDist2dSq(obj1->GetPositionX() + std::cos(angle) * dist, obj1->GetPositionY() + std::sin(angle) * dist);
+    return (size * size) >= GetExactDist2dSq(pos1.GetPositionX() + std::cos(angle) * dist, pos1.GetPositionY() + std::sin(angle) * dist);
 }
 
 bool WorldObject::isInFront(WorldObject const* target,  float arc) const
@@ -1403,7 +1400,8 @@ void WorldObject::GetRandomPoint(const Position &pos, float distance, float &ran
 
     // angle to face `obj` to `this`
     float angle = (float)rand_norm()*static_cast<float>(2*M_PI);
-    float new_dist = (float)rand_norm()*static_cast<float>(distance);
+    float new_dist = (float)rand_norm() + (float)rand_norm();
+    new_dist = distance * (new_dist > 1 ? new_dist - 2 : new_dist);
 
     rand_x = pos.m_positionX + new_dist * std::cos(angle);
     rand_y = pos.m_positionY + new_dist * std::sin(angle);
@@ -1980,7 +1978,7 @@ void WorldObject::ClearZoneScript()
     m_zoneScript = NULL;
 }
 
-TempSummon* WorldObject::SummonCreature(uint32 entry, const Position &pos, TempSummonType spwtype, uint32 duration, uint32 /*vehId*/) const
+TempSummon* WorldObject::SummonCreature(uint32 entry, Position const& pos, TempSummonType spwtype /*= TEMPSUMMON_MANUAL_DESPAWN*/, uint32 duration /*= 0*/, uint32 /*vehId = 0*/) const
 {
     if (Map* map = FindMap())
     {
@@ -1991,7 +1989,7 @@ TempSummon* WorldObject::SummonCreature(uint32 entry, const Position &pos, TempS
         }
     }
 
-    return NULL;
+    return nullptr;
 }
 
 TempSummon* WorldObject::SummonCreature(uint32 id, float x, float y, float z, float ang /*= 0*/, TempSummonType spwtype /*= TEMPSUMMON_MANUAL_DESPAWN*/, uint32 despwtime /*= 0*/) const
@@ -2001,29 +1999,30 @@ TempSummon* WorldObject::SummonCreature(uint32 id, float x, float y, float z, fl
         GetClosePoint(x, y, z, GetObjectSize());
         ang = GetOrientation();
     }
+
     Position pos;
     pos.Relocate(x, y, z, ang);
     return SummonCreature(id, pos, spwtype, despwtime, 0);
 }
 
-GameObject* WorldObject::SummonGameObject(uint32 entry, float x, float y, float z, float ang, float rotation0, float rotation1, float rotation2, float rotation3, uint32 respawnTime)
+GameObject* WorldObject::SummonGameObject(uint32 entry, Position const& pos, G3D::Quat const& rot, uint32 respawnTime)
 {
     if (!IsInWorld())
-        return NULL;
+        return nullptr;
 
     GameObjectTemplate const* goinfo = sObjectMgr->GetGameObjectTemplate(entry);
     if (!goinfo)
     {
         TC_LOG_ERROR("sql.sql", "Gameobject template %u not found in database!", entry);
-        return NULL;
+        return nullptr;
     }
 
     Map* map = GetMap();
     GameObject* go = new GameObject();
-    if (!go->Create(map->GenerateLowGuid<HighGuid::GameObject>(), entry, map, GetPhaseMask(), x, y, z, ang, rotation0, rotation1, rotation2, rotation3, 100, GO_STATE_READY))
+    if (!go->Create(map->GenerateLowGuid<HighGuid::GameObject>(), entry, map, GetPhaseMask(), pos, rot, 255, GO_STATE_READY))
     {
         delete go;
-        return NULL;
+        return nullptr;
     }
 
     go->SetRespawnTime(respawnTime);
@@ -2034,6 +2033,18 @@ GameObject* WorldObject::SummonGameObject(uint32 entry, float x, float y, float 
 
     map->AddToMap(go);
     return go;
+}
+
+GameObject* WorldObject::SummonGameObject(uint32 entry, float x, float y, float z, float ang, G3D::Quat const& rot, uint32 respawnTime)
+{
+    if (!x && !y && !z)
+    {
+        GetClosePoint(x, y, z, GetObjectSize());
+        ang = GetOrientation();
+    }
+
+    Position pos(x, y, z, ang);
+    return SummonGameObject(entry, pos, rot, respawnTime);
 }
 
 Creature* WorldObject::SummonTrigger(float x, float y, float z, float ang, uint32 duration, CreatureAI* (*GetAI)(Creature*))
@@ -2105,113 +2116,41 @@ GameObject* WorldObject::FindNearestGameObjectOfType(GameobjectTypes type, float
     return go;
 }
 
-void WorldObject::GetGameObjectListWithEntryInGrid(std::list<GameObject*>& gameobjectList, uint32 entry, float maxSearchRange) const
+template <typename Container>
+void WorldObject::GetGameObjectListWithEntryInGrid(Container& gameObjectContainer, uint32 entry, float maxSearchRange /*= 250.0f*/) const
 {
-    CellCoord pair(Trinity::ComputeCellCoord(this->GetPositionX(), this->GetPositionY()));
+    CellCoord pair(Trinity::ComputeCellCoord(GetPositionX(), GetPositionY()));
     Cell cell(pair);
     cell.SetNoCreate();
 
     Trinity::AllGameObjectsWithEntryInRange check(this, entry, maxSearchRange);
-    Trinity::GameObjectListSearcher<Trinity::AllGameObjectsWithEntryInRange> searcher(this, gameobjectList, check);
+    Trinity::GameObjectListSearcher<Trinity::AllGameObjectsWithEntryInRange> searcher(this, gameObjectContainer, check);
     TypeContainerVisitor<Trinity::GameObjectListSearcher<Trinity::AllGameObjectsWithEntryInRange>, GridTypeMapContainer> visitor(searcher);
 
-    cell.Visit(pair, visitor, *(this->GetMap()), *this, maxSearchRange);
+    cell.Visit(pair, visitor, *GetMap(), *this, maxSearchRange);
 }
 
-void WorldObject::GetCreatureListWithEntryInGrid(std::list<Creature*>& creatureList, uint32 entry, float maxSearchRange) const
+template <typename Container>
+void WorldObject::GetCreatureListWithEntryInGrid(Container& creatureContainer, uint32 entry, float maxSearchRange /*= 250.0f*/) const
 {
-    CellCoord pair(Trinity::ComputeCellCoord(this->GetPositionX(), this->GetPositionY()));
+    CellCoord pair(Trinity::ComputeCellCoord(GetPositionX(), GetPositionY()));
     Cell cell(pair);
     cell.SetNoCreate();
 
     Trinity::AllCreaturesOfEntryInRange check(this, entry, maxSearchRange);
-    Trinity::CreatureListSearcher<Trinity::AllCreaturesOfEntryInRange> searcher(this, creatureList, check);
+    Trinity::CreatureListSearcher<Trinity::AllCreaturesOfEntryInRange> searcher(this, creatureContainer, check);
     TypeContainerVisitor<Trinity::CreatureListSearcher<Trinity::AllCreaturesOfEntryInRange>, GridTypeMapContainer> visitor(searcher);
 
-    cell.Visit(pair, visitor, *(this->GetMap()), *this, maxSearchRange);
+    cell.Visit(pair, visitor, *GetMap(), *this, maxSearchRange);
 }
 
-void WorldObject::GetPlayerListInGrid(std::list<Player*>& playerList, float maxSearchRange) const
+template <typename Container>
+void WorldObject::GetPlayerListInGrid(Container& playerContainer, float maxSearchRange) const
 {
     Trinity::AnyPlayerInObjectRangeCheck checker(this, maxSearchRange);
-    Trinity::PlayerListSearcher<Trinity::AnyPlayerInObjectRangeCheck> searcher(this, playerList, checker);
-    this->VisitNearbyWorldObject(maxSearchRange, searcher);
+    Trinity::PlayerListSearcher<Trinity::AnyPlayerInObjectRangeCheck> searcher(this, playerContainer, checker);
+    VisitNearbyWorldObject(maxSearchRange, searcher);
 }
-
-/*
-namespace Trinity
-{
-    class NearUsedPosDo
-    {
-        public:
-            NearUsedPosDo(WorldObject const& obj, WorldObject const* searcher, float angle, ObjectPosSelector& selector)
-                : i_object(obj), i_searcher(searcher), i_angle(angle), i_selector(selector) { }
-
-            void operator()(Corpse*) const { }
-            void operator()(DynamicObject*) const { }
-
-            void operator()(Creature* c) const
-            {
-                // skip self or target
-                if (c == i_searcher || c == &i_object)
-                    return;
-
-                float x, y, z;
-
-                if (!c->IsAlive() || c->HasUnitState(UNIT_STATE_ROOT | UNIT_STATE_STUNNED | UNIT_STATE_DISTRACTED) ||
-                    !c->GetMotionMaster()->GetDestination(x, y, z))
-                {
-                    x = c->GetPositionX();
-                    y = c->GetPositionY();
-                }
-
-                add(c, x, y);
-            }
-
-            template<class T>
-                void operator()(T* u) const
-            {
-                // skip self or target
-                if (u == i_searcher || u == &i_object)
-                    return;
-
-                float x, y;
-
-                x = u->GetPositionX();
-                y = u->GetPositionY();
-
-                add(u, x, y);
-            }
-
-            // we must add used pos that can fill places around center
-            void add(WorldObject* u, float x, float y) const
-            {
-                // u is too nearest/far away to i_object
-                if (!i_object.IsInRange2d(x, y, i_selector.m_dist - i_selector.m_size, i_selector.m_dist + i_selector.m_size))
-                    return;
-
-                float angle = i_object.GetAngle(u)-i_angle;
-
-                // move angle to range -pi ... +pi
-                while (angle > M_PI)
-                    angle -= 2.0f * M_PI;
-                while (angle < -M_PI)
-                    angle += 2.0f * M_PI;
-
-                // dist include size of u
-                float dist2d = i_object.GetDistance2d(x, y);
-                i_selector.AddUsedPos(u->GetObjectSize(), angle, dist2d + i_object.GetObjectSize());
-            }
-        private:
-            WorldObject const& i_object;
-            WorldObject const* i_searcher;
-            float              i_angle;
-            ObjectPosSelector& i_selector;
-    };
-}                                                           // namespace Trinity
-*/
-
-//===================================================================================================
 
 void WorldObject::GetNearPoint2D(float &x, float &y, float distance2d, float absAngle) const
 {
@@ -2464,6 +2403,16 @@ void WorldObject::PlayDirectSound(uint32 sound_id, Player* target /*= NULL*/)
         SendMessageToSet(&data, true);
 }
 
+void WorldObject::PlayDirectMusic(uint32 music_id, Player* target /*= NULL*/)
+{
+    WorldPacket data(SMSG_PLAY_MUSIC, 4);
+    data << uint32(music_id);
+    if (target)
+        target->SendDirectMessage(&data);
+    else
+        SendMessageToSet(&data, true);
+}
+
 void WorldObject::DestroyForNearbyPlayers()
 {
     if (!IsInWorld())
@@ -2602,3 +2551,15 @@ ObjectGuid WorldObject::GetTransGUID() const
         return GetTransport()->GetGUID();
     return ObjectGuid::Empty;
 }
+
+template TC_GAME_API void WorldObject::GetGameObjectListWithEntryInGrid(std::list<GameObject*>&, uint32, float) const;
+template TC_GAME_API void WorldObject::GetGameObjectListWithEntryInGrid(std::deque<GameObject*>&, uint32, float) const;
+template TC_GAME_API void WorldObject::GetGameObjectListWithEntryInGrid(std::vector<GameObject*>&, uint32, float) const;
+
+template TC_GAME_API void WorldObject::GetCreatureListWithEntryInGrid(std::list<Creature*>&, uint32, float) const;
+template TC_GAME_API void WorldObject::GetCreatureListWithEntryInGrid(std::deque<Creature*>&, uint32, float) const;
+template TC_GAME_API void WorldObject::GetCreatureListWithEntryInGrid(std::vector<Creature*>&, uint32, float) const;
+
+template TC_GAME_API void WorldObject::GetPlayerListInGrid(std::list<Player*>&, float) const;
+template TC_GAME_API void WorldObject::GetPlayerListInGrid(std::deque<Player*>&, float) const;
+template TC_GAME_API void WorldObject::GetPlayerListInGrid(std::vector<Player*>&, float) const;
