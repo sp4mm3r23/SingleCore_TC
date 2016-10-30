@@ -578,13 +578,13 @@ void WorldSession::HandleMessagechatOpcode(WorldPacket& recvData)
 
             if (Channel* chn = ChannelMgr::GetChannelForPlayerByNamePart(channel, sender))
             {
-                // Playerbot mod: broadcast message to bot members
-                if (_player->GetPlayerbotMgr() && lang != LANG_ADDON && chn->GetFlags() & 0x18)
-                {
-                    _player->GetPlayerbotMgr()->HandleCommand(type, msg);
-                }
-                sRandomPlayerbotMgr.HandleCommand(type, msg, *_player);
-                // END Playerbot mod
+                    // Playerbot mod: broadcast message to bot members
+                    if (_player->GetPlayerbotMgr() && lang != LANG_ADDON && chn->GetFlags() & 0x18)
+                    {
+                        _player->GetPlayerbotMgr()->HandleCommand(type, msg);
+                    }
+                    sRandomPlayerbotMgr.HandleCommand(type, msg, *_player);
+                    // END Playerbot mod
                 sScriptMgr->OnPlayerChat(sender, type, lang, msg, chn);
                 chn->Say(sender->GetGUID(), msg.c_str(), lang);
             }
