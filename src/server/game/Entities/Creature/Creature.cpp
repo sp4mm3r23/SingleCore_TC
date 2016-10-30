@@ -1488,23 +1488,21 @@ void Creature::LoadEquipment(int8 id, bool force /*= true*/)
 
 void Creature::SetSpawnHealth()
 {
+    if (!m_creatureData)
+        return;
+
     uint32 curhealth;
 
     if (!m_regenHealth)
     {
-        if (m_creatureData)
+        curhealth = m_creatureData->curhealth;
+        if (curhealth)
         {
-            curhealth = m_creatureData->curhealth;
-            if (curhealth)
-            {
-                curhealth = uint32(curhealth*_GetHealthMod(GetCreatureTemplate()->rank));
-                if (curhealth < 1)
-                    curhealth = 1;
-            }
-            SetPower(POWER_MANA, m_creatureData->curmana);
+            curhealth = uint32(curhealth*_GetHealthMod(GetCreatureTemplate()->rank));
+            if (curhealth < 1)
+                curhealth = 1;
         }
-        else
-            curhealth = GetHealth();
+        SetPower(POWER_MANA, m_creatureData->curmana);
     }
     else
     {
@@ -1707,6 +1705,7 @@ void Creature::setDeathState(DeathState s)
             SaveRespawnTime(0, false);
 
         ReleaseFocus(nullptr, false); // remove spellcast focus
+        DoNotReacquireTarget(); // cancel delayed re-target
         SetTarget(ObjectGuid::Empty); // drop target - dead mobs shouldn't ever target things
 
         SetUInt32Value(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_NONE);
@@ -1810,35 +1809,23 @@ void Creature::Respawn(bool force)
                 SetNativeDisplayId(displayID);
                 SetByteValue(UNIT_FIELD_BYTES_0, UNIT_BYTES_0_OFFSET_GENDER, minfo->gender);
             }
+        //Re-initialize reactstate that could be altered by movementgenerators
+        InitializeReactState();
 
-            //Call AI respawn virtual function//Call AI respawn virtual function
-            if (IsAIEnabled)
-            {
-                //reset the AI to be sure no dirty or uninitialized values will be used till next tick
-                AI()->Reset();
-                m_TriggerJustRespawned = true;//delay event to next tick so all creatures are created on the map before processing
-            }
-
-            GetMotionMaster()->InitDefault();
-
-            uint32 poolid = GetSpawnId() ? sPoolMgr->IsPartOfAPool<Creature>(GetSpawnId()) : 0;
-            if (poolid)
-                sPoolMgr->UpdatePool<Creature>(poolid, GetSpawnId());
-
-            //Re-initialize reactstate that could be altered by movementgenerators
-            InitializeReactState();
+        //Call AI respawn virtual function
+        if (IsAIEnabled)
+        {
+            //reset the AI to be sure no dirty or uninitialized values will be used till next tick
+            AI()->Reset();
+            m_TriggerJustRespawned = true;//delay event to next tick so all creatures are created on the map before processing
         }
-        UpdateObjectVisibility();
-    }
-    else
-    {
-        if (m_spawnId)
-            GetMap()->RemoveCreatureRespawnTime(m_spawnId, 0, 0, true);
+
+        uint32 poolid = GetSpawnId() ? sPoolMgr->IsPartOfAPool<Creature>(GetSpawnId()) : 0;
+        if (poolid)
+            sPoolMgr->UpdatePool<Creature>(poolid, GetSpawnId());
     }
 
-    TC_LOG_DEBUG("entities.unit", "Respawning creature %s (%s)",
-        GetName().c_str(), GetGUID().ToString().c_str());
-
+    UpdateObjectVisibility();
 }
 
 void Creature::ForcedDespawn(uint32 timeMSToDespawn, Seconds const& forceRespawnTimer)

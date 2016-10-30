@@ -292,14 +292,18 @@ void Spell::EffectEnvironmentalDMG(SpellEffIndex /*effIndex*/)
     if (!unitTarget || !unitTarget->IsAlive())
         return;
 
-    uint32 absorb = 0;
-    uint32 resist = 0;
-
-    m_caster->CalcAbsorbResist(unitTarget, m_spellInfo->GetSchoolMask(), SPELL_DIRECT_DAMAGE, damage, &absorb, &resist, m_spellInfo);
-
-    m_caster->SendSpellNonMeleeDamageLog(unitTarget, m_spellInfo->Id, damage, m_spellInfo->GetSchoolMask(), absorb, resist, false, 0, false);
+    // CalcAbsorbResist already in Player::EnvironmentalDamage
     if (unitTarget->GetTypeId() == TYPEID_PLAYER)
         unitTarget->ToPlayer()->EnvironmentalDamage(DAMAGE_FIRE, damage);
+    else
+    {
+        DamageInfo damageInfo(m_caster, unitTarget, damage, m_spellInfo, m_spellInfo->GetSchoolMask(), SPELL_DIRECT_DAMAGE, BASE_ATTACK);
+        m_caster->CalcAbsorbResist(damageInfo);
+
+        uint32 absorb = damageInfo.GetAbsorb();
+        uint32 resist = damageInfo.GetResist();
+        m_caster->SendSpellNonMeleeDamageLog(unitTarget, m_spellInfo->Id, damage, m_spellInfo->GetSchoolMask(), absorb, resist, false, 0, false);
+    }
 }
 
 void Spell::EffectSchoolDMG(SpellEffIndex effIndex)
@@ -2023,7 +2027,7 @@ void Spell::EffectOpenLock(SpellEffIndex effIndex)
     if (gameObjTarget)
         SendLoot(guid, LOOT_SKINNING);
     else if (itemTarget)
-        itemTarget->SetFlag(ITEM_FIELD_FLAGS, ITEM_FLAG_UNLOCKED);
+        itemTarget->SetFlag(ITEM_FIELD_FLAGS, ITEM_FIELD_FLAG_UNLOCKED);
 
     // not allow use skill grow at item base open
     if (!m_CastItem && skillId != SKILL_NONE)
@@ -2686,7 +2690,7 @@ void Spell::EffectEnchantItemPerm(SpellEffIndex effIndex)
     else
     {
         // do not increase skill if vellum used
-        if (!(m_CastItem && m_CastItem->GetTemplate()->Flags & ITEM_PROTO_FLAG_TRIGGERED_CAST))
+        if (!(m_CastItem && m_CastItem->GetTemplate()->Flags & ITEM_FLAG_NO_REAGENT_COST))
             player->UpdateCraftSkill(m_spellInfo->Id);
 
         uint32 enchant_id = m_spellInfo->Effects[effIndex].MiscValue;
@@ -3536,6 +3540,7 @@ void Spell::EffectSummonObjectWild(SpellEffIndex effIndex)
         GameObject* linkedGO = new GameObject();
         if (linkedGO->Create(map->GenerateLowGuid<HighGuid::GameObject>(), linkedEntry, map, m_caster->GetPhaseMask(), Position(x, y, z, target->GetOrientation()), rot, 255, GO_STATE_READY))
         {
+            pGameObj->SetLinkedTrap(linkedGO);
             linkedGO->SetRespawnTime(duration > 0 ? duration/IN_MILLISECONDS : 0);
             linkedGO->SetSpellId(m_spellInfo->Id);
 
@@ -4579,8 +4584,8 @@ void Spell::EffectQuestComplete(SpellEffIndex effIndex)
         uint16 logSlot = player->FindQuestSlot(questId);
         if (logSlot < MAX_QUEST_LOG_SIZE)
             player->AreaExploredOrEventHappens(questId);
-        else if (player->CanTakeQuest(quest, false))    // Check if the quest has already been turned in.
-            player->SetRewardedQuest(questId);          // If not, set status to rewarded without broadcasting it to client.
+        else if (quest->HasFlag(QUEST_FLAGS_TRACKING))  // Check if the quest is used as a serverside flag.
+            player->SetRewardedQuest(questId);          // If so, set status to rewarded without broadcasting it to client.
     }
 }
 
@@ -4757,7 +4762,7 @@ void Spell::EffectLeapBack(SpellEffIndex effIndex)
     float speedxy = m_spellInfo->Effects[effIndex].MiscValue / 10.f;
     float speedz = damage/ 10.f;
     //1891: Disengage
-    m_caster->JumpTo(speedxy, speedz, m_spellInfo->SpellIconID != 1891);
+    unitTarget->JumpTo(speedxy, speedz, m_spellInfo->SpellIconID != 1891);
 }
 
 void Spell::EffectQuestClear(SpellEffIndex effIndex)
@@ -5144,6 +5149,7 @@ void Spell::EffectTransmitted(SpellEffIndex effIndex)
         GameObject* linkedGO = new GameObject;
         if (linkedGO->Create(cMap->GenerateLowGuid<HighGuid::GameObject>(), linkedEntry, cMap, m_caster->GetPhaseMask(), pos, rot, 255, GO_STATE_READY))
         {
+            pGameObj->SetLinkedTrap(linkedGO);
             linkedGO->SetRespawnTime(duration > 0 ? duration/IN_MILLISECONDS : 0);
             //linkedGO->SetUInt32Value(GAMEOBJECT_LEVEL, m_caster->getLevel());
             linkedGO->SetSpellId(m_spellInfo->Id);
@@ -5171,7 +5177,7 @@ void Spell::EffectProspecting(SpellEffIndex /*effIndex*/)
     if (!player)
         return;
 
-    if (!itemTarget || !(itemTarget->GetTemplate()->Flags & ITEM_PROTO_FLAG_PROSPECTABLE))
+    if (!itemTarget || !(itemTarget->GetTemplate()->Flags & ITEM_FLAG_IS_PROSPECTABLE))
         return;
 
     if (itemTarget->GetCount() < 5)
@@ -5196,7 +5202,7 @@ void Spell::EffectMilling(SpellEffIndex /*effIndex*/)
     if (!player)
         return;
 
-    if (!itemTarget || !(itemTarget->GetTemplate()->Flags & ITEM_PROTO_FLAG_MILLABLE))
+    if (!itemTarget || !(itemTarget->GetTemplate()->Flags & ITEM_FLAG_IS_MILLABLE))
         return;
 
     if (itemTarget->GetCount() < 5)
