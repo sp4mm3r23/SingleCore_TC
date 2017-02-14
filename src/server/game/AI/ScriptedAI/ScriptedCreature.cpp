@@ -448,6 +448,9 @@ BossAI::BossAI(Creature* creature, uint32 bossId) : ScriptedAI(creature),
 {
     if (instance)
         SetBoundary(instance->GetBossBoundary(bossId));
+
+    m_CheckAreaTimer = 1 * TimeConstants::IN_MILLISECONDS;
+
     scheduler.SetValidator([this]
     {
         return !me->HasUnitState(UNIT_STATE_CASTING);

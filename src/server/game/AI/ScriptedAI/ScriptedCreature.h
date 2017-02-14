@@ -368,6 +368,25 @@ class TC_GAME_API BossAI : public ScriptedAI
         void _DespawnAtEvade(uint32 delayToRespawn = 30, Creature* who = nullptr);
         void _DespawnAtEvade(Seconds const& time, Creature* who = nullptr) { _DespawnAtEvade(uint32(time.count()), who); }
 
+        bool CheckInArea(uint32 const diff, uint32 areaId)
+        {
+            if (m_CheckAreaTimer <= diff)
+                m_CheckAreaTimer = 3 * TimeConstants::IN_MILLISECONDS;
+            else
+            {
+                m_CheckAreaTimer -= diff;
+                return true;
+            }
+
+            if (me->GetAreaId() != areaId)
+            {
+                EnterEvadeMode();
+                return false;
+            }
+
+            return true;
+        }
+
         void TeleportCheaters();
 
         EventMap events;
@@ -376,6 +395,7 @@ class TC_GAME_API BossAI : public ScriptedAI
 
     private:
         uint32 const _bossId;
+        uint32 m_CheckAreaTimer;
 };
 
 class TC_GAME_API WorldBossAI : public ScriptedAI

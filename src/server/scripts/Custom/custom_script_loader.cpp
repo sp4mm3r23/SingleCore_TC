@@ -20,6 +20,18 @@
 
 // The name of this function should match:
 // void Add${NameOfDirectory}Scripts()
+
+     // spell
+void AddSC_priest_spell_scripts_pl();
+
+     // zone
+void AddSC_gilneas_pl();
+
 void AddCustomScripts()
 {
+    // spell
+    AddSC_priest_spell_scripts_pl();
+
+    // zone
+    AddSC_gilneas_pl();
 }

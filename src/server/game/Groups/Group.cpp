@@ -35,6 +35,7 @@
 #include "Util.h"
 #include "LFGMgr.h"
 #include "UpdateFieldFlags.h"
+#include "GuildMgr.h"
 #include "SpellAuras.h"
 #include "PartyPackets.h"
 #include "LootPackets.h"
@@ -2402,6 +2403,56 @@ bool Group::isBFGroup() const
 bool Group::IsCreated() const
 {
     return GetMembersCount() > 0;
+}
+
+void Group::UpdateGuildAchievementCriteria(CriteriaTypes type, uint64 miscValue1, uint64 miscValue2, uint64 miscValue3, Unit const* unit, Player* referencePlayer)
+{
+    // We will update criteria for each guild in group list but only once
+    std::list<uint32> guildList;
+    for (GroupReference* iter = GetFirstMember(); iter != nullptr; iter = iter->next())
+    {
+        if (Player* player = iter->GetSource())
+        {
+            if (referencePlayer)
+            {
+                if (!player->IsAtGroupRewardDistance(referencePlayer))
+                    continue;
+
+                if (!player->IsAlive())
+                    continue;
+            }
+
+            uint32 guildId = player->GetGuildId();
+            if (guildId == 0)
+                continue;
+
+            if (!guildList.empty())
+            {
+                bool unique = true;
+                for (std::list<uint32>::const_iterator itr = guildList.begin(); itr != guildList.end(); ++itr)
+                {
+                    if ((*itr) == guildId)
+                    {
+                        unique = false;
+                        break;
+                    }
+                }
+
+                if (unique && guildId)
+                {
+                    guildList.push_back(guildId);
+                    if (Guild* guild = sGuildMgr->GetGuildById(guildId))
+                        guild->GetAchievementMgr().UpdateCriteria(type, miscValue1, miscValue2, miscValue3, unit, player);
+                }
+            }
+            else
+            {
+                guildList.push_back(guildId);
+                if (Guild* guild = sGuildMgr->GetGuildById(guildId))
+                    guild->GetAchievementMgr().UpdateCriteria(type, miscValue1, miscValue2, miscValue3, unit, player);
+            }
+        }
+    }
 }
 
 ObjectGuid Group::GetLeaderGUID() const
