@@ -1,0 +1,208 @@
+#######################################################################################
+#
+# Class Spell
+#
+#######################################################################################
+
+-- Warrior:
+* Victory Rush - http://www.wowhead.com/spell=34428/victory-rush
+
+ -- Mage:
+* Conjure Refreshment - http://www.wowhead.com/spell=190336/conjure-refreshment
+* Frostbolt - http://www.wowhead.com/spell=228597/frostbolt
+
+-- Druid
+*
+
+-- Hunter:
+* Roar of Sacrifice - http://www.wowhead.com/spell=53480/roar-of-sacrifice
+
+-- Paladin:
+* Divine Steed - http://www.wowhead.com/spell=190784/divine-steed
+
+-- Demon Hunter:
+*
+
+-- Monk
+*
+
+-- Warlock
+*
+
+-- Priest
+* Surge of Light - http://www.wowhead.com/spell=109186/surge-of-light
+* Surge of Light - http://www.wowhead.com/spell=114255/surge-of-light
+* Shadowfiend - http://www.wowhead.com/spell=34433/shadowfiend
+* Mindbender - http://www.wowhead.com/spell=123040/mindbender
+* Power Word: Shield - http://www.wowhead.com/spell=17/power-word-shield
+* Levitate - http://www.wowhead.com/spell=1706/levitate
+
+-- Rogue
+*
+
+-- Shaman
+*
+
+-- Death Knight
+*
+
+#######################################################################################
+#
+# Instances
+#
+#######################################################################################
+
+-- Cataclysm:
+* Blackrock Caverns - trash mobs DONE
+* End Time - trash mobs DONE
+* Grim Batol - trash mobs DONE
+* Halls of Origination - trash mobs DONE
+* Hour of Twilight - trash mobs DONE
+* Lost City of the Tol'vir - trash mobs DONE
+* The Stonecore - trash mobs DONE
+* The Vortex Pinnacle - trash mobs DONE
+* Throne of the Tides - trash mobs DONE
+* Well of Eternity - trash mobs DONE
+* Zul'Aman - trash mobs DONE
+* Zul'Gurub - trash mobs DONE
+
+-- Classic:
+* Blackfathom Deeps - trash mobs REDONE
+* Blackrock Depths - trash mobs REDONE
+* Blackrock Spire - trash mobs REDONE
+* Dire Maul - trash mobs REDONE
+* Gnomeregan - trash mobs REDONE
+* Maraudon - trash mobs REDONE
+* Razorfen Downs - trash mobs REDONE
+* Razorfen Kraul - trash mobs REDONE
+* Shadowfang Keep - trash mobs REDONE
+* Stratholme - trash mobs REDONE
+* Sunken Temple - trash mobs REDONE
+* The Deadmines - trash mobs REDONE
+* The Stockade - trash mobs REDONE
+* Uldaman - trash mobs REDONE
+* Wailing Caverns - trash mobs REDONE
+* Zul'Farrak - trash mobs REDONE
+
+-- Pandaria:
+* Mogu'shan Palace - trash mobs DONE
+* Ragefire Chasm - trash mobs REDONE
+* Scarlet Halls - trash mobs DONE
+* Scarlet Monastery  - trash mobs DONE
+* Shado-Pan Monastery - trash mobs DONE
+* Siege of Niuzao Temple  - trash mobs DONE
+* Stormstout Brewery  - trash mobs DONE
+* Temple of the Jade Serpent  - trash mobs DONE
+
+-- The Burning Crusade:
+* Auchindoun-Auchenai Crypts - trash mobs REDONE
+* Auchindoun-Mana-Tombs - trash mobs REDONE
+* Auchindoun-Sethekk Halls - trash mobs REDONE
+* Auchindoun-Shadow Labyrinth - trash mobs REDONE
+* Caverns of Time-Old Hillsbrad Foothills - trash mobs REDONE
+* Caverns of Time-The Black Morass - trash mobs REDONE
+* Coilfang Reservoir-The Slave Pens - trash mobs REDONE
+* Coilfang Reservoir-The Steamvault - trash mobs REDONE
+* Coilfang Reservoir-The Underbog - trash mobs REDONE
+* Hellfire Citadel-Hellfire Ramparts - trash mobs REDONE
+* Hellfire Citadel-The Blood Furnace - trash mobs REDONE
+* Hellfire Citadel-The Shattered Halls - trash mobs REDONE
+* Magisters' Terrace - trash mobs REDONE
+* Tempest Keep-The Arcatraz - trash mobs REDONE
+* Tempest Keep-The Botanica - trash mobs REDONE
+* Tempest Keep-The Mechanar - trash mobs REDONE
+
+-- Wrath of the Lich King:
+* Ahn'kahet - The Old Kingdom  - trash mobs REDONE
+* Azjol-Nerub  - trash mobs REDONE
+* Drak'Tharon Keep  - trash mobs REDONE
+* Gundrak  - trash mobs REDONE
+* Halls of Lightning  - trash mobs REDONE
+* Halls of Reflection  - trash mobs REDONE
+* Halls of Stone  - trash mobs REDONE
+* Pit of Saron  - trash mobs REDONE
+* The Culling of Stratholme  - trash mobs REDONE
+* The Nexus  - trash mobs REDONE
+* The Oculus  - trash mobs REDONE
+* The Violet Hold  - trash mobs REDONE
+* Trial of the Champion  - trash mobs REDONE
+* Utgarde Keep  - trash mobs REDONE
+* Utgarde Pinnacle  - trash mobs REDONE
+
+#######################################################################################
+#
+# Raids
+#
+#######################################################################################
+
+-- Cataclysm:
+* Baradin Hold - trash mobs DONE
+* Blackwing Descent - trash mobs DONE
+* Dragon Soul - trash mobs DONE
+* Firelands - trash mobs DONE
+* The Bastion of Twilight - trash mobs DONE
+
+-- Classic:
+* Blackwing Lair - trash mobs REDONE
+* Molten Core - trash mobs REDONE
+* Ruins of Ahn'Qiraj - trash mobs REDONE
+* Temple of Ahn'Qiraj - trash mobs REDONE
+
+-- The Burning Crusade:
+* Black Temple - trash mobs REDONE
+* Gruul's Lair - trash mobs REDONE
+* Hyjal Summit - trash mobs REDONE
+* Karazhan - trash mobs REDONE
+* Magtheridon's Lair - trash mobs REDONE
+* Serpentshrine Cavern - trash mobs REDONE
+* Sunwell Plateau - trash mobs REDONE
+* The Eye - trash mobs REDONE
+
+-- Wrath of the Lich King:
+* Icecrown Citadel - trash mobs REDONE
+* Naxxramas - trash mobs REDONE
+* Onyxia's Lair - trash mobs REDONE
+* The Obsidian Sanctum - trash mobs REDONE
+* The Ruby Sanctum - trash mobs REDONE
+* Trial of the Crusader - trash mobs REDONE
+* Ulduar - trash mobs REDONE
+* Vault of Archavon - trash mobs REDONE
+
+#######################################################################################
+#
+# Zone
+#
+#######################################################################################
+
+-- Outland: 
+* Blade's Edge Mountains - REDONE
+
+-- The Maelstrom:
+* Deepholm - DONE  
+* Kezan - DONE  
+* The Lost Isles - DONE  
+* Tol Barad Peninsula - DONE 
+* Tol Barad - DONE
+
+#######################################################################################
+#
+# Battleground
+#
+#######################################################################################
+
+
+#######################################################################################
+#
+# Area
+#
+#######################################################################################
+
+-- Mist of Pandaria
+* The Tiger's Peak
+* Arena der Tol'vir
+
+-- Dreanor
+*
+
+-- Broken Isles
+*
