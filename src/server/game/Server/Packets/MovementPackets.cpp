@@ -209,10 +209,10 @@ ByteBuffer& WorldPackets::operator<<(ByteBuffer& data, Movement::MonsterSplineFi
 
 ByteBuffer& operator<<(ByteBuffer& data, WorldPackets::Movement::MonsterSplineSpellEffectExtraData const& spellEffectExtraData)
 {
-    data << spellEffectExtraData.field_1;
-    data << uint32(spellEffectExtraData.field_2);
-    data << uint32(spellEffectExtraData.field_3);
-    data << uint32(spellEffectExtraData.field_4);
+    data << spellEffectExtraData.TargetGUID;
+    data << uint32(spellEffectExtraData.SpellVisualID);
+    data << uint32(spellEffectExtraData.ProgressCurveID);
+    data << uint32(spellEffectExtraData.ParabolicCurveID);
 
     return data;
 }
@@ -343,10 +343,10 @@ void WorldPackets::Movement::CommonMovement::WriteCreateObjectSplineDataBlock(::
 
         //if (HasSpellEffectExtraData)
         //{
-        //    data << ObjectGuid();
-        //    data << uint32();
-        //    data << uint32();
-        //    data << uint32();
+        //    data << ObjectGuid(TargetGUID);
+        //    data << uint32(SpellVisualID);
+        //    data << uint32(ProgressCurveID);
+        //    data << uint32(ParabolicCurveID);
         //}
     }
 }
@@ -378,7 +378,7 @@ void WorldPackets::Movement::MonsterMove::InitializeSplineData(::Movement::MoveS
         movementSpline.SpecialTime = moveSpline.effect_start_time;
     }
 
-    if (splineFlags.unknown6)
+    if (splineFlags.fadeObject)
         movementSpline.SpecialTime = moveSpline.effect_start_time;
 
     ::Movement::Spline<int32> const& spline = moveSpline.spline;
