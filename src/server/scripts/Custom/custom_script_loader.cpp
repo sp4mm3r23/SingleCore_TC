@@ -23,6 +23,8 @@
 
      // spell
 void AddSC_priest_spell_scripts_pl();
+void AddSC_demon_hunter_spell_scripts_pl();
+void AddSC_deathknight_spell_scripts_pl();
 
      // zone
 void AddSC_gilneas_pl();
@@ -31,6 +33,8 @@ void AddCustomScripts()
 {
     // spell
     AddSC_priest_spell_scripts_pl();
+    AddSC_demon_hunter_spell_scripts_pl();
+    AddSC_deathknight_spell_scripts_pl();
 
     // zone
     AddSC_gilneas_pl();
