@@ -655,7 +655,7 @@ public:
     }
 };
 
-void AddSC_zone_mardum()
+void AddSC_zone_mardum_pl()
 {
     new npc_sevis_brightflame_1;
     new npc_sevis_brightflame_2;
