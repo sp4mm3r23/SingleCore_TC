@@ -25,7 +25,8 @@
 enum DeathKnightSpells
 {
     SPELL_DK_SPELL_DESECRATED_GROUND            = 118009,
-    SPELL_DK_SPELL_DESECRATED_GROUND_IMMUNE     = 115018
+    SPELL_DK_SPELL_DESECRATED_GROUND_IMMUNE     = 115018,
+    SPELL_DK_FROST_FEVER                        = 55095
 };
 
 // 118009 - Desecrated ground
