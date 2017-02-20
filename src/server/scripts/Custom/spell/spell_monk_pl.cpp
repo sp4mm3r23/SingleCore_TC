@@ -28,7 +28,8 @@ enum MonkSpells
     SPELL_MONK_CHI_WAVE_HEAL = 132463
 };
 
-// Chi Wave (healing bolt) - 173545
+// 173545 - Chi Wave (healing bolt)
+// 7.x.x
 class spell_monk_chi_wave_healing_bolt: public SpellScriptLoader
 {
     public:
