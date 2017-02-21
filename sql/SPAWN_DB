@@ -1,0 +1,9 @@
+/* Cataclysm */
+-- Gilneas 
+Creature 4000000 - 4000146 (not complete ~ 4001000)
+
+/* Legion */
+-- Mardum zone Demon Hunter 
+Creature 7000000 - 7001756
+GameObject 7000000- 7000098
+
