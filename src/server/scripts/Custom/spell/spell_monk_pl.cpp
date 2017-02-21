@@ -84,12 +84,13 @@ class spell_monk_roll : public SpellScriptLoader
         class spell_monk_roll_SpellScript : public SpellScript
         {
             PrepareSpellScript(spell_monk_roll_SpellScript);
+
             bool Validate(SpellInfo const* /*spell*/) override
-        {
-            if (!sSpellMgr->GetSpellInfo(SPELL_MONK_ROLL_TRIGGER))
-                return false;
-            return true;
-        }
+            {
+                if (!sSpellMgr->GetSpellInfo(SPELL_MONK_ROLL_TRIGGER))
+                    return false;
+                return true;
+            }
 
             bool Load() override
             {
