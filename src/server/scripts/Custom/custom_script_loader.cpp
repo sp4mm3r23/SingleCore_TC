@@ -29,6 +29,7 @@ void AddSC_monk_spell_scripts_pl();
 
      // zone
 void AddSC_gilneas_pl();
+void AddSC_zone_mardum_pl();
 
 void AddCustomScripts()
 {
@@ -40,4 +41,5 @@ void AddCustomScripts()
 
     // zone
     AddSC_gilneas_pl();
+    AddSC_zone_mardum_pl();
 }
