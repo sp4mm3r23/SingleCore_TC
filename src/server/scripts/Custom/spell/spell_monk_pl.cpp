@@ -27,7 +27,10 @@ enum MonkSpells
 {
     SPELL_MONK_CHI_WAVE_HEAL                            = 132463,
     SPELL_MONK_ROLL                                     = 109132,
-    SPELL_MONK_ROLL_TRIGGER                             = 107427
+    SPELL_MONK_ROLL_TRIGGER                             = 107427,
+    SPELL_MONK_CREATE_CHI_SPHERE                        = 121283,
+    SPELL_MONK_POWER_STRIKES_AURA                       = 129914
+
 };
 
 enum MonkCreatures
@@ -279,6 +282,44 @@ class spell_monk_zen_flight_check: public SpellScriptLoader
         }
 };
 
+// Power Strikes - 121817
+// 7.x.x
+class spell_monk_power_strikes: public SpellScriptLoader
+{
+    public:
+        spell_monk_power_strikes() : SpellScriptLoader("spell_monk_power_strikes") { }
+
+        class spell_monk_power_strikes_SpellScript : public SpellScript
+        {
+            PrepareSpellScript(spell_monk_power_strikes_SpellScript);
+
+            void HandleAfterCast()
+            {
+                Unit* caster = GetCaster();
+                
+                if (caster->HasAura(SPELL_MONK_POWER_STRIKES_AURA))
+                {
+                    if (caster->GetPower(POWER_CHI) >= caster->GetMaxPower(POWER_CHI))
+                        caster->CastSpell(caster, SPELL_MONK_CREATE_CHI_SPHERE, true);
+                    else
+                        caster->ModifyPower(POWER_CHI, 1);
+
+                    caster->RemoveAura(SPELL_MONK_POWER_STRIKES_AURA);
+                }
+            }
+
+            void Register() override
+            {
+                AfterCast += SpellCastFn(spell_monk_power_strikes_SpellScript::HandleAfterCast);
+            }
+        };
+
+        SpellScript* GetSpellScript() const override
+        {
+            return new spell_monk_power_strikes_SpellScript();
+        }
+};
+
 void AddSC_monk_spell_scripts_pl()
 {
     new spell_monk_chi_wave_healing_bolt();
@@ -286,4 +327,5 @@ void AddSC_monk_spell_scripts_pl()
     new spell_monk_transcendence_transfer();
     new spell_monk_dampen_harm();
     new spell_monk_zen_flight_check();
+    new spell_monk_power_strikes();
 }
