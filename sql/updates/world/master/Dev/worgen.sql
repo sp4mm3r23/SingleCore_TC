@@ -1,6 +1,6 @@
----------------------------- Gilneas Phase 1 ------------------------------
+-- Gilneas Phase 1
 
----------------------------- Gilneas spell area ------------------------------
+-- Gilneas spell area
 DELETE FROM `spell_area` WHERE `area` IN (4714,4725,4726,4727,4728,4729,4730,4731,4732,4733,4734,4735,4736,4755,4756,4757,4758,4759,4761,4762,4774,4786,4787,
 4788,4789,4790,4791,4792,4793,4794,4806,4807,4808,4810,4811,4817,4818,4841,4842,4858,4868,4869,5432,5720);
 INSERT INTO `spell_area` (`spell`,`area`,`quest_start`,`quest_end`,`aura_spell`,`racemask`,`gender`,`autocast`,`quest_start_status`,`quest_end_status`) VALUES
@@ -84,7 +84,7 @@ DELETE FROM `creature_addon` WHERE `guid` =314725;
 INSERT INTO `creature_addon` (`guid`, `mount`, `bytes2`) VALUES
 (314725, 14582, 2);
 
----------------------------- Gilneas Phase 2 ------------------------------
+-- Gilneas Phase 2
 
 UPDATE `creature` SET `PhaseGroup` = 368 WHERE `guid` = 314732; -- Slain Guard (phase 1-2)
 UPDATE `creature` SET `PhaseGroup` = 368 WHERE `guid` = 314714; -- Slain Guard (phase 1-2)
@@ -321,5 +321,5 @@ DELETE FROM `creature_text` WHERE `entry` IN (35118, 47091);
 INSERT INTO `creature_text` (`entry`, `groupid`, `id`, `text`, `type`, `language`, `probability`, `emote`, `duration`, `sound`, `comment`) VALUES
 (35118, 1, 0, "%s becomes enraged!", 16, 0, 100, 0, 0, 0, "Bloodfang Worgen - combat Enrage");
 
----------------------------- Gilneas Phase 3 ------------------------------
+-- Gilneas Phase 3
 
