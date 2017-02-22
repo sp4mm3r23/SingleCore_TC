@@ -189,9 +189,60 @@ class spell_monk_transcendence_transfer: public SpellScriptLoader
         }
 };
 
+// Dampen Harm - 122278
+// 7.x.x
+class spell_monk_dampen_harm: public SpellScriptLoader
+{
+    public:
+        spell_monk_dampen_harm() : SpellScriptLoader("spell_monk_dampen_harm") { }
+
+        class spell_monk_dampen_harm_AuraScript : public AuraScript
+        {
+            PrepareAuraScript(spell_monk_dampen_harm_AuraScript);
+
+            int32 healthPct;
+
+            bool Load()
+            {
+                healthPct = GetSpellInfo()->GetEffect(EFFECT_0)->CalcValue(GetCaster());
+                return GetUnitOwner()->ToPlayer();
+            }
+
+            void CalculateAmount(AuraEffect const* /*auraEff*/, int32& amount, bool& /*canBeRecalculated*/)
+            {
+                amount = -1;
+            }
+
+            void Absorb(AuraEffect* auraEff, DamageInfo& dmgInfo, uint32& absorbAmount)
+            {
+                Unit* target = GetTarget();
+
+                uint32 health = target->CountPctFromMaxHealth(healthPct);
+
+                if (dmgInfo.GetDamage() < health)
+                    return;
+
+                absorbAmount = dmgInfo.GetDamage() / 2;
+                auraEff->GetBase()->DropCharge();
+            }
+
+            void Register()
+            {
+                DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_monk_dampen_harm_AuraScript::CalculateAmount, EFFECT_0, SPELL_AURA_SCHOOL_ABSORB);
+                OnEffectAbsorb += AuraEffectAbsorbFn(spell_monk_dampen_harm_AuraScript::Absorb, EFFECT_0, SPELL_AURA_SCHOOL_ABSORB);
+            }
+        };
+
+        AuraScript* GetAuraScript() const
+        {
+            return new spell_monk_dampen_harm_AuraScript();
+        }
+};
+
 void AddSC_monk_spell_scripts_pl()
 {
     new spell_monk_chi_wave_healing_bolt();
     new spell_monk_roll();
     new spell_monk_transcendence_transfer();
+    new spell_monk_dampen_harm();
 }
