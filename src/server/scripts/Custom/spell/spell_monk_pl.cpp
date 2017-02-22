@@ -226,16 +226,56 @@ class spell_monk_dampen_harm: public SpellScriptLoader
                 auraEff->GetBase()->DropCharge();
             }
 
-            void Register()
+            void Register() override
             {
                 DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_monk_dampen_harm_AuraScript::CalculateAmount, EFFECT_0, SPELL_AURA_SCHOOL_ABSORB);
                 OnEffectAbsorb += AuraEffectAbsorbFn(spell_monk_dampen_harm_AuraScript::Absorb, EFFECT_0, SPELL_AURA_SCHOOL_ABSORB);
             }
         };
 
-        AuraScript* GetAuraScript() const
+        AuraScript* GetAuraScript() const override
         {
             return new spell_monk_dampen_harm_AuraScript();
+        }
+};
+
+// Zen Flight - 125883
+// 7.x.x
+class spell_monk_zen_flight_check: public SpellScriptLoader
+{
+    public:
+        spell_monk_zen_flight_check() : SpellScriptLoader("spell_monk_zen_flight_check") { }
+
+        class spell_monk_zen_flight_check_SpellScript : public SpellScript
+        {
+            PrepareSpellScript(spell_monk_zen_flight_check_SpellScript);
+
+            SpellCastResult CheckTarget()
+            {
+                if (Player* _player = GetCaster()->ToPlayer())
+                {
+                    if (_player->GetMap()->IsBattlegroundOrArena())
+                        return SPELL_FAILED_NOT_IN_BATTLEGROUND;
+
+                    if (!_player->HasSpell(90267) && (_player->GetMapId() == 1 || _player->GetMapId() == 0))
+                        return SPELL_FAILED_NOT_HERE;
+
+                    if (!_player->HasSpell(115913) && (_player->GetMapId() == 870))
+                        return SPELL_FAILED_NOT_HERE;
+                }
+
+                return SPELL_CAST_OK;
+            }
+
+            void Register() override
+            {
+                OnCheckCast += SpellCheckCastFn(spell_monk_zen_flight_check_SpellScript::CheckTarget);
+            }
+        };
+
+        SpellScript* GetSpellScript() const override
+        {
+            return new spell_monk_zen_flight_check_SpellScript();
         }
 };
 
@@ -245,4 +285,5 @@ void AddSC_monk_spell_scripts_pl()
     new spell_monk_roll();
     new spell_monk_transcendence_transfer();
     new spell_monk_dampen_harm();
+    new spell_monk_zen_flight_check();
 }
