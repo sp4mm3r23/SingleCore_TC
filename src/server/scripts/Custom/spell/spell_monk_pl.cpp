@@ -30,6 +30,11 @@ enum MonkSpells
     SPELL_MONK_ROLL_TRIGGER                             = 107427
 };
 
+enum MonkCreatures
+{
+    TRANSCENDENCE_SPIRIT = 54569
+};
+
 // 173545 - Chi Wave (healing bolt)
 // 7.x.x
 class spell_monk_chi_wave_healing_bolt: public SpellScriptLoader
@@ -127,8 +132,66 @@ class spell_monk_roll : public SpellScriptLoader
         }
 };
 
+// Transcendence : Transfer - 119996
+// 7.x.x
+class spell_monk_transcendence_transfer: public SpellScriptLoader
+{
+    public:
+        spell_monk_transcendence_transfer() : SpellScriptLoader("spell_monk_transcendence_transfer") { }
+
+        class spell_monk_transcendence_transfer_SpellScript : public SpellScript
+        {
+            PrepareSpellScript(spell_monk_transcendence_transfer_SpellScript);
+
+            SpellCastResult CheckSpiritRange()
+            {
+                if (Unit* caster = GetCaster())
+                {
+                    for (Unit::ControlList::const_iterator itr = caster->m_Controlled.begin(); itr != caster->m_Controlled.end(); ++itr)
+                    {
+                        if ((*itr)->GetEntry() == TRANSCENDENCE_SPIRIT)
+                        {
+                            if ((*itr)->GetDistance(caster) > 40.0f)
+                                return SPELL_FAILED_DONT_REPORT;
+                        }
+                    }
+                }
+
+                return SPELL_CAST_OK;
+            }
+
+            void HandleDummy()
+            {
+                if (Unit* caster = GetCaster())
+                {
+                    for (Unit::ControlList::const_iterator itr = caster->m_Controlled.begin(); itr != caster->m_Controlled.end(); ++itr)
+                    {
+                        if ((*itr)->GetEntry() == TRANSCENDENCE_SPIRIT)
+                        {
+                            Creature* clone = (*itr)->ToCreature();
+                            if (clone && clone->AI())
+                                clone->AI()->DoAction(1);
+                        }
+                    }
+                }
+            }
+
+            void Register() override
+            {
+                OnCheckCast += SpellCheckCastFn(spell_monk_transcendence_transfer_SpellScript::CheckSpiritRange);
+                OnHit += SpellHitFn(spell_monk_transcendence_transfer_SpellScript::HandleDummy);
+            }
+        };
+
+        SpellScript* GetSpellScript() const override
+        {
+            return new spell_monk_transcendence_transfer_SpellScript();
+        }
+};
+
 void AddSC_monk_spell_scripts_pl()
 {
     new spell_monk_chi_wave_healing_bolt();
     new spell_monk_roll();
+    new spell_monk_transcendence_transfer();
 }
