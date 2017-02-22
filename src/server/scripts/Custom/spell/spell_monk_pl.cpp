@@ -29,7 +29,9 @@ enum MonkSpells
     SPELL_MONK_ROLL                                     = 109132,
     SPELL_MONK_ROLL_TRIGGER                             = 107427,
     SPELL_MONK_CREATE_CHI_SPHERE                        = 121283,
-    SPELL_MONK_POWER_STRIKES_AURA                       = 129914
+    SPELL_MONK_POWER_STRIKES_AURA                       = 129914,
+    SPELL_MONK_RENEWING_MIST_HOT                        = 119611,
+    SPELL_MONK_THUNDER_FOCUS_TEA                        = 116680
 
 };
 
@@ -320,6 +322,58 @@ class spell_monk_power_strikes: public SpellScriptLoader
         }
 };
 
+// Thunder Focus Tea - 116680
+// Called 116670, 191837
+// 7.x.x
+class spell_monk_thunder_focus_tea: public SpellScriptLoader
+{
+    public:
+        spell_monk_thunder_focus_tea() : SpellScriptLoader("spell_monk_thunder_focus_tea") { }
+
+        class spell_monk_thunder_focus_tea_SpellScript : public SpellScript
+        {
+            PrepareSpellScript(spell_monk_thunder_focus_tea_SpellScript);
+
+            void FilterTargets(std::list<WorldObject*>& unitList)
+            {
+                unitList.remove_if(Trinity::UnitAuraCheck(false, SPELL_MONK_RENEWING_MIST_HOT, GetCaster()->GetGUID()));
+            }
+
+            void HandleOnHit()
+            {
+                if (Player* _player = GetCaster()->ToPlayer())
+                {
+                    if (Unit* target = GetHitUnit())
+                    {
+                        if (_player->HasAura(SPELL_MONK_THUNDER_FOCUS_TEA))
+                        {
+                            std::list<Unit*> groupList;
+
+                            _player->GetPartyMembers(groupList);
+
+                            for (auto itr : groupList)
+                                if (Aura* renewingMistGroup = itr->GetAura(SPELL_MONK_RENEWING_MIST_HOT, _player->GetGUID()))
+                                    renewingMistGroup->RefreshDuration();
+
+                            _player->RemoveAura(SPELL_MONK_THUNDER_FOCUS_TEA);
+                        }
+                    }
+                }
+            }
+
+            void Register() override
+            {
+                OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_monk_thunder_focus_tea_SpellScript::FilterTargets, EFFECT_1, TARGET_UNIT_SRC_AREA_ALLY);
+                OnHit += SpellHitFn(spell_monk_thunder_focus_tea_SpellScript::HandleOnHit);
+            }
+        };
+
+        SpellScript* GetSpellScript() const override
+        {
+            return new spell_monk_thunder_focus_tea_SpellScript();
+        }
+};
+
 void AddSC_monk_spell_scripts_pl()
 {
     new spell_monk_chi_wave_healing_bolt();
@@ -328,4 +382,5 @@ void AddSC_monk_spell_scripts_pl()
     new spell_monk_dampen_harm();
     new spell_monk_zen_flight_check();
     new spell_monk_power_strikes();
+    new spell_monk_thunder_focus_tea();
 }
