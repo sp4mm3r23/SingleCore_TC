@@ -11103,13 +11103,11 @@ INSERT INTO `gossip_menu` (`entry`, `text_id`) VALUES
 UPDATE `quest_template` SET `RewardMoney`=498000, `VerifiedBuild`=23420 WHERE `ID`=42756; -- Hunger's End
 UPDATE `quest_template` SET `RewardMoney`=16600, `VerifiedBuild`=23420 WHERE `ID`=42567; -- Cursed to Wither
 UPDATE `quest_template` SET `RewardMoney`=162000, `VerifiedBuild`=23420 WHERE `ID`=38014; -- Feasting on the Dragon
-UPDATE `quest_template` SET `VerifiedBuild`=23420 WHERE `ID`=38015; -- On the Brink
 UPDATE `quest_template` SET `RewardMoney`=81000, `VerifiedBuild`=23420 WHERE `ID`=37862; -- Still Alive
 UPDATE `quest_template` SET `RewardMoney`=162000, `VerifiedBuild`=23420 WHERE `ID`=37860; -- You Scratch My Back...
 UPDATE `quest_template` SET `RewardMoney`=486000, `VerifiedBuild`=23420 WHERE `ID`=37861; -- The Nightborne Prince
 UPDATE `quest_template` SET `RewardMoney`=162000, `VerifiedBuild`=23420 WHERE `ID`=37959; -- The Hunger Returns
 UPDATE `quest_template` SET `RewardMoney`=162000, `VerifiedBuild`=23420 WHERE `ID`=37960; -- Leyline Abuse
-UPDATE `quest_template` SET `VerifiedBuild`=23420 WHERE `ID`=37963; -- Those Beyond Redemption
 UPDATE `quest_template` SET `RewardMoney`=162000, `VerifiedBuild`=23420 WHERE `ID`=37857; -- Runas Knows the Way
 UPDATE `quest_template` SET `RewardMoney`=162000, `VerifiedBuild`=23420 WHERE `ID`=37957; -- Runas the Shamed
 UPDATE `quest_template` SET `RewardMoney`=162000, `VerifiedBuild`=23420 WHERE `ID`=37856; -- The Withered
@@ -11128,19 +11126,10 @@ UPDATE `quest_template` SET `RewardMoney`=486000, `VerifiedBuild`=23420 WHERE `I
 UPDATE `quest_template` SET `RewardMoney`=486000, `VerifiedBuild`=23420 WHERE `ID`=37566; -- The Prince is Going Down
 UPDATE `quest_template` SET `RewardMoney`=162000, `VerifiedBuild`=23420 WHERE `ID`=38857; -- A Favor for Mr. Shackle
 UPDATE `quest_template` SET `RewardMoney`=162000, `VerifiedBuild`=23420 WHERE `ID`=37565; -- The Right Weapon for the Job
-UPDATE `quest_template` SET `VerifiedBuild`=23420 WHERE `ID`=37495; -- Plunder the Cove
 UPDATE `quest_template` SET `RewardMoney`=486000, `VerifiedBuild`=23420 WHERE `ID`=37538; -- Round 1, Fight!
-UPDATE `quest_template` SET `VerifiedBuild`=23420 WHERE `ID`=37536; -- Morale Booster
-UPDATE `quest_template` SET `VerifiedBuild`=23420 WHERE `ID`=37510; -- Sternfathom's Champion
 UPDATE `quest_template` SET `RewardMoney`=162000, `VerifiedBuild`=23420 WHERE `ID`=37528; -- Let Sleeping Giants Lie
 UPDATE `quest_template` SET `RewardMoney`=324000, `VerifiedBuild`=23420 WHERE `ID`=37542; -- No Time for Tryouts
-UPDATE `quest_template` SET `VerifiedBuild`=23420 WHERE `ID`=37507; -- Boss Whalebelly's in Charge
 UPDATE `quest_template` SET `RewardMoney`=16200, `VerifiedBuild`=23420 WHERE `ID`=44383; -- In Pursuit of Power
-UPDATE `quest_template` SET `VerifiedBuild`=23420 WHERE `ID`=38842; -- Faerie Fracas
-UPDATE `quest_template` SET `VerifiedBuild`=23420 WHERE `ID`=42431; -- The Brood of Nithogg
-UPDATE `quest_template` SET `VerifiedBuild`=23420 WHERE `ID`=40316; -- The Screeching Crag
-UPDATE `quest_template` SET `VerifiedBuild`=23420 WHERE `ID`=39371; -- Witches of the Sky
-UPDATE `quest_template` SET `VerifiedBuild`=23420 WHERE `ID`=40050; -- Shipwreck Cove
 UPDATE `quest_template` SET `RewardMoney`=316000, `VerifiedBuild`=23420 WHERE `ID`=44437; -- Legion Dungeon Reward Quest
 UPDATE `quest_template` SET `RewardMoney`=632000, `VerifiedBuild`=23420 WHERE `ID`=38286; -- Wrath of Azshara
 UPDATE `quest_template` SET `RewardMoney`=632000, `VerifiedBuild`=23420 WHERE `ID`=37470; -- The Head of the Snake
@@ -11159,7 +11148,6 @@ UPDATE `quest_template` SET `RewardMoney`=158000, `VerifiedBuild`=23420 WHERE `I
 UPDATE `quest_template` SET `RewardMoney`=158000, `VerifiedBuild`=23420 WHERE `ID`=42692; -- Children of Nar'thalas
 UPDATE `quest_template` SET `RewardMoney`=158000, `VerifiedBuild`=23420 WHERE `ID`=42693; -- You Never Know Until You Scry
 UPDATE `quest_template` SET `RewardMoney`=158000, `VerifiedBuild`=23420 WHERE `ID`=37486; -- Nar'thalas Still Suffers
-UPDATE `quest_template` SET `VerifiedBuild`=23420 WHERE `ID`=37466; -- The Broken Academy
 UPDATE `quest_template` SET `RewardMoney`=158000, `VerifiedBuild`=23420 WHERE `ID`=37496; -- Infiltrating Shipwreck Arena
 UPDATE `quest_template` SET `RewardMoney`=158000, `VerifiedBuild`=23420 WHERE `ID`=37497; -- Trailing the Tidestone
 UPDATE `quest_template` SET `RewardMoney`=158000, `VerifiedBuild`=23420 WHERE `ID`=37257; -- Our Very Bones
@@ -11171,18 +11159,13 @@ UPDATE `quest_template` SET `RewardMoney`=158000, `VerifiedBuild`=23420 WHERE `I
 UPDATE `quest_template` SET `RewardMoney`=15800, `VerifiedBuild`=23420 WHERE `ID`=42238; -- Missing Demon
 UPDATE `quest_template` SET `RewardMoney`=15800, `VerifiedBuild`=23420 WHERE `ID`=42372; -- Felblaze Ingress
 UPDATE `quest_template` SET `RewardMoney`=15800, `VerifiedBuild`=23420 WHERE `ID`=37855; -- The Last of the Last
-UPDATE `quest_template` SET `VerifiedBuild`=23420 WHERE `ID`=37690; -- Those Who Remember
 UPDATE `quest_template` SET `RewardMoney`=79000, `VerifiedBuild`=23420 WHERE `ID`=42271; -- Their Dying Breaths
 UPDATE `quest_template` SET `RewardMoney`=79000, `VerifiedBuild`=23420 WHERE `ID`=37991; -- Agapanthus
 UPDATE `quest_template` SET `RewardMoney`=158000, `VerifiedBuild`=23420 WHERE `ID`=37853; -- The Death of the Eldest
-UPDATE `quest_template` SET `VerifiedBuild`=23420 WHERE `ID`=38443; -- Journey to the Repose
 UPDATE `quest_template` SET `RewardMoney`=316000, `VerifiedBuild`=23420 WHERE `ID`=37449; -- Dark Revelations
 UPDATE `quest_template` SET `RewardMoney`=79000, `VerifiedBuild`=23420 WHERE `ID`=42671; -- Rise, Champions
 UPDATE `quest_template` SET `RewardMoney`=308000, `VerifiedBuild`=23420 WHERE `ID`=37450; -- Saving Stellagosa
 UPDATE `quest_template` SET `RewardMoney`=308000, `VerifiedBuild`=23420 WHERE `ID`=37656; -- Fel Machinations
-UPDATE `quest_template` SET `VerifiedBuild`=23420 WHERE `ID`=37779; -- Tip the Scales
-UPDATE `quest_template` SET `VerifiedBuild`=23420 WHERE `ID`=37965; -- A Tainted Vintage
-UPDATE `quest_template` SET `VerifiedBuild`=23420 WHERE `ID`=36811; -- Retake Faronaar
 UPDATE `quest_template` SET `RewardMoney`=154000, `VerifiedBuild`=23420 WHERE `ID`=44140; -- From Within
 UPDATE `quest_template` SET `RewardMoney`=308000, `VerifiedBuild`=23420 WHERE `ID`=37660; -- The Scythe of Souls
 UPDATE `quest_template` SET `RewardMoney`=154000, `VerifiedBuild`=23420 WHERE `ID`=37658; -- Reignite the Wards

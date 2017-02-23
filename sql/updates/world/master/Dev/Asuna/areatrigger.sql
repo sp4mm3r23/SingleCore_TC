@@ -15,7 +15,6 @@ UPDATE `areatrigger_template` SET `Data0`=4, `Data1`=4, `VerifiedBuild`=23420 WH
 UPDATE `areatrigger_template` SET `Data0`=4, `Data1`=4, `VerifiedBuild`=23420 WHERE `Id`=6197;
 UPDATE `areatrigger_template` SET `Data0`=4, `Data1`=4, `VerifiedBuild`=23420 WHERE `Id`=6197;
 UPDATE `areatrigger_template` SET `Data0`=4, `Data1`=4, `VerifiedBuild`=23420 WHERE `Id`=6197;
-UPDATE `areatrigger_template` SET `VerifiedBuild`=23420 WHERE `Id`=10665;
 UPDATE `areatrigger_template` SET `Data0`=4, `Data1`=4, `VerifiedBuild`=23420 WHERE `Id`=6197;
 UPDATE `areatrigger_template` SET `Data0`=4, `Data1`=4, `VerifiedBuild`=23420 WHERE `Id`=6197;
 UPDATE `areatrigger_template` SET `Data0`=4, `Data1`=4, `VerifiedBuild`=23420 WHERE `Id`=6197;
@@ -23,7 +22,6 @@ UPDATE `areatrigger_template` SET `Data0`=4, `Data1`=4, `VerifiedBuild`=23420 WH
 UPDATE `areatrigger_template` SET `Data0`=4, `Data1`=4, `VerifiedBuild`=23420 WHERE `Id`=6197;
 UPDATE `areatrigger_template` SET `Data0`=4, `Data1`=4, `VerifiedBuild`=23420 WHERE `Id`=6197;
 UPDATE `areatrigger_template` SET `Data0`=4, `Data1`=4, `VerifiedBuild`=23420 WHERE `Id`=6197;
-UPDATE `areatrigger_template` SET `VerifiedBuild`=23420 WHERE `Id`=10665;
 UPDATE `areatrigger_template` SET `Data0`=4, `Data1`=4, `VerifiedBuild`=23420 WHERE `Id`=6197;
 UPDATE `areatrigger_template` SET `Data0`=4, `Data1`=4, `VerifiedBuild`=23420 WHERE `Id`=6197;
 UPDATE `areatrigger_template` SET `Data0`=4, `Data1`=4, `VerifiedBuild`=23420 WHERE `Id`=6197;
