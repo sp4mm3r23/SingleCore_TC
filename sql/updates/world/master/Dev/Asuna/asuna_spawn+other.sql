@@ -2520,6 +2520,8 @@ INSERT INTO `creature` (`guid`, `id`, `map`, `zoneId`, `areaId`, `spawnMask`, `P
 (@CGUID+2328, 88465, 1220, 0, 0, 3, '0', 0, 0, 0, 97.91986, 5747.772, 0.4287093, 3.978169, 7200, 0, 0, 0, 0, 0, 0, 0, 0, 23420), -- Kelp Scuttler (Area: -Unknown-)
 (@CGUID+2329, 89024, 1220, 0, 0, 3, '0', 0, 0, 0, 95.03125, 5733.143, 0.1726834, 0.1565726, 7200, 0, 0, 0, 0, 0, 0, 0, 0, 23420), -- Hatecoil Fathom-Stalker (Area: -Unknown-)
 (@CGUID+2330, 89802, 1220, 0, 0, 3, '0', 0, 0, 0, -35.47396, 5899.313, -0.5394122, 1.071326, 7200, 0, 0, 0, 0, 0, 0, 0, 0, 23420), -- Hatecoil Skrog (Area: -Unknown-)
+
+/*
 (@CGUID+2331, 91781, 1456, 0, 0, 3, '0', 0, 0, 0, -3878.79, 4519.562, 82.59285, 3.418034, 7200, 0, 0, 0, 0, 0, 0, 0, 0, 23420), -- Hatecoil Warrior (Area: -Unknown-) (Auras: 115385 - Rush)
 (@CGUID+2332, 91781, 1456, 0, 0, 3, '0', 0, 0, 0, -3884.863, 4509.048, 81.78993, 2.507887, 7200, 0, 0, 0, 0, 0, 0, 0, 0, 23420), -- Hatecoil Warrior (Area: -Unknown-) (Auras: 115385 - Rush)
 (@CGUID+2333, 100216, 1456, 0, 0, 3, '0', 0, 0, 0, -3814.583, 4506.3, 56.9316, 2.82829, 7200, 0, 0, 0, 0, 0, 0, 0, 0, 23420), -- Hatecoil Wrangler (Area: -Unknown-)
@@ -2683,10 +2685,11 @@ INSERT INTO `creature` (`guid`, `id`, `map`, `zoneId`, `areaId`, `spawnMask`, `P
 (@CGUID+2491, 99908, 1456, 0, 0, 3, '0', 0, 0, 0, -3574.044, 4488.272, 1.644041, 3.671233, 7200, 0, 0, 0, 0, 0, 0, 0, 0, 23420), -- Skittering Softshell (Area: -Unknown-) (Auras: 123168 - Mod Scale 115-120%)
 (@CGUID+2492, 91794, 1456, 0, 0, 3, '0', 0, 0, 0, -3658.813, 4152.127, 24.19348, 2.027565, 7200, 10, 0, 0, 0, 1, 0, 0, 0, 23420), -- Saltscale Lurker (Area: -Unknown-) (Auras: 196108 - Mrrglrr!) (possible waypoints or random movement)
 (@CGUID+2493, 91787, 1456, 0, 0, 3, '0', 0, 0, 0, -3494.951, 4680.232, 30.72568, 3.189339, 7200, 0, 0, 0, 0, 0, 0, 0, 0, 23420), -- Cove Seagull (Area: -Unknown-)
+*/
 (@CGUID+2494, 89808, 1220, 0, 0, 3, '0', 0, 0, 0, -39.1441, 5868.127, -0.2052428, 0, 7200, 0, 0, 0, 0, 0, 0, 0, 0, 23420), -- Murloc Hatchery (Area: -Unknown-) (Auras: )
 (@CGUID+2495, 89024, 1220, 0, 0, 3, '0', 0, 0, 0, -50.05035, 5811.752, 3.911055, 1.716058, 7200, 0, 0, 0, 0, 0, 0, 0, 0, 23420), -- Hatecoil Fathom-Stalker (Area: -Unknown-)
 (@CGUID+2496, 89025, 1220, 0, 0, 3, '0', 0, 0, 0, -41.52604, 5736.198, 7.547517, 1.096875, 7200, 0, 0, 0, 0, 0, 0, 0, 0, 23420), -- Hatecoil Spitespeaker (Area: -Unknown-)
-(@CGUID+2497, 89808, 1220, 0, 0, 3, '0', 0, 0, 0, -73.56077, 5833.148, -0.1428255, 0, 7200, 0, 0, 0, 0, 0, 0, 0, 0, 23420), -- Murloc Hatchery (Area: -Unknown-) (Auras: )
+(@CGUID+2497, 89808, 1220, 0, 0, 3, '0', 0, 0, 0, -73.56077, 5833.148, -0.1428255, 0, 7200, 0, 0, 0, 0, 0, 0, 0, 0, 23420); -- Murloc Hatchery (Area: -Unknown-) (Auras: )
 -- (@CGUID+2498, 89809, UNKNOWN, 0, 0, 3, '0', 0, 0, 0, 0.5, 0, 3.5, 4.712389, 7200, 0, 0, 0, 0, 0, 0, 0, 0, 23420), -- Salteye Tadpole (Area: -Unknown-) (Auras: 46598 - Ride Vehicle Hardcoded) - !!! on transport - transport template not found !!!
 -- (@CGUID+2499, 89809, UNKNOWN, 0, 0, 3, '0', 0, 0, 0, 0, 0.5, 3, 3.141593, 7200, 0, 0, 0, 0, 0, 0, 0, 0, 23420); -- Salteye Tadpole (Area: -Unknown-) (Auras: 46598 - Ride Vehicle Hardcoded) - !!! on transport - transport template not found !!!
 
@@ -7207,6 +7210,7 @@ INSERT INTO `creature_addon` (`guid`, `path_id`, `mount`, `bytes1`, `bytes2`, `e
 (@CGUID+2328, 0, 0, 0, 1, 0, 0, 0, 0, ''), -- Kelp Scuttler
 (@CGUID+2329, 0, 0, 0, 1, 0, 0, 0, 0, ''), -- Hatecoil Fathom-Stalker
 (@CGUID+2330, 0, 0, 0, 1, 0, 0, 0, 0, ''), -- Hatecoil Skrog
+/*
 (@CGUID+2331, 0, 0, 0, 1, 0, 0, 0, 0, '115385'), -- Hatecoil Warrior - 115385 - Rush
 (@CGUID+2332, 0, 0, 0, 1, 0, 0, 0, 0, '115385'), -- Hatecoil Warrior - 115385 - Rush
 (@CGUID+2333, 0, 0, 0, 1, 0, 0, 0, 0, ''), -- Hatecoil Wrangler
@@ -7369,7 +7373,8 @@ INSERT INTO `creature_addon` (`guid`, `path_id`, `mount`, `bytes1`, `bytes2`, `e
 (@CGUID+2490, 0, 0, 0, 1, 0, 0, 0, 0, ''), -- Bitterbrine Slave
 (@CGUID+2491, 0, 0, 0, 1, 0, 0, 0, 0, '123168'), -- Skittering Softshell - 123168 - Mod Scale 115-120%
 (@CGUID+2492, 0, 0, 0, 1, 0, 0, 0, 0, '196108'), -- Saltscale Lurker - 196108 - Mrrglrr!
-(@CGUID+2493, 0, 0, 50331648, 1, 0, 0, 0, 0, ''), -- Cove Seagull
+(@CGUID+2493, 0, 0, 50331648, 1, 0, 0, 0, 0, ''), -- Cove Seagull 
+*/
 (@CGUID+2494, 0, 0, 0, 1, 0, 0, 0, 0, ''), -- Murloc Hatchery
 (@CGUID+2495, 0, 0, 0, 1, 0, 0, 0, 0, ''), -- Hatecoil Fathom-Stalker
 (@CGUID+2496, 0, 0, 0, 1, 0, 0, 0, 0, ''), -- Hatecoil Spitespeaker
@@ -9944,10 +9949,10 @@ INSERT INTO `gameobject` (`guid`, `id`, `map`, `zoneId`, `areaId`, `spawnMask`, 
 (@OGUID+393, 250103, 1220, 0, 0, 3, '', 0, 84.96528, 5637.499, 2.77527, 0, 0, 0, 0, 1, 7200, 255, 1, 23420), -- Small Treasure Chest (Area: -Unknown-)
 (@OGUID+394, 239774, 1220, 0, 0, 3, '', 0, 83.61806, 5629.313, 0.5308589, 0.206776, -0.2662983, -0.19063, 0.04875088, 0.9435936, 7200, 255, 1, 23420), -- Coral Trident (Area: -Unknown-)
 (@OGUID+395, 243009, 1220, 0, 0, 3, '', 0, 48.08854, 5539.522, 2.659124, 4.558186, 0.4475808, -0.7025805, -0.2753077, 0.4798519, 7200, 255, 1, 23420), -- Horn of the Siren (Area: -Unknown-)
-(@OGUID+396, 252247, 1456, 0, 0, 3, '', 0, -3925.479, 4549.06, 91.90079, 5.736945, 0, 0, -0.2697372, 0.962934, 7200, 255, 1, 23420), -- Instance Portal (Area: -Unknown-)
+-- (@OGUID+396, 252247, 1456, 0, 0, 3, '', 0, -3925.479, 4549.06, 91.90079, 5.736945, 0, 0, -0.2697372, 0.962934, 7200, 255, 1, 23420), -- Instance Portal (Area: -Unknown-)
 -- (@OGUID+397, 244690, 1456, 0, 0, 3, '', 0, -3478.828, 4596.364, -0.3546312, 4.729331, 0, 0, -0.7010918, 0.713071, 7200, 255, 1, 23420), -- Sand Dune (Area: -Unknown-) - !!! might be temporary spawn !!!
 -- (@OGUID+398, 244690, 1456, 0, 0, 3, '', 0, -3447.143, 4603.747, -0.3546312, 5.993111, 0, 0, -0.1445293, 0.9895005, 7200, 255, 1, 23420), -- Sand Dune (Area: -Unknown-) - !!! might be temporary spawn !!!
-(@OGUID+399, 246983, 1456, 0, 0, 3, '', 0, -3401.806, 4143.14, 28.45384, 0.2530711, 0.004244804, 0.001008987, 0.126195, 0.9919959, 7200, 255, 0, 23420), -- Water Door (Area: -Unknown-)
+-- (@OGUID+399, 246983, 1456, 0, 0, 3, '', 0, -3401.806, 4143.14, 28.45384, 0.2530711, 0.004244804, 0.001008987, 0.126195, 0.9919959, 7200, 255, 0, 23420), -- Water Door (Area: -Unknown-)
 -- (@OGUID+400, 244690, 1456, 0, 0, 3, '', 0, -3408.969, 4608.918, -0.3546075, 0.2561028, 0, 0, 0.1277018, 0.9918126, 7200, 255, 1, 23420), -- Sand Dune (Area: -Unknown-) - !!! might be temporary spawn !!!
 (@OGUID+401, 236931, 1220, 0, 0, 3, '', 0, -419.8264, 6580.866, 0.3315905, 0.7250032, 0.01154232, -0.01873589, 0.3546124, 0.9347544, 7200, 255, 1, 23420), -- Giants' Stash of Weapons (Area: -Unknown-)
 (@OGUID+402, 239078, 1220, 0, 0, 3, '', 0, -382.0121, 6519.398, 3.439112, 4.898637, 0, 0, -0.6382895, 0.7697964, 7200, 255, 1, 23420), -- 6HU Pet Stable Food Tray 01 (scale x3) (Area: -Unknown-)
@@ -11655,3 +11660,6 @@ INSERT INTO `npc_text` (`ID`, `Probability0`, `Probability1`, `Probability2`, `P
 (25529, 1, 0, 0, 0, 0, 0, 0, 0, 90231, 0, 0, 0, 0, 0, 0, 0, 23420), -- 25529
 (25530, 1, 0, 0, 0, 0, 0, 0, 0, 90232, 0, 0, 0, 0, 0, 0, 0, 23420), -- 25530
 (25531, 1, 0, 0, 0, 0, 0, 0, 0, 90236, 0, 0, 0, 0, 0, 0, 0, 23420); -- 25531
+
+UPDATE `creature` SET `spawnMask` = 1 WHERE `map` = 1220;
+UPDATE `gameobject` SET `spawnMask` = 1 WHERE `map` = 1220;
