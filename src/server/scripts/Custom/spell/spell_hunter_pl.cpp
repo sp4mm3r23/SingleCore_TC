@@ -51,7 +51,44 @@ class spell_hun_burrow_attack : public SpellScriptLoader
         }
 };
 
+// Thunderstomp - 63900
+// 7.x.x
+class spell_hun_thunderstomp : public SpellScriptLoader
+{
+    public:
+        spell_hun_thunderstomp() : SpellScriptLoader("spell_hun_thunderstomp") { }
+
+        class spell_hun_thunderstomp_SpellScript : public SpellScript
+        {
+            PrepareSpellScript(spell_hun_thunderstomp_SpellScript);
+
+            void HandleDamage(SpellEffIndex effIndex)
+            {
+                int32 damage = GetEffectValue();
+                ApplyPct(damage, GetCaster()->GetTotalAttackPowerValue(RANGED_ATTACK) * 0.250f);
+
+                if (Unit* target = GetHitUnit())
+                {
+                    damage = GetCaster()->SpellDamageBonusDone(target, GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, GetEffectInfo(effIndex));
+                    damage = target->SpellDamageBonusTaken(GetCaster(), GetSpellInfo(), uint32(damage), SPELL_DIRECT_DAMAGE, GetEffectInfo(effIndex));
+                }
+                SetHitDamage(damage);
+            }
+
+            void Register() override
+            {
+                OnEffectHitTarget += SpellEffectFn(spell_hun_thunderstomp_SpellScript::HandleDamage, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+            }
+        };
+
+        SpellScript* GetSpellScript() const override
+        {
+            return new spell_hun_thunderstomp_SpellScript();
+        }
+};
+
 void AddSC_hunter_spell_scripts_pl()
 {
     new spell_hun_burrow_attack();
+    new spell_hun_thunderstomp();
 }
