@@ -4860,7 +4860,7 @@ INSERT INTO `creature` (`guid`, `id`, `map`, `zoneId`, `areaId`, `spawnMask`, `P
 (@CGUID+4647, 93725, 1220, 0, 0, 3, '0', 0, 0, 0, -1426.766, 6777.924, 15.93642, 4.685052, 7200, 0, 0, 0, 0, 0, 0, 0, 0, 23420), -- Slithering Brownscale (Area: -Unknown-)
 -- (@CGUID+4648, 32642, UNKNOWN, 0, 0, 3, '0', 0, 0, 0, 0, 0, 0, 0, 7200, 0, 0, 0, 0, 0, 0, 0, 0, 23420); -- Mojodishu (Area: -Unknown-) (Auras: 61424 - Traveler's Tundra Mammoth) - !!! on transport - transport template not found !!!
 DELETE FROM `creature_addon` WHERE `guid` BETWEEN @CGUID+0 AND @CGUID+4648;
-INSERT INTO `creature_addon` (`guid`, `path_id`, `mount`, `bytes1`, `bytes2`, `emote`, `aiAnimKit`, `movementAnimKit`, `meleeAnimKit`, `auras`) VALUES
+/*INSERT INTO `creature_addon` (`guid`, `path_id`, `mount`, `bytes1`, `bytes2`, `emote`, `aiAnimKit`, `movementAnimKit`, `meleeAnimKit`, `auras`) VALUES
 (@CGUID+0, 0, 0, 50331648, 1, 0, 0, 0, 0, ''), -- Savage Felbat
 (@CGUID+1, 0, 0, 0, 1, 0, 0, 0, 0, '185302'), -- Infernal Brutalizer - 185302 - Infernal Spawn v2
 (@CGUID+2, 0, 0, 50331648, 1, 0, 0, 0, 0, ''), -- Savage Felbat
@@ -7374,7 +7374,7 @@ INSERT INTO `creature_addon` (`guid`, `path_id`, `mount`, `bytes1`, `bytes2`, `e
 (@CGUID+2491, 0, 0, 0, 1, 0, 0, 0, 0, '123168'), -- Skittering Softshell - 123168 - Mod Scale 115-120%
 (@CGUID+2492, 0, 0, 0, 1, 0, 0, 0, 0, '196108'), -- Saltscale Lurker - 196108 - Mrrglrr!
 (@CGUID+2493, 0, 0, 50331648, 1, 0, 0, 0, 0, ''), -- Cove Seagull 
-*/
+
 (@CGUID+2494, 0, 0, 0, 1, 0, 0, 0, 0, ''), -- Murloc Hatchery
 (@CGUID+2495, 0, 0, 0, 1, 0, 0, 0, 0, ''), -- Hatecoil Fathom-Stalker
 (@CGUID+2496, 0, 0, 0, 1, 0, 0, 0, 0, ''), -- Hatecoil Spitespeaker
@@ -9547,7 +9547,7 @@ INSERT INTO `creature_addon` (`guid`, `path_id`, `mount`, `bytes1`, `bytes2`, `e
 (@CGUID+4645, 0, 0, 0, 1, 0, 0, 0, 0, ''), -- Felfire Fiend
 (@CGUID+4646, 0, 0, 0, 1, 0, 0, 0, 0, '222541'), -- Experimental Fel Corruptor - 222541 - Fel Corruptor
 (@CGUID+4647, 0, 0, 0, 1, 0, 0, 0, 0, ''), -- Slithering Brownscale
-(@CGUID+4648, 0, 0, 0, 1, 0, 0, 0, 0, '61424'); -- Mojodishu - 61424 - Traveler's Tundra Mammoth
+(@CGUID+4648, 0, 0, 0, 1, 0, 0, 0, 0, '61424'); -- Mojodishu - 61424 - Traveler's Tundra Mammoth*/
 
 DELETE FROM `gameobject` WHERE `guid` BETWEEN @OGUID+0 AND @OGUID+749;
 INSERT INTO `gameobject` (`guid`, `id`, `map`, `zoneId`, `areaId`, `spawnMask`, `PhaseId`, `PhaseGroup`, `position_x`, `position_y`, `position_z`, `orientation`, `rotation0`, `rotation1`, `rotation2`, `rotation3`, `spawntimesecs`, `animprogress`, `state`, `VerifiedBuild`) VALUES
