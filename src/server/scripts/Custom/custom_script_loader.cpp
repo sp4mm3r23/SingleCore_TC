@@ -21,16 +21,19 @@
 // The name of this function should match:
 // void Add${NameOfDirectory}Scripts()
 
-     // spell
+// spell
 void AddSC_priest_spell_scripts_pl();
 void AddSC_demon_hunter_spell_scripts_pl();
 void AddSC_deathknight_spell_scripts_pl();
 void AddSC_monk_spell_scripts_pl();
 void AddSC_hunter_spell_scripts_pl();
 
-     // zone
+// zone
 void AddSC_gilneas_pl();
 void AddSC_zone_mardum_pl();
+
+// other
+void AddSC_dungeon_portal_pl();
 
 void AddCustomScripts()
 {
@@ -44,4 +47,7 @@ void AddCustomScripts()
     // zone
     AddSC_gilneas_pl();
     AddSC_zone_mardum_pl();
+
+    // other
+    AddSC_dungeon_portal_pl();
 }
