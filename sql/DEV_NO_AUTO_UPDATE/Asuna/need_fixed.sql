@@ -1,22 +1,33 @@
-DELETE FROM `gossip_menu_option` WHERE (`menu_id`=18180 AND `id`=2) OR (`menu_id`=18180 AND `id`=0) OR (`menu_id`=18178 AND `id`=2) OR (`menu_id`=18178 AND `id`=0) OR (`menu_id`=18177 AND `id`=2) OR (`menu_id`=18177 AND `id`=0) OR (`menu_id`=18176 AND `id`=2) OR (`menu_id`=18176 AND `id`=0) OR (`menu_id`=18175 AND `id`=2) OR (`menu_id`=18175 AND `id`=0) OR (`menu_id`=18174 AND `id`=2) OR (`menu_id`=18174 AND `id`=0) OR (`menu_id`=18173 AND `id`=2) OR (`menu_id`=18173 AND `id`=0) OR (`menu_id`=18066 AND `id`=2) OR (`menu_id`=18066 AND `id`=0);
-INSERT INTO `gossip_menu_option` (`menu_id`, `id`, `option_icon`, `option_text`, `OptionBroadcastTextID`, `option_id`, `npc_option_npcflag`, `action_menu_id`, `action_poi_id`, `box_coded`, `box_money`, `box_text`, `BoxBroadcastTextID`) VALUES
-(18180, 2, 0, 'Ooka, may I please have some of your delicious Fighter Chow? I hear it''s the best.', UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, 0, 0, '', UNKNOWN),
-(18180, 0, 0, 'You can mank my dook, Ooka. I''m taking the chow and there''s nothing you can ookin do about it, wicket licker.', UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, 0, 0, '', UNKNOWN),
-(18178, 2, 0, 'Ooka, may I please have some of your delicious Fighter Chow? I hear it''s the best.', UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, 0, 0, '', UNKNOWN),
-(18178, 0, 0, 'You''ve got quite the mouth on you, Ooka. Maybe I should stuff it full of your blookin mank chow.', UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, 0, 0, '', UNKNOWN),
-(18177, 2, 0, 'Ooka, may I please have some of your delicious Fighter Chow? I hear it''s the best.', UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, 0, 0, '', UNKNOWN),
-(18177, 0, 0, 'Slicky slapper! That''s right, I said it. Slicky slapper.', UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, 0, 0, '', UNKNOWN),
-(18176, 2, 0, 'Ooka, may I please have some of your delicious Fighter Chow? I hear it''s the best.', UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, 0, 0, '', UNKNOWN),
-(18176, 0, 0, 'You know what, Ooka? You have a dook for a head!', UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, 0, 0, '', UNKNOWN),
-(18175, 2, 0, 'Ooka, may I please have some of your delicious Fighter Chow? I hear it''s the best.', UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, 0, 0, '', UNKNOWN),
-(18175, 0, 0, 'Ookin'' wikket! Walk away, just like your brother.', UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, 0, 0, '', UNKNOWN),
-(18174, 2, 0, 'Ooka, may I please have some of your delicious Fighter Chow? I hear it''s the best.', UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, 0, 0, '', UNKNOWN),
-(18174, 0, 0, 'Your mom.', UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, 0, 0, '', UNKNOWN),
-(18173, 2, 0, 'Ooka, may I please have some of your delicious Fighter Chow? I hear it''s the best.', UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, 0, 0, '', UNKNOWN),
-(18173, 0, 0, 'Hey, Ooka, your ooker is showing. That''s unsavory and not the least bit sanitary.', UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, 0, 0, '', UNKNOWN),
-(18066, 2, 0, 'Ooka, may I please have some of your delicious Fighter Chow? I hear it''s the best.', UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, 0, 0, '', UNKNOWN),
-(18066, 0, 0, 'I said, when I beat your brother black and blue, he dooked his pants and jumped away. Now give me the chow!', UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, 0, 0, '', UNKNOWN);
+DELETE FROM `gossip_menu` WHERE (`entry`=18180 AND `text_id`=25179) OR (`entry`=18178 AND `text_id`=25529) OR (`entry`=18177 AND `text_id`=25530) OR (`entry`=18176 AND `text_id`=25531) OR (`entry`=18175 AND `text_id`=25533) OR (`entry`=18174 AND `text_id`=25868) OR (`entry`=18173 AND `text_id`=25869) OR (`entry`=18066 AND `text_id`=26006) OR (`entry`=19923 AND `text_id`=29600);
+INSERT INTO `gossip_menu` (`entry`, `text_id`) VALUES
+(18180, 25179), -- 90086 (Ooka Dooker)
+(18178, 25529), -- 90086 (Ooka Dooker)
+(18177, 25530), -- 90086 (Ooka Dooker)
+(18176, 25531), -- 90086 (Ooka Dooker)
+(18175, 25533), -- 90086 (Ooka Dooker)
+(18174, 25868), -- 90086 (Ooka Dooker)
+(18173, 25869), -- 90086 (Ooka Dooker)
+(18066, 26006), -- 90086 (Ooka Dooker)
+(19923, 29600); -- 88097 (Golk the Rumble)
 
+DELETE FROM `gossip_menu_option` WHERE (`menu_id`=18180 AND `id`=2) OR (`menu_id`=18180 AND `id`=0) OR (`menu_id`=18178 AND `id`=2) OR (`menu_id`=18178 AND `id`=0) OR (`menu_id`=18177 AND `id`=2) OR (`menu_id`=18177 AND `id`=0) OR (`menu_id`=18176 AND `id`=2) OR (`menu_id`=18176 AND `id`=0) OR (`menu_id`=18175 AND `id`=2) OR (`menu_id`=18175 AND `id`=0) OR (`menu_id`=18174 AND `id`=2) OR (`menu_id`=18174 AND `id`=0) OR (`menu_id`=18173 AND `id`=2) OR (`menu_id`=18173 AND `id`=0) OR (`menu_id`=18066 AND `id`=2) OR (`menu_id`=18066 AND `id`=0);
+INSERT INTO `gossip_menu_option` (`menu_id`, `id`, `option_icon`, `option_text`, `OptionBroadcastTextID`, `action_poi_id`, `box_coded`, `box_money`, `box_text`, `BoxBroadcastTextID`) VALUES
+(18180, 2, 0, 'Ooka, may I please have some of your delicious Fighter Chow? I hear it''s the best.', 92236, 0, 0, 0, '', 0),
+(18180, 0, 0, 'You can mank my dook, Ooka. I''m taking the chow and there''s nothing you can ookin do about it, wicket licker.', 92417, 0, 0, 0, '', 0),
+(18178, 2, 0, 'Ooka, may I please have some of your delicious Fighter Chow? I hear it''s the best.', 92236, 0, 0, 0, '', 0),
+(18178, 0, 0, 'You''ve got quite the mouth on you, Ooka. Maybe I should stuff it full of your blookin mank chow.', 91448, 0, 0, 0, '', 0),
+(18177, 2, 0, 'Ooka, may I please have some of your delicious Fighter Chow? I hear it''s the best.', 92236, 0, 0, 0, '', 0),
+(18177, 0, 0, 'Slicky slapper! That''s right, I said it. Slicky slapper.', 91591, 0, 0, 0, '', 0),
+(18176, 2, 0, 'Ooka, may I please have some of your delicious Fighter Chow? I hear it''s the best.', 92236, 0, 0, 0, '', 0),
+(18176, 0, 0, 'You know what, Ooka? You have a dook for a head!', 91597, 0, 0, 0, '', 0),
+(18175, 2, 0, 'Ooka, may I please have some of your delicious Fighter Chow? I hear it''s the best.', 92236, 0, 0, 0, '', 0),
+(18175, 0, 0, 'Ookin'' wikket! Walk away, just like your brother.', 91799, 0, 0, 0, '', 0),
+(18174, 2, 0, 'Ooka, may I please have some of your delicious Fighter Chow? I hear it''s the best.', 92236, 0, 0, 0, '', 0),
+(18174, 0, 0, 'Your mom.', 90224, 0, 0, 0, '', 0),
+(18173, 2, 0, 'Ooka, may I please have some of your delicious Fighter Chow? I hear it''s the best.', 92236, 0, 0, 0, '', 0),
+(18173, 0, 0, 'Hey, Ooka, your ooker is showing. That''s unsavory and not the least bit sanitary.', 90223, 0, 0, 0, '', 0),
+(18066, 2, 0, 'Ooka, may I please have some of your delicious Fighter Chow? I hear it''s the best.', 92236, 0, 0, 0, '', 0),
+(18066, 0, 0, 'I said, when I beat your brother black and blue, he dooked his pants and jumped away. Now give me the chow!', 90222, 0, 0, 0, '', 0);
 
 INSERT INTO `creature_text` (`entry`, `groupid`, `id`, `text`, `type`, `language`, `probability`, `emote`, `duration`, `sound`, `BroadcastTextId`, `comment`) VALUES
 (90474, UNKNOWN, UNKNOWN, 'We will work together to destroy the Legion from within.', 12, 0, 100, UNKNOWN, 0, 56344, '92242', 'Kor''vas Bloodthorn to Player'),
