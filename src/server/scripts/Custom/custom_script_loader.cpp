@@ -32,6 +32,9 @@ void AddSC_hunter_spell_scripts_pl();
 void AddSC_gilneas_pl();
 void AddSC_zone_mardum_pl();
 
+// dungeon
+void AddSC_instance_eye_of_azshara();
+
 // other
 void AddSC_dungeon_portal_pl();
 
@@ -47,6 +50,9 @@ void AddCustomScripts()
     // zone
     AddSC_gilneas_pl();
     AddSC_zone_mardum_pl();
+
+    //dungeon
+    AddSC_instance_eye_of_azshara();
 
     // other
     AddSC_dungeon_portal_pl();
