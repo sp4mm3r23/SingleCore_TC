@@ -17,7 +17,7 @@
  
 #include "ScriptMgr.h"
 #include "ScriptedCreature.h"
-#include "maw_of_souls.h"
+#include "eye_of_azshara.h"
 
 enum Spells
 {
