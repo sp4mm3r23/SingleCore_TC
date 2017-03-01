@@ -26,7 +26,7 @@ enum PriestSpells
     SPELL_PRIEST_SURGE_OF_LIGHT                     = 114255,
     SPELL_PRIEST_SURGE_OF_LIGHT_VISUAL              = 128654,
     SPELL_PRIEST_BODY_AND_SOUL_AURA                 = 64129,
-    SPELL_PRIEST_BODY_AND_SOUL_INCREASE_SPEED       = 65081
+    SPELL_PRIEST_BODY_AND_SOUL_INCREASE_SPEED       = 65081,
 };
 
 // Shadowfiend - 34433
@@ -259,10 +259,48 @@ class spell_pri_body_and_soul: public SpellScriptLoader
         }
 };
 
+// Flash heal - 2061
+// 7.x.x
+class spell_pri_flash_heal: public SpellScriptLoader
+{
+public:
+    spell_pri_flash_heal() : SpellScriptLoader("spell_pri_flash_heal") { }
+
+    class spell_pri_flash_heal_SpellScript : public SpellScript
+    {
+        PrepareSpellScript(spell_pri_flash_heal_SpellScript);
+
+        bool Validate(SpellInfo const* /*spellInfo*/) override
+        {
+            if (!sSpellMgr->GetSpellInfo(SPELL_PRIEST_SURGE_OF_LIGHT))
+                return false;
+            return true;
+        }
+
+        void HandleBeforeCast()
+        {
+            if (Unit* caster = GetCaster())
+                if (Aura* surgeOfLight = caster->GetAura(SPELL_PRIEST_SURGE_OF_LIGHT))
+                    surgeOfLight->ModStackAmount(-1);
+        }
+
+        void Register() override
+        {
+            BeforeCast += SpellCastFn(spell_pri_flash_heal_SpellScript::HandleBeforeCast);
+        }
+    };
+
+    SpellScript* GetSpellScript() const override
+    {
+        return new spell_pri_flash_heal_SpellScript();
+    }
+};
+
 void AddSC_priest_spell_scripts_pl()
 {
     new spell_pri_shadowfiend();
     new spell_pri_surge_of_light();
     new spell_pri_surge_of_light_aura();
     new spell_pri_body_and_soul();
+    new spell_pri_flash_heal();
 }
