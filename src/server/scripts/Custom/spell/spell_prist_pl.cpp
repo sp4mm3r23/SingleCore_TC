@@ -24,7 +24,9 @@
 enum PriestSpells
 {
     SPELL_PRIEST_SURGE_OF_LIGHT                     = 114255,
-    SPELL_PRIEST_SURGE_OF_LIGHT_VISUAL              = 128654
+    SPELL_PRIEST_SURGE_OF_LIGHT_VISUAL              = 128654,
+    SPELL_PRIEST_BODY_AND_SOUL_AURA                 = 64129,
+    SPELL_PRIEST_BODY_AND_SOUL_INCREASE_SPEED       = 65081
 };
 
 // Shadowfiend - 34433
@@ -217,9 +219,50 @@ class spell_pri_surge_of_light_aura : public SpellScriptLoader
         }
 };
 
+// Called by Leap of Faith - 73325 and Power Word : Shield - 17
+// Body and Soul - 64129
+// 7.x.x
+class spell_pri_body_and_soul: public SpellScriptLoader
+{
+    public:
+        spell_pri_body_and_soul() : SpellScriptLoader("spell_pri_body_and_soul") { }
+
+        class spell_pri_body_and_soul_SpellScript : public SpellScript
+        {
+            PrepareSpellScript(spell_pri_body_and_soul_SpellScript);
+
+            bool Validate(SpellInfo const* /*spellInfo*/) override
+            {
+                if (!sSpellMgr->GetSpellInfo(SPELL_PRIEST_BODY_AND_SOUL_AURA) ||
+                    !sSpellMgr->GetSpellInfo(SPELL_PRIEST_BODY_AND_SOUL_INCREASE_SPEED))
+                    return false;
+                return true;
+            }
+
+            void HandleOnHit()
+            {
+                if (Player* _player = GetCaster()->ToPlayer())
+                    if (Unit* target = GetHitUnit())
+                        if (_player->HasAura(SPELL_PRIEST_BODY_AND_SOUL_AURA))
+                            _player->CastSpell(target, SPELL_PRIEST_BODY_AND_SOUL_INCREASE_SPEED, true);
+            }
+
+            void Register() override
+            {
+                OnHit += SpellHitFn(spell_pri_body_and_soul_SpellScript::HandleOnHit);
+            }
+        };
+
+        SpellScript* GetSpellScript() const override
+        {
+            return new spell_pri_body_and_soul_SpellScript();
+        }
+};
+
 void AddSC_priest_spell_scripts_pl()
 {
     new spell_pri_shadowfiend();
     new spell_pri_surge_of_light();
     new spell_pri_surge_of_light_aura();
+    new spell_pri_body_and_soul();
 }
