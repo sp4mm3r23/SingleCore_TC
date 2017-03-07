@@ -3953,39 +3953,6 @@ INSERT INTO `gameobject` (`guid`, `id`, `map`, `zoneId`, `areaId`, `spawnMask`, 
 INSERT INTO `gameobject` (`guid`, `id`, `map`, `zoneId`, `areaId`, `spawnMask`, `PhaseId`, `PhaseGroup`, `position_x`, `position_y`, `position_z`, `orientation`, `rotation0`, `rotation1`, `rotation2`, `rotation3`, `spawntimesecs`, `animprogress`, `state`) VALUES(@OGUID+441,'201871','654','0','0','1','188','0','-1668.23','1926.97','29.37','0','0','0','0','1','300','100','1');
 INSERT INTO `gameobject` (`guid`, `id`, `map`, `zoneId`, `areaId`, `spawnMask`, `PhaseId`, `PhaseGroup`, `position_x`, `position_y`, `position_z`, `orientation`, `rotation0`, `rotation1`, `rotation2`, `rotation3`, `spawntimesecs`, `animprogress`, `state`) VALUES(@OGUID+442,'201871','654','0','0','1','188','0','-1671.58','1910.84','30.1048','0','0','0','0','1','300','100','1');
 INSERT INTO `gameobject` (`guid`, `id`, `map`, `zoneId`, `areaId`, `spawnMask`, `PhaseId`, `PhaseGroup`, `position_x`, `position_y`, `position_z`, `orientation`, `rotation0`, `rotation1`, `rotation2`, `rotation3`, `spawntimesecs`, `animprogress`, `state`) VALUES(@OGUID+443,'201871','654','0','0','1','188','0','-1715.45','1928.21','21.0419','0','0','0','0','1','300','100','1');
- 
- 
-DELETE FROM `creature_text` WHERE `entry` IN  (34851, 34864, 44086, 34913, 35836, 35112, 35115, 35369, 50415, 35118);
-INSERT INTO `creature_text` (`entry`, `groupid`, `id`, `text`, `type`, `language`, `probability`, `emote`, `duration`, `sound`, `BroadcastTextId`, `comment`) VALUES
-(34851, 1, 0, 'What... what are those things on the rooftops?', 12, 0, 100, 0, 0, 0, 39313, ''),
-(34864, 1, 1, 'Everyone keep calm! We are controlling the situation.', 12, 0, 100, 0, 0, 0, 44375, ''),
-(34864, 1, 2, 'Gate is closed. Order from Prince Liam!', 12, 0, 100, 0, 0, 0, 44373, ''),
-(34864, 1, 3, 'In the woods is something strange going on, and to go beyond the city is unsafe.', 12, 0, 100, 0, 0, 0, 44374, ''),
-(44086, 1, 1, 'You can''t do this to us!', 12, 0, 100, 0, 0, 0, 44377, ''),
-(44086, 1, 2, 'What''s going on? I think I saw something on the roof.', 12, 0, 100, 0, 0, 0, 44379, ''),
-(44086, 1, 3, 'My children stayed in Wuthering Heights, quite alone! I shall return to them!', 12, 0, 100, 0, 0, 0, 44378, ''),
-(34913, 1, 1, 'Stand your ground, men!', 14, 0, 100, 0, 0, 19617, 35166, ''),
-(34913, 1, 2, 'Defeat these foul beasts!', 14, 0, 100, 0, 0, 19618, 35167, ''),
-(34913, 1, 3, 'Protect the civilians!', 14, 0, 100, 0, 0, 19619, 35168, ''),
-(34913, 1, 4, 'Push them back!', 14, 0, 100, 0, 0, 19620, 35169, ''),
-(34913, 1, 5, 'Take heart, men! We must protect our city!', 14, 0, 100, 0, 0, 19621, 35170, ''),
-(35836, 1, 1, 'I don''t want to die!', 14, 0, 100, 0, 0, 0, 36041, ''),
-(35836, 1, 2, 'He is right behind me!', 14, 0, 100, 430, 0, 0, 36037, ''),
-(35836, 1, 3, 'They''re after me!', 14, 0, 100, 430, 0, 0, 36039, ''),
-(35836, 1, 4, 'Help!', 14, 0, 100, 430, 0, 0, 36040, ''),
-(35836, 1, 5, 'Help me please!', 14, 0, 100, 430, 0, 0, 0, ''),
-(35836, 1, 6, 'Please save me!', 14, 0, 100, 430, 0, 0, 0, ''),
-(35836, 1, 7, 'One of them is right behind me!', 14, 0, 100, 430, 0, 0, 0, ''),
-(35112, 1, 0, 'Enough! I''ve made up my mind. We need Crowley on our side.', 12, 0, 100, 0, 0, 0, 38602, ''),
-(35115, 1, 0, 'We ought to leave Crowley in prison with those beasts!', 12, 0, 100, 0, 0, 0, 38601, ''),
-(35369, 1, 1, 'I can''t fight it!', 14, 0, 100, 0, 0, 0, 38741, ''),
-(35369, 1, 2, 'Make it stop!', 14, 0, 100, 0, 0, 0, 38740, ''),
-(35369, 1, 3, 'My face! What''s wrong with my face!', 14, 0, 100, 0, 0, 0, 38737, ''),
-(35369, 1, 4, 'My hands... don''t look at my hands!!', 14, 0, 100, 0, 0, 0, 38738, ''),
-(35369, 1, 5, 'The pain is unbearable!', 14, 0, 100, 0, 0, 0, 38739, ''),
-(35369, 1, 6, 'What''s wrong with me??!', 14, 0, 100, 0, 0, 0, 0, ''),
-(50415, 1, 0, 'You''ve been bitten by a worgen. It''s probably nothing, but it sure stings a little.$B$B|TInterface\\Icons\\INV_Misc_monsterfang_02.blp:32|t', 41, 0, 100, 0, 0, 0, 0, ''),
-(35118, 1, 0, "%s becomes enraged!", 16, 0, 100, 0, 0, 0, "Bloodfang Worgen - combat Enrage");
 
 DELETE FROM `creature_queststarter` WHERE `id` = 34884; -- remove quest qiver flag
 
@@ -4319,3 +4286,75 @@ INSERT IGNORE INTO `creature_text` (`entry`, `groupid`, `id`, `text`, `type`, `l
 INSERT IGNORE INTO `creature_text` (`entry`, `groupid`, `id`, `text`, `type`, `language`, `probability`, `emote`, `duration`, `sound`, `comment`, `BroadcastTextID`) VALUES('44086','2','1','They told us Gilneas City was safe...','12','0','100','0','0','0','SAY_PANICKED_CITIZEN - Military distrcit','44394');
 INSERT IGNORE INTO `creature_text` (`entry`, `groupid`, `id`, `text`, `type`, `language`, `probability`, `emote`, `duration`, `sound`, `comment`, `BroadcastTextID`) VALUES('50474','0','0','Hold them back!  We must protect the survivors!','14','0','100','0','0','0','','50264');
 INSERT IGNORE INTO `creature_text` (`entry`, `groupid`, `id`, `text`, `type`, `language`, `probability`, `emote`, `duration`, `sound`, `comment`, `BroadcastTextID`) VALUES('51277','0','0','%s goes into a frenzy!','16','0','100','0','0','0','','0');
+
+UPDATE `creature_template` SET `AIName` = '', `ScriptName` = 'npc_gilneas_city_guard_gate' WHERE `entry` = 34864;
+UPDATE `creature_template` SET `AIName` = '', `ScriptName` = 'npc_prince_liam_greymane' WHERE `entry` = 34850;
+UPDATE `creature_template` SET `AIName` = '', `ScriptName` = 'npc_lieutenant_walden' WHERE `entry` = 34863;
+
+DELETE FROM `spell_area` WHERE `area` IN (4714,4725,4726,4727,4728,4729,4730,4731,4732,4733,4734,4735,4736,4755,4756,4757,4758,4759,4761,4762,4774,4786,4787,
+4788,4789,4790,4791,4792,4793,4794,4806,4807,4808,4810,4811,4817,4818,4841,4842,4858,4868,4869,5432,5720);
+INSERT INTO `spell_area` (`spell`,`area`,`quest_start`,`quest_end`,`aura_spell`,`racemask`,`gender`,`autocast`,`quest_start_status`,`quest_end_status`) VALUES
+(59073,4714,0,0,0,0,2,0,0,0),
+(59073,4755,0,0,0,0,2,0,0,0),
+(59073,4756,0,0,0,0,2,0,0,0),
+(59073,4774,0,0,0,0,2,0,0,0),
+(68481,4714,0,0,0,0,2,0,0,0),
+(68481,4755,0,0,0,0,2,0,0,0),
+(68481,4756,0,0,0,0,2,0,0,0),
+(68481,4774,0,0,0,0,2,0,0,0),
+(68482,4714,0,0,0,0,2,0,0,0),
+(68482,4755,0,0,0,0,2,0,0,0),
+(68482,4756,0,0,0,0,2,0,0,0),
+(68482,4774,0,0,0,0,2,0,0,0),
+(68483,4714,0,0,0,0,2,0,0,0),
+(68483,4755,0,0,0,0,2,0,0,0),
+(68483,4756,0,0,0,0,2,0,0,0),
+(68483,4774,0,0,0,0,2,0,0,0),
+(69484,4714,0,0,0,0,2,0,0,0),
+(69484,4755,0,0,0,0,2,0,0,0),
+(69484,4756,0,0,0,0,2,0,0,0),
+(69484,4774,0,0,0,0,2,0,0,0),
+(69485,4714,0,0,0,0,2,0,0,0),
+(69485,4755,0,0,0,0,2,0,0,0),
+(69485,4756,0,0,0,0,2,0,0,0),
+(69485,4774,0,0,0,0,2,0,0,0),
+(69486,4714,0,0,0,0,2,0,0,0),
+(69486,4755,0,0,0,0,2,0,0,0),
+(69486,4756,0,0,0,0,2,0,0,0),
+(69486,4774,0,0,0,0,2,0,0,0),
+(70695,4714,0,0,0,0,2,0,0,0),
+(70695,4755,0,0,0,0,2,0,0,0),
+(70695,4756,0,0,0,0,2,0,0,0),
+(70695,4774,0,0,0,0,2,0,0,0),
+(74096,4714,0,0,0,0,2,0,0,0),
+(74096,4755,0,0,0,0,2,0,0,0),
+(74096,4756,0,0,0,0,2,0,0,0),
+(74096,4774,0,0,0,0,2,0,0,0),
+(72870,4714,0,0,0,0,2,0,0,0),
+(72870,4755,0,0,0,0,2,0,0,0),
+(72870,4756,0,0,0,0,2,0,0,0),
+(72870,4774,0,0,0,0,2,0,0,0),
+(72872,4714,0,0,0,0,2,0,0,0),
+(72872,4755,0,0,0,0,2,0,0,0),
+(72872,4756,0,0,0,0,2,0,0,0),
+(72872,4774,0,0,0,0,2,0,0,0),
+(76642,4714,0,0,0,0,2,0,0,0),
+(76642,4755,0,0,0,0,2,0,0,0),
+(76642,4756,0,0,0,0,2,0,0,0),
+(76642,4774,0,0,0,0,2,0,0,0),
+(49416,4714,0,0,0,0,2,0,0,0),
+(49416,4755,0,0,0,0,2,0,0,0),
+(49416,4756,0,0,0,0,2,0,0,0),
+(49416,4774,0,0,0,0,2,0,0,0),
+(49417,4714,0,0,0,0,2,0,0,0),
+(49417,4755,0,0,0,0,2,0,0,0),
+(49417,4756,0,0,0,0,2,0,0,0),
+(49417,4774,0,0,0,0,2,0,0,0),
+(60922,4714,0,0,0,0,2,0,0,0),
+(60922,4755,0,0,0,0,2,0,0,0),
+(60922,4756,0,0,0,0,2,0,0,0),
+(60922,4774,0,0,0,0,2,0,0,0);
+
+DELETE FROM `phase_area` WHERE `AreaId` = 4755 AND `PhaseId` = 169;
+INSERT INTO `phase_area` VALUES
+(4755, 169, 'Worgen starting zone');

@@ -15,240 +15,249 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "ScriptPCH.h"
+#include "Cell.h"
+#include "CellImpl.h"
+#include "Creature.h"
+#include "CreatureAI.h"
+#include "GameObjectAI.h"
+#include "GameObject.h"
+#include "GridNotifiers.h"
+#include "PassiveAI.h"
+#include "Pet.h"
+#include "Player.h"
 #include "ScriptMgr.h"
 #include "ScriptedCreature.h"
 #include "ScriptedGossip.h"
-#include "SpellScript.h"
-#include "SpellAuraEffects.h"
-#include "SpellHistory.h"
-#include "Player.h"
-#include "DatabaseEnv.h"
-#include "ObjectMgr.h"
+#include "ScriptedEscortAI.h"
+#include "ScriptedFollowerAI.h"
+#include "Unit.h"
+#include "Vehicle.h"
+#include "zone_gilneas_pl.h"
 
-enum GilneasSpells
-{
-    SPELL_PHASE_QUEST_ZONE_SPECIFIC_01           = 59073,
-    SPELL_GENERIC_QUEST_INVISIBILITY_DETECTION_1 = 49416,
-    SPELL_UPDATE_PHASE_SHIFT                     = 82238
-};
-
-enum GilneasQuests
-{
-    QUEST_LOCKDOWN   = 14078
-};
-
-enum GilneasCityGuardGate
-{
-    EVENT_GUARD_TALK    = 1,
-    EVENT_CITIZEN_TALK  = 2,
-
-    GUARD_RANDOM_TEXT   = 1,
-    CITIZEN_RANDOM_TEXT = 1
-};
-
-// Gilneas City Guard 34864 - phase 1
+//34864
 class npc_gilneas_city_guard_gate : public CreatureScript
 {
-    public:
-        npc_gilneas_city_guard_gate() : CreatureScript("npc_gilneas_city_guard_gate") { }
+public:
+    npc_gilneas_city_guard_gate() : CreatureScript("npc_gilneas_city_guard_gate") { }
 
-        struct npc_gilneas_city_guard_gateAI : public ScriptedAI
+    struct npc_gilneas_city_guard_gateAI : public ScriptedAI
+    {
+        npc_gilneas_city_guard_gateAI(Creature* creature) : ScriptedAI(creature)  { }
+
+        void Reset() override
         {
-            npc_gilneas_city_guard_gateAI(Creature* creature) : ScriptedAI(creature) { }
-
-            void Reset() override
-            {
-                events.Reset();
-
-                if (me->GetMountID())
-                    events.ScheduleEvent(EVENT_GUARD_TALK, urand(10000, 20000));
-            }
-
-            void UpdateAI(uint32 diff) override
-            {
-                if (!UpdateVictim())
-                {
-                    events.Update(diff);
-
-                    if (uint32 pl_eventId = events.ExecuteEvent())
-                    {
-                        switch (pl_eventId)
-                        {
-                            case EVENT_GUARD_TALK:
-                                Talk(GUARD_RANDOM_TEXT);
-                                events.ScheduleEvent(EVENT_CITIZEN_TALK, urand(10000, 20000));
-                                break;
-                            case EVENT_CITIZEN_TALK:
-                                {
-                                    std::list<Creature*> pl_citizens;
-                                    me->GetCreatureListWithEntryInGrid(pl_citizens, 44086, 35.0f);
-
-                                    if (!pl_citizens.empty())
-                                        if (Creature* pl_citizen = Trinity::Containers::SelectRandomContainerElement(pl_citizens))
-                                            if (pl_citizen->IsAIEnabled)
-                                                pl_citizen->AI()->Talk(CITIZEN_RANDOM_TEXT);
-
-                                    events.ScheduleEvent(EVENT_GUARD_TALK, urand(20000, 40000));
-                                }
-                                break;
-                            default:
-                                break;
-                        }
-                    }
-
-                    return;
-                }
-
-                DoMeleeAttackIfReady();
-            }
-
-        private:
-            EventMap events;
-        };
-
-        CreatureAI* GetAI(Creature* creature) const override
-        {
-            return new npc_gilneas_city_guard_gateAI (creature);
+            if (me->GetDistance2d(-1430.47f, 1345.55f) < 10.0f)
+                events.ScheduleEvent(EVENT_START_TALK_WITH_CITIZEN, urand(10000, 30000));
         }
-};
 
-enum PanickedCitizenGate
-{
-    EVENT_RANDOM_EMOTE  = 1
-};
-
-// Panicked Citizen 44086 - phase 1
-class npc_panicked_citizen_gate : public CreatureScript
-{
-    public:
-        npc_panicked_citizen_gate() : CreatureScript("npc_panicked_citizen_gate") { }
-
-        struct npc_panicked_citizen_gateAI : public ScriptedAI
+        void UpdateAI(uint32 diff) override
         {
-            npc_panicked_citizen_gateAI(Creature* creature) : ScriptedAI(creature) { }
+            events.Update(diff);
 
-            void Reset() override
+            while (uint32 eventId = events.ExecuteEvent())
             {
-                events.ScheduleEvent(EVENT_RANDOM_EMOTE, urand(4000, 8000));
-            }
-
-            void UpdateAI(uint32 diff) override
-            {
-                if (!UpdateVictim())
+                switch (eventId)
                 {
-                    events.Update(diff);
-
-                    if (events.ExecuteEvent() == EVENT_RANDOM_EMOTE)
+                    case EVENT_START_TALK_WITH_CITIZEN:
                     {
-                        const uint16 pl_PanickedCitizenRandomEmote[5] =
-                        {
-                            EMOTE_ONESHOT_COWER,
-                            EMOTE_ONESHOT_TALK,
-                            EMOTE_ONESHOT_CRY,
-                            EMOTE_ONESHOT_BEG,
-                            EMOTE_ONESHOT_EXCLAMATION,
-                        };
-
-                        uint8 roll = urand(0, 4);
-                        me->HandleEmoteCommand(pl_PanickedCitizenRandomEmote[roll]);
-                        events.ScheduleEvent(EVENT_RANDOM_EMOTE, urand(2000, 5000));
+                        citicenGUID = GetRandomCitizen();
+                        emote = RAND(EMOTE_STATE_COWER, EMOTE_STATE_TALK, EMOTE_ONESHOT_CRY, EMOTE_STATE_SPELL_PRECAST, EMOTE_STATE_EXCLAIM);
+                        say = urand(0, 2);
+                        if (Creature* npc = ObjectAccessor::GetCreature(*me, citicenGUID))
+                            npc->HandleEmoteCommand(emote);
+                        events.ScheduleEvent(EVENT_TALK_WITH_CITIZEN_1, urand(1200, 2000));
+                        break;
                     }
-
-                    return;
+                    case EVENT_TALK_WITH_CITIZEN_1:
+                    {
+                        if (Creature* npc = ObjectAccessor::GetCreature(*me, citicenGUID))
+                            npc->AI()->Talk(say);
+                        events.ScheduleEvent(EVENT_TALK_WITH_CITIZEN_2, 5000);
+                        break;
+                    }
+                    case EVENT_TALK_WITH_CITIZEN_2:
+                    {
+                        Talk(say);
+                        events.ScheduleEvent(EVENT_TALK_WITH_CITIZEN_3, 5000);
+                        break;
+                    }
+                    case EVENT_TALK_WITH_CITIZEN_3:
+                    {
+                        if (Creature* npc = ObjectAccessor::GetCreature(*me, citicenGUID))
+                            npc->HandleEmoteCommand(EMOTE_STATE_NONE);
+                        events.ScheduleEvent(EVENT_START_TALK_WITH_CITIZEN, urand(5000, 30000));
+                        break;
+                    }
                 }
-
-                DoMeleeAttackIfReady();
             }
 
-        private:
-            EventMap events;
-        };
+            if (!UpdateVictim())
+                return;
 
-        CreatureAI* GetAI(Creature* creature) const override
-        {
-            return new npc_panicked_citizen_gateAI (creature);
+            DoMeleeAttackIfReady();
         }
-};
 
-enum PrinceLiamGreymanePhase1
-{
-    NPC_PANICKED_CITIZEN         = 34851,
-    CITIZEN_SAY_WHAT_AT_THE_ROOF = 1,
-
-    EVENT_SAY_INTRO_1            = 1,
-    EVENT_SAY_INTRO_2            = 2,
-    EVENT_SAY_INTRO_3            = 3,
-
-    LIAM_TALK_INTRO_1            = 1,
-    LIAM_TALK_INTRO_2            = 2,
-    LIAM_TALK_INTRO_3            = 3
-};
-
-// Prince Liam Greymane 34850 - phase 1
-class npc_prince_liam_greymane_phase1 : public CreatureScript
-{
-    public:
-        npc_prince_liam_greymane_phase1() : CreatureScript("npc_prince_liam_greymane_phase1") { }
-
-        bool OnQuestAccept(Player* player, Creature* creature, Quest const* quest) override
+        void FillCitizenList()
         {
-            if (quest->GetQuestId() == QUEST_LOCKDOWN)
-                if (Creature* pl_cinizen = creature->FindNearestCreature(NPC_PANICKED_CITIZEN, 30.0f))
-                    if (pl_cinizen->IsAIEnabled)
-                        pl_cinizen->AI()->Talk(CITIZEN_SAY_WHAT_AT_THE_ROOF);
+            listOfCitizenGUID.clear();
+            std::list<Creature*> listOfCitizen;
+            me->GetCreatureListWithEntryInGrid(listOfCitizen, NPC_PANICKED_CITIZEN_GATE, 35.0f);
+            for (std::list<Creature*>::iterator itr = listOfCitizen.begin(); itr != listOfCitizen.end(); ++itr)
+                listOfCitizenGUID.push_back((*itr)->GetGUID());
+        }
 
+        ObjectGuid GetRandomCitizen()
+        {
+            if (listOfCitizenGUID.empty())
+                FillCitizenList();
+            uint8 rol = urand(0, listOfCitizenGUID.size() - 1);
+            std::list<ObjectGuid>::iterator itr = listOfCitizenGUID.begin();
+            std::advance(itr, rol);
+            return (*itr);
+        }
+
+    private:
+        std::list<ObjectGuid> listOfCitizenGUID;
+        EventMap events;
+        uint8 say;
+        uint8 emote;
+        ObjectGuid citicenGUID;
+    };
+
+    CreatureAI* GetAI(Creature* creature) const override
+    {
+        return new npc_gilneas_city_guard_gateAI(creature);
+    }
+};
+
+// 34850
+class npc_prince_liam_greymane : public CreatureScript
+{
+public:
+    npc_prince_liam_greymane() : CreatureScript("npc_prince_liam_greymane") { }
+
+    bool OnQuestAccept(Player* player, Creature* creature, Quest const* quest) override
+    {
+        if (quest->GetQuestId() == QUEST_LOCKDOWN)
+            if (Creature* citizen = creature->FindNearestCreature(NPC_PANICKED_CITIZEN, 20.0f))
+                citizen->AI()->Talk(0);
+
+        return true;
+    }
+
+    struct npc_prince_liam_greymaneAI : public ScriptedAI
+    {
+        npc_prince_liam_greymaneAI(Creature* creature) : ScriptedAI(creature) { }
+
+        void Reset() override
+        {            
+            events.RescheduleEvent(EVENT_COUNT_COOLDOWN, 1000);
+        }
+
+        void MoveInLineOfSight(Unit* who) override
+        {
+            if (Player* player = who->ToPlayer())
+                if (player->GetDistance2d(me) < 15.0f)
+                    if (cdList.find(player->GetGUID()) == cdList.end())
+                        if (player->GetQuestStatus(QUEST_LOCKDOWN) != QUEST_STATUS_REWARDED)
+                            cdList.insert(std::make_pair(player->GetGUID(), 70));
+        }
+
+        void UpdateAI(uint32 diff) override
+        {
+            events.Update(diff);
+
+            while (uint32 eventId = events.ExecuteEvent())
+            {
+                switch (eventId)
+                {
+                    case EVENT_COUNT_COOLDOWN:
+                    {
+                        for (std::map<ObjectGuid, int32>::iterator itr = cdList.begin(); itr != cdList.end(); ++itr)
+                            if ((itr)->second > 0)
+                                --(itr)->second;
+
+                        if (!playerGUID)
+                            for (std::map<ObjectGuid, int32>::iterator itr = cdList.begin(); itr != cdList.end(); ++itr)
+                                if ((itr)->second == 0)
+                                    if (Player* player = ObjectAccessor::GetPlayer(*me, (itr)->first))
+                                        if (player->GetDistance2d(me) < 15.0f)
+                                        {
+                                            --(itr)->second;
+                                            playerGUID = player->GetGUID();
+                                            events.ScheduleEvent(EVENT_MASTER_RESET, 120000);
+                                            events.ScheduleEvent(EVENT_START_TALK_TO_GUARD, 1000);
+                                        }
+
+                        for (std::map<ObjectGuid, int32>::iterator itr = cdList.begin(); itr != cdList.end();)
+                            if (ToBeDeleted(itr))
+                                cdList.erase(itr++);
+                            else
+                                itr++;
+
+                        events.ScheduleEvent(EVENT_COUNT_COOLDOWN, 1000);
+                        break;
+                    }
+                    case EVENT_START_TALK_TO_GUARD:
+                    {
+                        if (Player* player = ObjectAccessor::GetPlayer(*me, playerGUID))
+                            Talk(0, player);
+                        events.ScheduleEvent(EVENT_TALK_TO_GUARD_1, 15000);
+                        break;
+                    }
+                    case EVENT_TALK_TO_GUARD_1:
+                    {
+                        if (Player* player = ObjectAccessor::GetPlayer(*me, playerGUID))
+                            Talk(1, player);
+                        events.ScheduleEvent(EVENT_TALK_TO_GUARD_2, 18000);
+                        break;
+                    }
+                    case EVENT_TALK_TO_GUARD_2:
+                    {
+                        if (Player* player = ObjectAccessor::GetPlayer(*me, playerGUID))
+                            Talk(2, player);
+                        events.ScheduleEvent(EVENT_TALK_TO_GUARD_3, 25000);
+                        break;
+                    }
+                    case EVENT_TALK_TO_GUARD_3:
+                    {
+                        events.ScheduleEvent(EVENT_MASTER_RESET, 1000);
+                        break;
+                    }
+                    case EVENT_MASTER_RESET:
+                    {
+                        Reset();
+                        break;
+                    }
+                }
+            }
+
+            if (!UpdateVictim())
+                return;
+
+            DoMeleeAttackIfReady();
+        }
+
+        bool ToBeDeleted(std::map<ObjectGuid, int32>::iterator itr)
+        {
+            if (itr->second < 0)
+                if (Player* player = ObjectAccessor::GetPlayer(*me, (itr)->first))
+                    if (player->GetQuestStatus(QUEST_LOCKDOWN) == QUEST_STATUS_REWARDED)
+                        return true;
             return false;
         }
 
-        struct npc_prince_liam_greymane_phase1AI : public ScriptedAI
-        {
-            npc_prince_liam_greymane_phase1AI(Creature* creature) : ScriptedAI(creature) { }
+    private:
+        EventMap events;
+        std::map<ObjectGuid, int32> cdList;
+        ObjectGuid playerGUID;
+    };
 
-            void Reset() override
-            {
-                events.Reset();
-                events.ScheduleEvent(EVENT_SAY_INTRO_1, 1000);
-            }
-
-            void UpdateAI(uint32 diff) override
-            {
-                if (!UpdateVictim())
-                {
-                    events.Update(diff);
-
-                    if (uint32 pl_eventId = events.ExecuteEvent())
-                    {
-                        switch (pl_eventId)
-                        {
-                            case EVENT_SAY_INTRO_1:
-                                Talk(LIAM_TALK_INTRO_1);
-                                events.ScheduleEvent(EVENT_SAY_INTRO_2, 21000);
-                                break;
-                            case EVENT_SAY_INTRO_2:
-                                Talk(LIAM_TALK_INTRO_2);
-                                events.ScheduleEvent(EVENT_SAY_INTRO_3, 20000);
-                                break;
-                            case EVENT_SAY_INTRO_3:
-                                Talk(LIAM_TALK_INTRO_3);
-                                events.ScheduleEvent(EVENT_SAY_INTRO_1, 22000);
-                                break;
-                        }
-                    }
-
-                    return;
-                }
-
-                DoMeleeAttackIfReady();
-            }
-
-        private:
-            EventMap events;
-        };
-
-        CreatureAI* GetAI(Creature* creature) const override
-        {
-            return new npc_prince_liam_greymane_phase1AI (creature);
-        }
+    CreatureAI* GetAI(Creature* creature) const override
+    {
+        return new npc_prince_liam_greymaneAI(creature);
+    }
 };
 
 // update player phase 1 to phase 2
@@ -263,7 +272,6 @@ class npc_lieutenant_walden : public CreatureScript
             if (quest->GetQuestId() == QUEST_LOCKDOWN)
             {
                 player->CastSpell(player, SPELL_PHASE_QUEST_ZONE_SPECIFIC_01, false);
-                player->CastSpell(player, SPELL_GENERIC_QUEST_INVISIBILITY_DETECTION_1, false);
                 player->CastSpell(player, SPELL_UPDATE_PHASE_SHIFT, false);
                 player->SaveToDB();
             }
@@ -274,8 +282,7 @@ class npc_lieutenant_walden : public CreatureScript
 
 void AddSC_gilneas_pl()
 {
-   new npc_gilneas_city_guard_gate();
-   new npc_panicked_citizen_gate();
-   new npc_prince_liam_greymane_phase1();
-   new npc_lieutenant_walden();
+    new npc_gilneas_city_guard_gate();
+    new npc_prince_liam_greymane();
+    new npc_lieutenant_walden();
 }
