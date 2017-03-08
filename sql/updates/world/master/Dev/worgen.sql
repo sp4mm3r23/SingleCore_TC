@@ -4358,3 +4358,11 @@ INSERT INTO `spell_area` (`spell`,`area`,`quest_start`,`quest_end`,`aura_spell`,
 DELETE FROM `phase_area` WHERE `AreaId` = 4755 AND `PhaseId` = 169;
 INSERT INTO `phase_area` VALUES
 (4755, 169, 'Worgen starting zone');
+
+UPDATE `creature_template` SET `AIName` = '', `ScriptName` = 'npc_rampaging_worgen_phase_1' WHERE `entry` = 35660;
+UPDATE `creature_template` SET `AIName` = '', `ScriptName` = 'npc_prince_liam_greymane_phase_1' WHERE `entry` = 34913;
+UPDATE `creature_template` SET `AIName` = '', `ScriptName` = 'npc_gilneas_city_guard_phase_1' WHERE `entry` = 34916;
+UPDATE `creature_template` SET `AIName` = '', `ScriptName` = 'npc_rampaging_worgen_phase' WHERE `entry` = 34884;
+UPDATE `creature_template` SET `AIName` = '', `ScriptName` = 'npc_frightened_citizen' WHERE `entry` = 34981;
+UPDATE `creature_template` SET `AIName` = '', `ScriptName` = 'npc_frightened_citizen_1' WHERE `entry` = 35836;
+UPDATE `gameobject_template` SET `AIName` = '', `ScriptName` = 'go_merchant_square_door' WHERE `entry` = 195327;
