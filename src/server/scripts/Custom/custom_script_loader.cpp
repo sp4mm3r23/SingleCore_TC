@@ -35,6 +35,13 @@ void AddSC_zone_mardum_pl();
 // dungeon
 void AddSC_instance_eye_of_azshara();
 
+// GrimBatol
+void AddSC_instance_grim_batol();
+void AddSC_boss_general_umbriss();
+void AddSC_boss_forgemaster_throngus();
+void AddSC_boss_erudax();
+void AddSC_boss_drahga_shadowburner();
+
 // other
 void AddSC_dungeon_portal_pl();
 
@@ -53,6 +60,13 @@ void AddCustomScripts()
 
     //dungeon
     AddSC_instance_eye_of_azshara();
+
+    // GrimBatol
+    AddSC_instance_grim_batol();
+    AddSC_boss_general_umbriss();
+    AddSC_boss_forgemaster_throngus();
+    AddSC_boss_erudax();
+    AddSC_boss_drahga_shadowburner();
 
     // other
     AddSC_dungeon_portal_pl();
