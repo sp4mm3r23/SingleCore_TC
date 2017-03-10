@@ -328,7 +328,7 @@ class npc_erudax_faceless_corruptor : public CreatureScript
                     switch (eventId)
                     {
                     case EVENT_UMBRAL_MENDING:
-                        if (Creature* erudax = instance->GetCreature(NPC_ERUDAX))
+                        if (Creature* erudax = ObjectAccessor::GetCreature(*me, instance->GetGuidData(DATA_ERUDAX)))
                             DoCast(erudax, SPELL_UMBRAL_MENDING);
                         events.ScheduleEvent(EVENT_UMBRAL_MENDING, urand(15000, 20000));
                         break;
