@@ -121,3 +121,43 @@ UPDATE `creature_template` SET `AIName` = '', `ScriptName` = 'npc_malignant_trog
 UPDATE `creature_template` SET `AIName` = '', `ScriptName` = 'npc_umbriss_trogg_dweller' WHERE `entry` = 45467;
 
 UPDATE `instance_template` SET `script` = 'instance_grim_batol' WHERE `map` = 670;
+
+UPDATE `creature_template` SET `AIName` = '', `ScriptName` = 'npc_ascended_flameseeker' WHERE `entry` = 40320; 
+UPDATE `creature_template` SET `AIName` = '', `ScriptName` = 'npc_ascended_rockbreaker' WHERE `entry` = 40272; 
+UPDATE `creature_template` SET `AIName` = '', `ScriptName` = 'npc_ascended_waterlasher' WHERE `entry` = 40273; 
+UPDATE `creature_template` SET `AIName` = '', `ScriptName` = 'npc_ascended_windwalker' WHERE `entry` = 39414; 
+UPDATE `creature_template` SET `AIName` = '', `ScriptName` = 'npc_azureborne_guardian' WHERE `entry` = 39854; 
+UPDATE `creature_template` SET `AIName` = '', `ScriptName` = 'npc_azureborne_seer' WHERE `entry` = 40291; 
+UPDATE `creature_template` SET `AIName` = '', `ScriptName` = 'npc_azureborne_seer' WHERE `entry` = 39855; 
+UPDATE `creature_template` SET `AIName` = '', `ScriptName` = 'npc_azureborne_warlord' WHERE `entry` = 39909; 
+UPDATE `creature_template` SET `AIName` = '', `ScriptName` = 'npc_crimsonborne_guardian' WHERE `entry` = 39381; 
+UPDATE `creature_template` SET `AIName` = '', `ScriptName` = 'npc_crimsonborne_seer' WHERE `entry` = 39405; 
+UPDATE `creature_template` SET `AIName` = '', `ScriptName` = 'npc_crimsonborne_seer' WHERE `entry` = 40290; 
+UPDATE `creature_template` SET `AIName` = '', `ScriptName` = 'npc_crimsonborne_warlord' WHERE `entry` = 39626; 
+UPDATE `creature_template` SET `AIName` = '', `ScriptName` = 'npc_enslaved_burning_ember' WHERE `entry` = 39892; 
+UPDATE `creature_template` SET `AIName` = '', `ScriptName` = 'npc_enslaved_rock_elemental' WHERE `entry` = 39900; 
+UPDATE `creature_template` SET `AIName` = '', `ScriptName` = 'npc_enslaved_gronn_brute' WHERE `entry` = 40166; 
+UPDATE `creature_template` SET `AIName` = '', `ScriptName` = 'npc_faceless_corruptor' WHERE `entry` = 48844; 
+UPDATE `creature_template` SET `AIName` = '', `ScriptName` = 'npc_faceless_corruptor' WHERE `entry` = 40600; 
+UPDATE `creature_template` SET `AIName` = '', `ScriptName` = 'npc_faceless_corruptor' WHERE `entry` = 57749; 
+UPDATE `creature_template` SET `AIName` = '', `ScriptName` = 'npc_trogg_dweller' WHERE `entry` = 39450; 
+UPDATE `creature_template` SET `AIName` = '', `ScriptName` = 'npc_twilight_armsmaster' WHERE `entry` = 40306; 
+UPDATE `creature_template` SET `AIName` = '', `ScriptName` = 'npc_twilight_armsmaster' WHERE `entry` = 41073; 
+UPDATE `creature_template` SET `AIName` = '', `ScriptName` = 'npc_twilight_beguiler' WHERE `entry` = 40167; 
+UPDATE `creature_template` SET `AIName` = '', `ScriptName` = 'npc_twilight_drake_gb' WHERE `entry` = 39390; 
+UPDATE `creature_template` SET `AIName` = '', `ScriptName` = 'npc_twilight_drake_gb' WHERE `entry` = 41095; 
+UPDATE `creature_template` SET `AIName` = '', `ScriptName` = 'npc_twilight_earthshaper' WHERE `entry` = 39890; 
+UPDATE `creature_template` SET `AIName` = '', `ScriptName` = 'npc_twilight_enforcer' WHERE `entry` = 39956; 
+UPDATE `creature_template` SET `AIName` = '', `ScriptName` = 'npc_twilight_enforcer' WHERE `entry` = 40448; 
+UPDATE `creature_template` SET `AIName` = '', `ScriptName` = 'npc_twilight_firecatcher' WHERE `entry` = 39870; 
+UPDATE `creature_template` SET `AIName` = '', `ScriptName` = 'npc_twilight_shadow_weaver' WHERE `entry` = 39954; 
+UPDATE `creature_template` SET `AIName` = '', `ScriptName` = 'npc_twilight_stormbreaker' WHERE `entry` = 39962; 
+UPDATE `creature_template` SET `AIName` = '', `ScriptName` = 'npc_twilight_thundercaller' WHERE `entry` = 40270; 
+UPDATE `creature_template` SET `AIName` = '', `ScriptName` = 'npc_twilight_wyrmcaller' WHERE `entry` = 39873; 
+UPDATE `creature_template` SET `AIName` = '', `ScriptName` = 'npc_twilight_war_mage' WHERE `entry` = 40268; 
+UPDATE `creature_template` SET `AIName` = '', `ScriptName` = 'npc_crimsonborne_warlord_empowering_flames' WHERE `entry` = 41045; 
+
+DELETE FROM `spell_script_names` WHERE `ScriptName` IN ('spell_twilight_shadow_weaver_shadow_weave', 'spell_twilight_thundercaller_electric_blast'); 
+INSERT INTO `spell_script_names` VALUES
+(90673, 'spell_twilight_shadow_weaver_shadow_weave'),
+(82973, 'spell_twilight_thundercaller_electric_blast'); 

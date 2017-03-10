@@ -41,6 +41,7 @@ void AddSC_boss_general_umbriss();
 void AddSC_boss_forgemaster_throngus();
 void AddSC_boss_erudax();
 void AddSC_boss_drahga_shadowburner();
+void AddSC_grim_batol();
 
 // other
 void AddSC_dungeon_portal_pl();
@@ -67,6 +68,7 @@ void AddCustomScripts()
     AddSC_boss_forgemaster_throngus();
     AddSC_boss_erudax();
     AddSC_boss_drahga_shadowburner();
+    AddSC_grim_batol();
 
     // other
     AddSC_dungeon_portal_pl();
