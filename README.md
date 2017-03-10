@@ -1,5 +1,9 @@
 # ![logo](http://eu.battle.net/wow/static/images/seven-oh/logo.png) ProjectLegion custom fork TrinityCore
 
+
+# ![logo](https://discordapp.com/assets/e05ead6e6ebc08df9291738d0aa6986d.png)[Dicord chat](https://discord.gg/FE3z4j8)
+
+
 ## Introduction
 
 TrinityCore is a *MMORPG* Framework based mostly in C++.
