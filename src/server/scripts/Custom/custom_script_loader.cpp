@@ -43,6 +43,14 @@ void AddSC_boss_erudax();
 void AddSC_boss_drahga_shadowburner();
 void AddSC_grim_batol();
 
+// Throne Of The Tides
+void AddSC_throne_of_the_tides();
+void AddSC_instance_throne_of_the_tides();
+void AddSC_boss_ozumat();
+void AddSC_boss_lady_nazjar();
+void AddSC_boss_erunak_stonespeaker();
+void AddSC_boss_commander_ulthok();
+
 // other
 void AddSC_dungeon_portal_pl();
 
@@ -69,6 +77,14 @@ void AddCustomScripts()
     AddSC_boss_erudax();
     AddSC_boss_drahga_shadowburner();
     AddSC_grim_batol();
+
+    // Throne Of The Tides
+    AddSC_throne_of_the_tides();
+    AddSC_instance_throne_of_the_tides();
+    AddSC_boss_ozumat();
+    AddSC_boss_lady_nazjar();
+    AddSC_boss_erunak_stonespeaker();
+    AddSC_boss_commander_ulthok();
 
     // other
     AddSC_dungeon_portal_pl();
