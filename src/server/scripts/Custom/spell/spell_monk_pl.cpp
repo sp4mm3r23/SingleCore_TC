@@ -210,8 +210,8 @@ class spell_monk_dampen_harm: public SpellScriptLoader
 
             bool Load()
             {
-                healPct = GetSpellInfo()->GetEffect(EFFECT_0)->CalcValue();
-                return true;
+                healPct = GetSpellInfo()->GetEffect(EFFECT_0)->CalcValue(GetCaster());
+                return GetUnitOwner()->GetTypeId() == TYPEID_PLAYER;
             }
 
             void CalculateAmount(AuraEffect const* /*auraEff*/, int32& amount, bool& /*canBeRecalculated*/)
