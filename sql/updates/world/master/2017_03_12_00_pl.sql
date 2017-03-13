@@ -1302,11 +1302,11 @@ UPDATE `creature_template` SET `AIName` = '', `ScriptName` = 'boss_lady_nazjar' 
 
 DELETE FROM `creature_text` WHERE `entry` = 40586;
 INSERT INTO `creature_text` (`entry`, `groupid`, `id`, `text`, `type`, `language`, `probability`, `emote`, `duration`, `sound`, `comment`, `BroadcastTextID`) VALUES
-('40586','0','0','You have interfered with our plans for the last time, mortals!','14','0','100','0','0','18886','nazjar','0'),
-('40586','1','0','Take arms, minions! Rise from the icy depths!','14','0','100','0','0','18892','nazjar','0'),
-('40586','2','0','Destroy these intruders! Leave them for the great dark beyond!','14','0','100','0','0','18893','nazjar','0'),
-('40586','3','0','The abyss awaits!','14','0','50','0','0','18888','nazjar','0'),
-('40586','3','1','Depths take you!','14','0','50','0','0','18887','nazjar','0'),
+('40586','0','0','You have interfered with our plans for the last time, mortals!','14','0','100','0','0','18886','nazjar','50505'),
+('40586','1','0','Take arms, minions! Rise from the icy depths!','14','0','100','0','0','18892','nazjar','50513'),
+('40586','2','0','Destroy these intruders! Leave them for the great dark beyond!','14','0','100','0','0','18893','nazjar','50514'),
+('40586','3','0','The abyss awaits!','14','0','50','0','0','18888','nazjar','50508'),
+('40586','3','1','Depths take you!','14','0','50','0','0','18887','nazjar','50506'),
 ('40586','4','0','Ulthok...stop....them....','14','0','100','0','0','18889','nazjar','0');
 
 UPDATE `creature_template` SET `AIName` = '', `ScriptName` = 'npc_lady_nazjar_honnor_guard' WHERE `entry` = 40633; 
@@ -1329,10 +1329,10 @@ UPDATE `creature_template` SET `AIName` = '', `ScriptName` = 'npc_neptulon' WHER
 DELETE FROM `creature_text` WHERE `entry` = 40792;
 INSERT INTO `creature_text` (`entry`, `groupid`, `id`, `text`, `type`, `language`, `probability`, `emote`, `duration`, `sound`, `comment`, `BroadcastTextID`) VALUES
 ('40792','0','0','Ah, my fearless assistants I presume!','14','0','100','0','0','19469','Neptulon say1','0'),
-('40792','1','0','You may yet regret your presence here.','14','0','100','0','0','19470','Neptulon say2','0'),
+('40792','1','0','You may yet regret your presence here.','14','0','100','0','0','19470','Neptulon say2','44264'),
 ('40792','2','0','As I purify there waters, the servants of filth will surely be stirred. Beware!','14','0','100','0','0','19471','Neptulon menu select','0'),
 ('40792','3','0','Patience, guests! The waters are nearly cleansed!','14','0','100','0','0','19475','Neptulon saybefore ozumat','0'),
-('40792','4','0','The beast has returned! It must not pollute my waters!','14','0','100','0','0','19476','Neptulon Ozumat appear','0'),
+('40792','4','0','The beast has returned! It must not pollute my waters!','14','0','100','0','0','19476','Neptulon Ozumat appear','44270'),
 ('40792','5','0','The waters are cleansed! Drink in their power!','14','0','100','0','0','19478','Neptulon Ozumat slain','0');
 
 UPDATE `creature_template` SET `AIName` = '', `ScriptName` = 'npc_vicious_mindslasher' WHERE `entry` = 44715; 
