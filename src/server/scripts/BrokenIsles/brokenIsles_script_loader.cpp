@@ -18,7 +18,7 @@
 void AddSC_zone_mardum_pl();
 void AddSC_instance_eye_of_azshara();
 
-void AddBrokenIslesplScripts()
+void AddBrokenIslesScripts()
 {
     AddSC_zone_mardum_pl();
     AddSC_instance_eye_of_azshara();
