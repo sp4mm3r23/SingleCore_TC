@@ -1204,6 +1204,8 @@ public:
     }
 };
 
+
+
 void AddSC_deathknight_spell_scripts()
 {
     new spell_dk_advantage_t10_4p();
