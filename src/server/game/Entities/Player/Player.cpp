@@ -2071,6 +2071,15 @@ void Player::ResetAllPowers()
         case POWER_LUNAR_POWER:
             SetPower(POWER_LUNAR_POWER, 0);
             break;
+        case POWER_CHI:  // monk
+            SetPower(POWER_CHI, 0);
+            break;
+        case POWER_PAIN: // DH tank
+            SetPower(POWER_PAIN, 0);
+            break;
+        case POWER_INSANITY: // DH dd
+            SetPower(POWER_INSANITY, 0);
+            break;
         default:
             break;
     }
@@ -9182,6 +9191,26 @@ void Player::SendInitWorldStates(uint32 zoneid, uint32 areaid)
             if (bg && bg->GetTypeID(true) == BATTLEGROUND_BFG)
                 bg->FillInitialWorldStates(packet);
             break;
+        case 6732:
+            if (bg && bg->GetTypeID(true) == BATTLEGROUND_TTP)
+                bg->FillInitialWorldStates(packet);
+            else
+            {
+                packet.Worldstates.emplace_back(0xE10, 0x0);           // 7 gold
+                packet.Worldstates.emplace_back(0xE11, 0x0);           // 8 green
+                packet.Worldstates.emplace_back(0xE1A, 0x0);           // 9 show
+            }
+            break;
+        case 6296:
+            if (bg && bg->GetTypeID(true) == BATTLEGROUND_TVA)
+                bg->FillInitialWorldStates(packet);
+            else
+            {
+                packet.Worldstates.emplace_back(0xE10, 0x0);           // 7 gold
+                packet.Worldstates.emplace_back(0xE11, 0x0);           // 8 green
+                packet.Worldstates.emplace_back(0xE1A, 0x0);           // 9 show
+            }
+            break;
         // Tol Barad Peninsula
         case 5389:
             if (sWorld->getBoolConfig(CONFIG_TOLBARAD_ENABLE))
@@ -14672,48 +14701,8 @@ bool Player::CanCompleteQuest(uint32 quest_id)
         {
             for (QuestObjective const& obj : qInfo->GetObjectives())
             {
-                switch (obj.Type)
-                {
-                    case QUEST_OBJECTIVE_MONSTER:
-                    case QUEST_OBJECTIVE_ITEM:
-                    case QUEST_OBJECTIVE_GAMEOBJECT:
-                    case QUEST_OBJECTIVE_PLAYERKILLS:
-                    case QUEST_OBJECTIVE_TALKTO:
-                    case QUEST_OBJECTIVE_WINPVPPETBATTLES:
-                    case QUEST_OBJECTIVE_HAVE_CURRENCY:
-                    case QUEST_OBJECTIVE_OBTAIN_CURRENCY:
-                        if (GetQuestObjectiveData(qInfo, obj.StorageIndex) < obj.Amount)
-                            return false;
-                        break;
-                    case QUEST_OBJECTIVE_MIN_REPUTATION:
-                        if (GetReputationMgr().GetReputation(obj.ObjectID) < obj.Amount)
-                            return false;
-                        break;
-                    case QUEST_OBJECTIVE_MAX_REPUTATION:
-                        if (GetReputationMgr().GetReputation(obj.ObjectID) > obj.Amount)
-                            return false;
-                        break;
-                    case QUEST_OBJECTIVE_MONEY:
-                        if (!HasEnoughMoney(uint64(obj.Amount)))
-                            return false;
-                        break;
-                    case QUEST_OBJECTIVE_AREATRIGGER:
-                        if (!GetQuestObjectiveData(qInfo, obj.StorageIndex))
-                            return false;
-                        break;
-                    case QUEST_OBJECTIVE_LEARNSPELL:
-                        if (!HasSpell(obj.ObjectID))
-                            return false;
-                        break;
-                    case QUEST_OBJECTIVE_CURRENCY:
-                        if (!HasCurrency(obj.ObjectID, obj.Amount))
-                            return false;
-                        break;
-                    default:
-                        TC_LOG_ERROR("entities.player.quest", "Player::CanCompleteQuest: Player '%s' (%s) tried to complete a quest (ID: %u) with an unknown objective type %u",
-                            GetName().c_str(), GetGUID().ToString().c_str(), quest_id, obj.Type);
-                        return false;
-                }
+                if (!IsQuestObjectiveComplete(qInfo, obj))
+                    return false;
             }
 
             if (qInfo->HasSpecialFlag(QUEST_SPECIAL_FLAGS_TIMED) && q_status.Timer == 0)
@@ -16847,6 +16836,54 @@ int32 Player::GetQuestObjectiveData(Quest const* quest, int8 storageIndex) const
     }
 
     return status.ObjectiveData[storageIndex];
+}
+
+bool Player::IsQuestObjectiveComplete(Quest const* quest, QuestObjective const& objective) const
+{
+    switch (objective.Type)
+    {
+        case QUEST_OBJECTIVE_MONSTER:
+        case QUEST_OBJECTIVE_ITEM:
+        case QUEST_OBJECTIVE_GAMEOBJECT:
+        case QUEST_OBJECTIVE_PLAYERKILLS:
+        case QUEST_OBJECTIVE_TALKTO:
+        case QUEST_OBJECTIVE_WINPVPPETBATTLES:
+        case QUEST_OBJECTIVE_HAVE_CURRENCY:
+        case QUEST_OBJECTIVE_OBTAIN_CURRENCY:
+            if (GetQuestObjectiveData(quest, objective.StorageIndex) < objective.Amount)
+                return false;
+            break;
+        case QUEST_OBJECTIVE_MIN_REPUTATION:
+            if (GetReputationMgr().GetReputation(objective.ObjectID) < objective.Amount)
+                return false;
+            break;
+        case QUEST_OBJECTIVE_MAX_REPUTATION:
+            if (GetReputationMgr().GetReputation(objective.ObjectID) > objective.Amount)
+                return false;
+            break;
+        case QUEST_OBJECTIVE_MONEY:
+            if (!HasEnoughMoney(uint64(objective.Amount)))
+                return false;
+            break;
+        case QUEST_OBJECTIVE_AREATRIGGER:
+            if (!GetQuestObjectiveData(quest, objective.StorageIndex))
+                return false;
+            break;
+        case QUEST_OBJECTIVE_LEARNSPELL:
+            if (!HasSpell(objective.ObjectID))
+                return false;
+            break;
+        case QUEST_OBJECTIVE_CURRENCY:
+            if (!HasCurrency(objective.ObjectID, objective.Amount))
+                return false;
+            break;
+        default:
+            TC_LOG_ERROR("entities.player.quest", "Player::CanCompleteQuest: Player '%s' (%s) tried to complete a quest (ID: %u) with an unknown objective type %u",
+                GetName().c_str(), GetGUID().ToString().c_str(), quest->ID, objective.Type);
+            return false;
+    }
+
+    return true;
 }
 
 void Player::SetQuestObjectiveData(Quest const* quest, int8 storageIndex, int32 data)

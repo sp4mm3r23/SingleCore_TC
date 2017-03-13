@@ -21,6 +21,7 @@
  * Scriptnames of files in this file should be prefixed with "spell_dh_".
  */
 
+
 void AddSC_demon_hunter_spell_scripts()
 {
 }

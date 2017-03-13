@@ -295,6 +295,7 @@ class TC_GAME_API Group
         bool isBFGroup()   const;
         bool IsCreated()   const;
         GroupCategory GetGroupCategory() const { return m_groupCategory; }
+        void UpdateGuildAchievementCriteria(CriteriaTypes type, uint64 miscValue1, uint64 miscValue2, uint64 miscValue3, Unit const* unit, Player* referencePlayer);
         ObjectGuid GetLeaderGUID() const;
         ObjectGuid GetGUID() const;
         const char * GetLeaderName() const;

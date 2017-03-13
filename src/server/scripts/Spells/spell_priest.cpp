@@ -1291,7 +1291,7 @@ class spell_pri_vampiric_touch : public SpellScriptLoader
 
 void AddSC_priest_spell_scripts()
 {
-    new spell_pri_body_and_soul();
+    //new spell_pri_body_and_soul();
     new spell_pri_circle_of_healing();
     new spell_pri_dispel_magic();
     new spell_pri_divine_aegis();

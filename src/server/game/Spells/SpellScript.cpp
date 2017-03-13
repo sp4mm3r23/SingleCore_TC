@@ -197,6 +197,16 @@ SpellCastResult SpellScript::CheckCastHandler::Call(SpellScript* spellScript)
     return (spellScript->*_checkCastHandlerScript)();
 }
 
+void SpellScript::OnPrepareHandler::Call(SpellScript* spellScript)
+{
+    (spellScript->*_onPrepareHandlerScript)();
+}
+
+SpellScript::OnPrepareHandler::OnPrepareHandler(SpellOnPrepareFnType OnPrepareHandlerScript)
+{
+    _onPrepareHandlerScript = OnPrepareHandlerScript;
+}
+
 SpellScript::EffectHandler::EffectHandler(SpellEffectFnType _pEffectHandlerScript, uint8 _effIndex, uint16 _effName)
     : _SpellScript::EffectNameCheck(_effName), _SpellScript::EffectHook(_effIndex)
 {

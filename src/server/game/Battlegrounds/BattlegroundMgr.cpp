@@ -35,6 +35,8 @@
 #include "BattlegroundIC.h"
 #include "BattlegroundTP.h"
 #include "BattlegroundBFG.h"
+#include "BattlegroundTTP.h"
+#include "BattlegroundTVA.h"
 #include "Map.h"
 #include "MapInstanced.h"
 #include "MapManager.h"
@@ -343,6 +345,12 @@ Battleground* BattlegroundMgr::CreateNewBattleground(BattlegroundTypeId original
         case BATTLEGROUND_BFG:
             bg = new BattlegroundBFG(*(BattlegroundBFG*)bg_template);
             break;
+        case BATTLEGROUND_TTP:
+            bg = new BattlegroundTTP(*(BattlegroundTTP*)bg_template);
+            break;
+        case BATTLEGROUND_TVA:
+            bg = new BattlegroundTVA(*(BattlegroundTVA*)bg_template);
+            break;
         case BATTLEGROUND_RB:
         case BATTLEGROUND_AA:
         default:
@@ -441,6 +449,12 @@ bool BattlegroundMgr::CreateBattleground(BattlegroundTemplate const* bgTemplate)
                 break;
             case BATTLEGROUND_BFG:
                 bg = new BattlegroundBFG;
+                break;
+            case BATTLEGROUND_TTP:
+                bg = new BattlegroundTTP;
+                break;
+            case BATTLEGROUND_TVA:
+                bg = new BattlegroundTVA;
                 break;
             default:
                 return false;
@@ -621,7 +635,9 @@ bool BattlegroundMgr::IsArenaType(BattlegroundTypeId bgTypeId)
             || bgTypeId == BATTLEGROUND_NA
             || bgTypeId == BATTLEGROUND_DS
             || bgTypeId == BATTLEGROUND_RV
-            || bgTypeId == BATTLEGROUND_RL;
+            || bgTypeId == BATTLEGROUND_RL
+            || bgTypeId == BATTLEGROUND_TTP
+            || bgTypeId == BATTLEGROUND_TVA;
 }
 
 BattlegroundQueueTypeId BattlegroundMgr::BGQueueTypeId(BattlegroundTypeId bgTypeId, uint8 arenaType)
@@ -652,6 +668,8 @@ BattlegroundQueueTypeId BattlegroundMgr::BGQueueTypeId(BattlegroundTypeId bgType
         case BATTLEGROUND_NA:
         case BATTLEGROUND_RL:
         case BATTLEGROUND_RV:
+        case BATTLEGROUND_TTP:
+        case BATTLEGROUND_TVA:
             switch (arenaType)
             {
                 case ARENA_TYPE_2v2:
