@@ -205,12 +205,13 @@ class spell_monk_dampen_harm: public SpellScriptLoader
         {
             PrepareAuraScript(spell_monk_dampen_harm_AuraScript);
 
-            int32 healthPct;
+        private:
+            uint32 healPct;
 
             bool Load()
             {
-                healthPct = GetSpellInfo()->GetEffect(EFFECT_0)->CalcValue(GetCaster());
-                return GetUnitOwner()->ToPlayer();
+                healPct = GetSpellInfo()->GetEffect(EFFECT_0)->CalcValue(GetCaster());
+                return GetUnitOwner()->GetTypeId() == TYPEID_PLAYER;
             }
 
             void CalculateAmount(AuraEffect const* /*auraEff*/, int32& amount, bool& /*canBeRecalculated*/)
@@ -222,7 +223,7 @@ class spell_monk_dampen_harm: public SpellScriptLoader
             {
                 Unit* target = GetTarget();
 
-                uint32 health = target->CountPctFromMaxHealth(healthPct);
+                uint32 health = target->CountPctFromMaxHealth(healPct);
 
                 if (dmgInfo.GetDamage() < health)
                     return;
@@ -234,7 +235,7 @@ class spell_monk_dampen_harm: public SpellScriptLoader
             void Register() override
             {
                 DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_monk_dampen_harm_AuraScript::CalculateAmount, EFFECT_0, SPELL_AURA_SCHOOL_ABSORB);
-                OnEffectAbsorb += AuraEffectAbsorbFn(spell_monk_dampen_harm_AuraScript::Absorb, EFFECT_0, SPELL_AURA_SCHOOL_ABSORB);
+                OnEffectAbsorb += AuraEffectAbsorbFn(spell_monk_dampen_harm_AuraScript::Absorb, EFFECT_0);
             }
         };
 
