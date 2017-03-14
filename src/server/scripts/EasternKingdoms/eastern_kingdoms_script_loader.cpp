@@ -197,6 +197,26 @@ void AddSC_undercity();
 void AddSC_western_plaguelands();
 void AddSC_wetlands();
 
+// ProjectLegion
+// GrimBatol
+void AddSC_instance_grim_batol();
+void AddSC_boss_general_umbriss();
+void AddSC_boss_forgemaster_throngus();
+void AddSC_boss_erudax();
+void AddSC_boss_drahga_shadowburner();
+void AddSC_grim_batol();
+
+// Throne Of The Tides
+void AddSC_throne_of_the_tides();
+void AddSC_instance_throne_of_the_tides();
+void AddSC_boss_ozumat();
+void AddSC_boss_lady_nazjar();
+void AddSC_boss_erunak_stonespeaker();
+void AddSC_boss_commander_ulthok();
+
+// zone
+void AddSC_gilneas_pl();
+
 // The name of this function should match:
 // void Add${NameOfDirectory}Scripts()
 void AddEasternKingdomsScripts()
@@ -382,4 +402,24 @@ void AddEasternKingdomsScripts()
     AddSC_undercity();
     AddSC_western_plaguelands();
     AddSC_wetlands();
+
+    // ProjectLegion
+    // GrimBatol
+    AddSC_instance_grim_batol();
+    AddSC_boss_general_umbriss();
+    AddSC_boss_forgemaster_throngus();
+    AddSC_boss_erudax();
+    AddSC_boss_drahga_shadowburner();
+    AddSC_grim_batol();
+
+    // Throne Of The Tides
+    AddSC_throne_of_the_tides();
+    AddSC_instance_throne_of_the_tides();
+    AddSC_boss_ozumat();
+    AddSC_boss_lady_nazjar();
+    AddSC_boss_erunak_stonespeaker();
+    AddSC_boss_commander_ulthok();
+
+    // zone
+    AddSC_gilneas_pl();
 }
