@@ -38,7 +38,7 @@ void Trinity::Banner::Show(char const* applicationName, void(*log)(char const* t
 	log(" ");
 	log("Based on ProjectLegion source.");
 	log(" ");
-	log(" https://github.com/conan513/SingleCore_TC ");
+	log(" https://bitbucket.org/projectlegion/projectlegion ");
 	log(" ");
 	log("###############################################################################");
 	log(" ");
