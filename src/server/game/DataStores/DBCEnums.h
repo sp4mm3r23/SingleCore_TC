@@ -228,6 +228,8 @@ enum CriteriaAdditionalCondition
     CRITERIA_ADDITIONAL_CONDITION_GARRISON_BUILDING_LEVEL       = 149, // NYI
     CRITERIA_ADDITIONAL_CONDITION_GARRISON_MISSION_TYPE         = 167, // NYI
     CRITERIA_ADDITIONAL_CONDITION_GARRISON_FOLLOWER_ILVL        = 184,
+    CRITERIA_ADDITIONAL_CONDITION_HONOR_LEVEL                   = 193,
+    CRITERIA_ADDITIONAL_CONDITION_PRESTIGE_LEVEL                = 194
 };
 
 enum CriteriaFlags
@@ -947,6 +949,11 @@ enum SceneFlags
     SCENEFLAG_NOT_CANCELABLE    = 0x04,
     SCENEFLAG_UNK8              = 0x08,
     SCENEFLAG_UNK16             = 0x10, // 16, most common value
+};
+
+enum PrestigeLevelInfoFlags
+{
+    PRESTIGE_FLAG_DONT_LIST = 0x01 // Don't list prestige level when hovering over prestige icon in honor talents.
 };
 
 #endif
