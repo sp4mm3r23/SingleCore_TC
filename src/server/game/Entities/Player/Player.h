@@ -2534,6 +2534,8 @@ class TC_GAME_API Player : public Unit, public GridObject<Player>
 
         SceneMgr& GetSceneMgr() { return m_sceneMgr; }
 
+		void ShowNeutralPlayerFactionSelectUI();
+
     protected:
         // Gamemaster whisper whitelist
         GuidList WhisperList;
