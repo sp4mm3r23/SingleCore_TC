@@ -17,8 +17,10 @@
 
 #include "ScriptMgr.h"
 #include "ScriptedCreature.h"
+#include "ScriptedEscortAI.h"
 #include "SpellScript.h"
 #include "Player.h"
+#include "Vehicle.h"
 
 class spell_summon_troublemaker : public SpellScriptLoader
 {
@@ -1368,6 +1370,162 @@ public:
         return new shen_zin_shu_bunnyAI(creature);
     }
 };
+
+class go_wandering_weapon_rack : public GameObjectScript
+{
+public:
+	go_wandering_weapon_rack() : GameObjectScript("go_wandering_weapon_rack") { }
+
+	bool OnGossipHello(Player* player, GameObject* /*go*/)
+	{
+		if (player->GetQuestStatus(30027) == QUEST_STATUS_INCOMPLETE && (!player->HasItemCount(77279) || !player->HasItemCount(77278)))
+		{
+			player->AddItem(77279, 1);
+			player->AddItem(77278, 1);
+		}
+		else if (player->GetQuestStatus(30033) == QUEST_STATUS_INCOMPLETE && (!player->HasItemCount(76392) || !player->HasItemCount(76390)))
+		{
+			player->AddItem(76392, 1);
+			player->AddItem(76390, 1);
+		}
+		else if (player->GetQuestStatus(30034) == QUEST_STATUS_INCOMPLETE && !player->HasItemCount(73211))
+		{
+			player->AddItem(73211, 1);
+		}
+		else if (player->GetQuestStatus(30035) == QUEST_STATUS_INCOMPLETE && (!player->HasItemCount(76393) || !player->HasItemCount(73207)))
+		{
+			player->AddItem(76393, 1);
+			player->AddItem(73207, 1);
+		}
+		else if (player->GetQuestStatus(30036) == QUEST_STATUS_INCOMPLETE && (!player->HasItemCount(73212) || !player->HasItemCount(73208)))
+		{
+			player->AddItem(73212, 1);
+			player->AddItem(73208, 1);
+		}
+		else if (player->GetQuestStatus(30037) == QUEST_STATUS_INCOMPLETE && (!player->HasItemCount(73213) || !player->HasItemCount(76391)))
+		{
+			player->AddItem(73213, 1);
+			player->AddItem(76391, 1);
+		}
+		else if (player->GetQuestStatus(30038) == QUEST_STATUS_INCOMPLETE && !player->HasItemCount(73210))
+		{
+			player->AddItem(73210, 1);
+		}
+
+		return true;
+	}
+};
+
+class mob_shang_xi_air_balloon : public VehicleScript
+{
+public:
+	mob_shang_xi_air_balloon() : VehicleScript("mob_shang_xi_air_balloon") { }
+
+	void OnAddPassenger(Vehicle* /*veh*/, Unit* passenger, int8 seatId)
+	{
+		if (seatId == 1)
+			if (Player* player = passenger->ToPlayer())
+				player->KilledMonsterCredit(56378);
+	}
+
+	struct mob_shang_xi_air_balloonAI : public npc_escortAI
+	{
+		mob_shang_xi_air_balloonAI(Creature* creature) : npc_escortAI(creature)
+		{}
+
+		uint32 IntroTimer;
+
+		void Reset()
+		{
+			IntroTimer = 250;
+			me->setActive(true);
+			me->SetReactState(REACT_PASSIVE);
+		}
+
+		void WaypointReached(uint32 waypointId)
+		{
+			switch (waypointId)
+			{
+			case 19:
+				if (me->GetVehicleKit())
+				{
+					if (Unit* passenger = me->GetVehicleKit()->GetPassenger(1))
+						if (Player* player = passenger->ToPlayer())
+						{
+							player->KilledMonsterCredit(55939);
+							player->AddAura(50550, player);
+						}
+
+					me->GetVehicleKit()->RemoveAllPassengers();
+				}
+
+				me->DespawnOrUnsummon();
+				break;
+			default:
+				break;
+			}
+		}
+
+		void UpdateAI(uint32 diff)
+		{
+			if (IntroTimer)
+			{
+				if (IntroTimer <= diff)
+				{
+					if (me->GetVehicleKit())
+					{
+						if (Unit* passenger = me->GetVehicleKit()->GetPassenger(1))
+						{
+							Start(false, true);
+							IntroTimer = 0;
+						}
+					}
+				}
+				else
+					IntroTimer -= diff;
+			}
+
+			npc_escortAI::UpdateAI(diff);
+		}
+	};
+
+	CreatureAI* GetAI(Creature* creature) const
+	{
+		return new mob_shang_xi_air_balloonAI(creature);
+	}
+};
+
+// Grab Air Balloon - 95247
+class spell_grab_air_balloon : public SpellScriptLoader
+{
+public:
+	spell_grab_air_balloon() : SpellScriptLoader("spell_grab_air_balloon") { }
+
+	class spell_grab_air_balloon_SpellScript : public SpellScript
+	{
+		PrepareSpellScript(spell_grab_air_balloon_SpellScript);
+
+		void HandleScriptEffect(SpellEffIndex effIndex)
+		{
+			PreventHitDefaultEffect(effIndex);
+
+			if (Unit* caster = GetCaster())
+				if (Creature* balloon = caster->SummonCreature(55649, 915.55f, 4563.66f, 230.68f, 2.298090f, TEMPSUMMON_MANUAL_DESPAWN, 0))
+					caster->EnterVehicle(balloon, 0);
+		}
+
+		void Register()
+		{
+			OnEffectLaunch += SpellEffectFn(spell_grab_air_balloon_SpellScript::HandleScriptEffect, EFFECT_0, SPELL_EFFECT_APPLY_AURA);
+		}
+	};
+
+	SpellScript* GetSpellScript() const
+	{
+		return new spell_grab_air_balloon_SpellScript();
+	}
+};
+
 
 void AddSC_the_wandering_isle()
 {
