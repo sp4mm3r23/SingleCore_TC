@@ -37,6 +37,8 @@ void AddSC_demon_hunter_spell_scripts_pl();
 void AddSC_deathknight_spell_scripts_pl();
 void AddSC_monk_spell_scripts_pl();
 void AddSC_hunter_spell_scripts_pl();
+void AddSC_mage_spell_scripts_pl();
+void AddSC_druid_spell_scripts_pl();
 
 void AddCustomScripts()
 {
@@ -60,4 +62,6 @@ void AddCustomScripts()
     AddSC_deathknight_spell_scripts_pl();
     AddSC_monk_spell_scripts_pl();
     AddSC_hunter_spell_scripts_pl();
+    AddSC_mage_spell_scripts_pl();
+    AddSC_druid_spell_scripts_pl();
 }
