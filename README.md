@@ -1,4 +1,11 @@
-# ![logo](http://eu.battle.net/wow/static/images/seven-oh/logo.png) [ProjectLegion](https://bitbucket.org/projectlegion/projectlegion) custom fork [TrinityCore](https://github.com/TrinityCore/TrinityCore)
+
+# Come and join to the Single Player Project Discord Server!
+![logo](http://i.imgur.com/Rn2rKfy.png) 
+## --> https://discord.gg/TpxqWWT <--
+
+
+
+# ![logo](https://community.trinitycore.org/public/style_images/1_trinitycore.png) TrinityCore (master)
 
 
 # ![logo](https://discordapp.com/assets/e05ead6e6ebc08df9291738d0aa6986d.png)[Dicord chat](https://discord.gg/FE3z4j8)
