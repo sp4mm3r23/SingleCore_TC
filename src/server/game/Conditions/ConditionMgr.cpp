@@ -461,22 +461,6 @@ bool Condition::Meets(ConditionSourceInfo& sourceInfo) const
             }
             break;
         }
-        case CONDITION_QUEST_OBJECTIVE_COMPLETE:
-        {
-            if (Player* player = object->ToPlayer())
-            {
-                Quest const* qInfo = sObjectMgr->GetQuestTemplate(ConditionValue1);
-                if (!qInfo)
-                    break;
-                
-                for (QuestObjective const& obj : qInfo->GetObjectives())
-                {
-                    if (obj.ID == ConditionValue2)
-                        condMeets = (player->IsQuestObjectiveComplete(qInfo, obj) && !player->GetQuestRewardStatus(ConditionValue1));
-                }
-            }
-            break;
-        }
         case CONDITION_DAILY_QUEST_DONE:
         {
             if (Player* player = object->ToPlayer())
@@ -711,9 +695,6 @@ uint32 Condition::GetSearcherTypeMaskForCondition() const
             break;
         case CONDITION_STAND_STATE:
             mask |= GRID_MAP_TYPE_MASK_CREATURE | GRID_MAP_TYPE_MASK_PLAYER;
-            break;
-        case CONDITION_QUEST_OBJECTIVE_COMPLETE:
-            mask |= GRID_MAP_TYPE_MASK_PLAYER;
             break;
         case CONDITION_DAILY_QUEST_DONE:
             mask |= GRID_MAP_TYPE_MASK_PLAYER;
