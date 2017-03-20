@@ -77,18 +77,27 @@ INSERT INTO `disables` (`sourceType`, `entry`, `comment`) VALUES ('1', '26198', 
 INSERT INTO `disables` (`sourceType`, `entry`, `comment`) VALUES ('1', '26201', 'Deprecated quest: The Power of a Warlock');
 INSERT INTO `disables` (`sourceType`, `entry`, `comment`) VALUES ('1', '31138', 'Deprecated quest: The Arts of a Monk');
 
+DELETE FROM `quest_template_addon` WHERE `ID` IN (41217, 31135, 31137, 41218);
 INSERT INTO `quest_template_addon` (`ID`, `AllowableClasses`, `PrevQuestID`, `NextQuestID`) VALUES ('41217', '4', '27674', '41218');
 INSERT INTO `quest_template_addon` (`ID`, `AllowableClasses`, `PrevQuestID`, `NextQuestID`) VALUES ('31135', '512', '27674', '31137');
 INSERT INTO `quest_template_addon` (`ID`, `AllowableClasses`, `NextQuestID`) VALUES ('31137', '512', '26208');
 INSERT INTO `quest_template_addon` (`ID`, `AllowableClasses`, `NextQuestID`) VALUES('41218','4','26208');
+
+DELETE FROM `creature_queststarter` WHERE `id` = 42396 AND `quest` = 41217;
+DELETE FROM `creature_queststarter` WHERE `id` = 103614 AND `quest` = 41218;
+DELETE FROM `creature_queststarter` WHERE `id` = 42396 AND `quest` = 31135;
+DELETE FROM `creature_queststarter` WHERE `id` = 63238 AND `quest` = 31137;
 INSERT INTO `creature_queststarter` (`id`, `quest`) VALUES
 ('42396', '41217'),
 ('103614', '41218'),
 ('42396', '31135'),
 ('63238', '31137');
+
+DELETE FROM `creature_addon` WHERE `guid` IN (304597, 304826);
 INSERT INTO `creature_addon` (`guid`, `bytes1`, `auras`) VALUES ('304597', '7', '29266');
 INSERT INTO `creature_addon` (`guid`, `path_id`) VALUES ('304826', '3048260');
 
+DELETE FROM `waypoint_data` WHERE `id` = 3048260;
 INSERT INTO `waypoint_data` (`id`, `point`, `position_x`, `position_y`, `position_z`, `orientation`, `delay`, `move_type`, `action`, `action_chance`, `wpguid`) VALUES('3048260','1','-5570.51','685.956','382.666','0','0','0','0','100','0');
 INSERT INTO `waypoint_data` (`id`, `point`, `position_x`, `position_y`, `position_z`, `orientation`, `delay`, `move_type`, `action`, `action_chance`, `wpguid`) VALUES('3048260','2','-5570.41','664.255','387.659','0','0','0','0','100','0');
 INSERT INTO `waypoint_data` (`id`, `point`, `position_x`, `position_y`, `position_z`, `orientation`, `delay`, `move_type`, `action`, `action_chance`, `wpguid`) VALUES('3048260','3','-5563.21','655.185','388.666','0','0','0','0','100','0');
