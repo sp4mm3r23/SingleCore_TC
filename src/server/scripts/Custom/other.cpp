@@ -24,7 +24,8 @@
 enum Say
 {
     /* Elwynn Forest */
-    SAY_BLACKROCK_COMBAT = 0
+    SAY_BLACKROCK_COMBAT = 0,
+    SAY_ASSASSIN_COMBAT  = 0
 };
 
 enum CreatureIds
@@ -356,10 +357,40 @@ public:
     }
 };
 
+class npc_goblin_assassin : public CreatureScript
+{
+public:
+    npc_goblin_assassin() : CreatureScript("npc_goblin_assassin") { }
+
+    struct npc_goblin_assassinAI : public ScriptedAI
+    {
+        npc_goblin_assassinAI(Creature *c) : ScriptedAI(c) { }
+
+        void EnterCombat(Unit * /*who*/) override
+        {
+            Talk(SAY_ASSASSIN_COMBAT);
+        }
+
+        void UpdateAI(uint32 /*diff*/) override
+        {
+            if (!UpdateVictim())
+                return;
+
+            DoMeleeAttackIfReady();
+        }
+    };
+
+     CreatureAI* GetAI(Creature* creature) const
+    {
+        return new npc_goblin_assassinAI (creature);
+    }
+};
+
 void AddSC_other_scripts()
 {
     new npc_stormwind_infantry();
     new npc_brother_paxton();
     new npc_blackrock_battle_worg();
     new npc_blackrock_spy();
+    new npc_goblin_assassin();
 }
