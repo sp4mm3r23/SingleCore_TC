@@ -2068,14 +2068,14 @@ void Player::ResetAllPowers()
         case POWER_LUNAR_POWER:
             SetPower(POWER_LUNAR_POWER, 0);
             break;
-        case POWER_CHI:  // monk
+        case POWER_CHI:
             SetPower(POWER_CHI, 0);
             break;
-        case POWER_PAIN: // DH tank
+        case POWER_PAIN:
             SetPower(POWER_PAIN, 0);
             break;
-        case POWER_INSANITY: // DH dd
-            SetPower(POWER_INSANITY, 0);
+        case POWER_FURY:
+            SetPower(POWER_FURY, 0);
             break;
         default:
             break;
