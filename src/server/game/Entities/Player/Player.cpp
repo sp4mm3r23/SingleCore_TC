@@ -2636,6 +2636,9 @@ void Player::InitStatsForLevel(bool reapplyMods)
     SetFloatValue(PLAYER_OFFHAND_CRIT_PERCENTAGE, 0.0f);
     SetFloatValue(PLAYER_RANGED_CRIT_PERCENTAGE, 0.0f);
 
+    for (uint8 i = 0; i < PlayerAvgItemLevelOffsets::MaxAvgItemLevel; i++)
+        SetFloatValue(PLAYER_FIELD_AVG_ITEM_LEVEL + i, 0.0f);
+
     // Init spell schools (will be recalculated in UpdateAllStats() at loading and in _ApplyAllStatBonuses() at reset
     SetFloatValue(PLAYER_SPELL_CRIT_PERCENTAGE1, 0.0f);
 
@@ -11648,6 +11651,8 @@ Item* Player::StoreItem(ItemPosCountVec const& dest, Item* pItem, bool update)
         lastItem = _StoreItem(pos, pItem, count, true, update);
     }
 
+    UpdateItemLevel();
+
     AutoUnequipChildItem(lastItem);
 
     return lastItem;
@@ -11882,6 +11887,8 @@ Item* Player::EquipItem(uint16 pos, Item* pItem, bool update)
     // only for full equip instead adding to stack
     UpdateCriteria(CRITERIA_TYPE_EQUIP_ITEM, pItem->GetEntry());
     UpdateCriteria(CRITERIA_TYPE_EQUIP_EPIC_ITEM, pItem->GetEntry(), slot);
+
+    UpdateItemLevel();
 
     return pItem;
 }
@@ -12141,6 +12148,8 @@ void Player::RemoveItem(uint8 bag, uint8 slot, bool update)
 
         AutoUnequipChildItem(pItem);
     }
+
+    UpdateItemLevel();
 }
 
 // Common operation need to remove item from inventory without delete in trade, auction, guild bank, mail....
@@ -26788,6 +26797,26 @@ void Player::_LoadRandomBGStatus(PreparedQueryResult result)
 
     if (result)
         m_IsBGRandomWinner = true;
+}
+
+float Player::GetAverageItemLevelEquipped() const
+{
+    float sum = 0;
+    uint32 count = 0;
+
+    for (int i = EQUIPMENT_SLOT_START; i < EQUIPMENT_SLOT_END; ++i)
+    {
+        // don't check tabard, ranged, offhand or shirt
+        if (i == EQUIPMENT_SLOT_TABARD || i == EQUIPMENT_SLOT_RANGED || i == EQUIPMENT_SLOT_OFFHAND || i == EQUIPMENT_SLOT_BODY)
+            continue;
+
+        if (m_items[i] && m_items[i]->GetTemplate())
+            sum += m_items[i]->GetItemLevel(this);
+
+        ++count;
+    }
+
+    return ((float)sum) / count;
 }
 
 float Player::GetAverageItemLevel() const

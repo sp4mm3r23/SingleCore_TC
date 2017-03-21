@@ -220,6 +220,7 @@ bool Player::UpdateAllStats()
     UpdateExpertise(OFF_ATTACK);
     RecalculateRating(CR_ARMOR_PENETRATION);
     UpdateAllResistances();
+    UpdateItemLevel();
 
     return true;
 }
@@ -306,6 +307,12 @@ void Player::UpdateMaxPower(Powers power)
     value *= GetModifierValue(unitMod, TOTAL_PCT);
 
     SetMaxPower(power, uint32(value));
+}
+
+void Player::UpdateItemLevel()
+{
+    SetFloatValue(PLAYER_FIELD_AVG_ITEM_LEVEL + TotalAvgItemLevel, (float)GetAverageItemLevel());
+    SetFloatValue(PLAYER_FIELD_AVG_ITEM_LEVEL + EquippedAvgItemLevel, (float)GetAverageItemLevelEquipped());
 }
 
 void Player::UpdateAttackPowerAndDamage(bool ranged)
