@@ -11651,9 +11651,8 @@ Item* Player::StoreItem(ItemPosCountVec const& dest, Item* pItem, bool update)
         lastItem = _StoreItem(pos, pItem, count, true, update);
     }
 
-    UpdateItemLevel();
-
     AutoUnequipChildItem(lastItem);
+    UpdateItemLevel();
 
     return lastItem;
 }
@@ -26797,26 +26796,6 @@ void Player::_LoadRandomBGStatus(PreparedQueryResult result)
 
     if (result)
         m_IsBGRandomWinner = true;
-}
-
-float Player::GetAverageItemLevelEquipped() const
-{
-    float sum = 0;
-    uint32 count = 0;
-
-    for (int i = EQUIPMENT_SLOT_START; i < EQUIPMENT_SLOT_END; ++i)
-    {
-        // don't check tabard, ranged, offhand or shirt
-        if (i == EQUIPMENT_SLOT_TABARD || i == EQUIPMENT_SLOT_RANGED || i == EQUIPMENT_SLOT_OFFHAND || i == EQUIPMENT_SLOT_BODY)
-            continue;
-
-        if (m_items[i] && m_items[i]->GetTemplate())
-            sum += m_items[i]->GetItemLevel(this);
-
-        ++count;
-    }
-
-    return ((float)sum) / count;
 }
 
 float Player::GetAverageItemLevel() const
