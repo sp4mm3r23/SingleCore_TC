@@ -17048,7 +17048,7 @@ bool Player::IsQuestObjectiveComplete(Quest const* quest, QuestObjective const& 
                 GetName().c_str(), GetGUID().ToString().c_str(), quest->ID, objective.Type);
             return false;
     }
-
+    
     return true;
 }
 
