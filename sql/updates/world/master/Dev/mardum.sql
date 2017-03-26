@@ -4370,3 +4370,6 @@ INSERT INTO `quest_template_addon` (`ID`, `PrevQuestID`) VALUES
 DELETE FROM `areatrigger_template` WHERE `Id` IN (9637);
 INSERT INTO `areatrigger_template` (`Id`, `Type`, `Flags`, `Data0`, `Data1`, `Data2`, `Data3`, `Data4`, `Data5`, `VerifiedBuild`) VALUES
 (9637, 0, 20, 5, 5, 0, 0, 0, 0, 23420);
+
+UPDATE `scene_template` SET `Flags`= 20 WHERE `SceneId` IN (1061, 1116);
+

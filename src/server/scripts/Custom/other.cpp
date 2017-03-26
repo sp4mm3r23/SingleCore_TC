@@ -21,28 +21,37 @@
 #include "ScriptedEscortAI.h"
 #include "Player.h"
 
-/*    Elwynn Forest      */
+enum Say
+{
+    /* Elwynn Forest */
+    SAY_BLACKROCK_COMBAT = 0,
+    SAY_ASSASSIN_COMBAT  = 0
+};
+
 enum CreatureIds
 {
-    /*    Elwynn Forest      */
+    /* Elwynn Forest */
     NPC_STORMWIND_INFANTRY    = 49869,
     NPC_BLACKROCK_BATTLE_WORG = 49871,
-    NPC_BROTHER_PAXTON        = 951
+    NPC_BROTHER_PAXTON        = 951,
+    NPC_BLACKROCK_SPY         = 49874
 };
 
 enum Spells
 {
-    /*    Elwynn Forest      */
+    /* Elwynn Forest */
     SPELL_CONVERSATIONS_TRIGGER_01 = 84076,
     SPELL_REVIVE                   = 93799,
     SPELL_PRAYER_OF_HEALING        = 93091,
     SPELL_FLASH_HEAL               = 17843,
     SPELL_PENANCE                  = 47750,
-    SPELL_FORTITUDE                = 13864
+    SPELL_FORTITUDE                = 13864,
+    SPELL_SPYING                   = 92857,
+    SPELL_SPYGLASS                 = 80676,
+    SPELL_SNEAKING                 = 93046
 };
 
-/*    Elwynn Forest      */
-
+/* Elwynn Forest */
 class npc_blackrock_battle_worg : public CreatureScript
 {
 public:
@@ -257,9 +266,131 @@ public:
     }
 };
 
+class npc_blackrock_spy : public CreatureScript
+{
+public:
+    npc_blackrock_spy() : CreatureScript("npc_blackrock_spy") { }
+
+    struct npc_blackrock_spyAI : public ScriptedAI
+    {
+        npc_blackrock_spyAI(Creature* creature) : ScriptedAI(creature) { }
+
+        void Reset() override
+        {
+            _phase = 0;
+            _timer = 0;
+        }
+
+        void EnterCombat(Unit* who) override
+        { 
+            Talk(SAY_BLACKROCK_COMBAT);
+            me->RemoveAllAuras();
+            _phase = 0;
+            _timer = 0;
+        }
+
+        void MovementInform(uint32 type, uint32 id) override
+        {
+            if (me->IsInCombat())
+                return;
+
+            if (id == 0 || id == 3)
+            {
+                uint8 r1 = urand(0, 100);
+                uint8 r2 = urand(0, 100);
+                uint8 r3 = urand(0, 100);
+                if (r1 < 33)
+                {
+                    me->CastSpell(me, SPELL_SPYGLASS);
+                    _phase = 1;
+                    _timer = 4800;
+                }
+                if (r2 < 50)
+                {
+                    me->HandleEmoteCommand(EMOTE_STATE_KNEEL);
+                }
+                if (r3 < 50)
+                    me->CastSpell(me, SPELL_SPYING);
+                else
+                    me->CastSpell(me, SPELL_SNEAKING);
+            }
+        }
+
+        void UpdateAI(uint32 diff) override
+        {
+            if (_timer <= diff)
+                DoWork();
+            else
+                _timer -= diff;
+
+            if (!UpdateVictim())
+                return;
+
+            DoMeleeAttackIfReady();
+        }
+
+        void DoWork()
+        {
+            if (me->IsInCombat())
+                return;
+
+            switch (_phase)
+            {
+            case 1:
+                me->RemoveAllAuras();
+                _phase = 0;
+                _timer = 0;
+                break;
+            case 2:
+                break;
+            }
+           
+        }
+    private:
+        uint32 _phase;
+        uint32 _timer;
+    };
+
+    CreatureAI* GetAI(Creature* creature) const override
+    {
+        return new npc_blackrock_spyAI (creature);
+    }
+};
+
+class npc_goblin_assassin : public CreatureScript
+{
+public:
+    npc_goblin_assassin() : CreatureScript("npc_goblin_assassin") { }
+
+    struct npc_goblin_assassinAI : public ScriptedAI
+    {
+        npc_goblin_assassinAI(Creature *c) : ScriptedAI(c) { }
+
+        void EnterCombat(Unit * /*who*/) override
+        {
+            Talk(SAY_ASSASSIN_COMBAT);
+        }
+
+        void UpdateAI(uint32 /*diff*/) override
+        {
+            if (!UpdateVictim())
+                return;
+
+            DoMeleeAttackIfReady();
+        }
+    };
+
+     CreatureAI* GetAI(Creature* creature) const
+    {
+        return new npc_goblin_assassinAI (creature);
+    }
+};
+
 void AddSC_other_scripts()
 {
     new npc_stormwind_infantry();
     new npc_brother_paxton();
     new npc_blackrock_battle_worg();
+    new npc_blackrock_spy();
+    new npc_goblin_assassin();
 }
