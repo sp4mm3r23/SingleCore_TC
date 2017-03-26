@@ -41,6 +41,8 @@ void AddSC_hunter_spell_scripts_pl();
 void AddSC_mage_spell_scripts_pl();
 void AddSC_druid_spell_scripts_pl();
 
+void AddSC_other_scripts();
+
 void AddCustomScripts()
 {
     // SingleCore
@@ -66,4 +68,6 @@ void AddCustomScripts()
     AddSC_hunter_spell_scripts_pl();
     AddSC_mage_spell_scripts_pl();
     AddSC_druid_spell_scripts_pl();
+
+    AddSC_other_scripts();
 }

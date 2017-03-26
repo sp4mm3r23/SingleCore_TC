@@ -1108,6 +1108,15 @@ enum PlayerLogXPReason : uint8
     LOG_XP_REASON_NO_KILL = 1
 };
 
+enum PlayerAvgItemLevelOffsets
+{
+    TotalAvgItemLevel       = 0,
+    EquippedAvgItemLevel    = 1,
+    NonPvPAvgItemLevel      = 2,
+    PvPAvgItemLevel         = 3,
+    MaxAvgItemLevel         = 4
+};
+
 class Player;
 
 /// Holder for Battleground data
@@ -1972,6 +1981,7 @@ class TC_GAME_API Player : public Unit, public GridObject<Player>
         void ApplyRatingMod(CombatRating cr, int32 value, bool apply);
         void UpdateRating(CombatRating cr);
         void UpdateAllRatings();
+        void UpdateItemLevel();
         void UpdateMastery();
         bool CanUseMastery() const;
 

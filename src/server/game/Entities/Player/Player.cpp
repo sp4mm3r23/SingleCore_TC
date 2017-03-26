@@ -17,6 +17,7 @@
  */
 
 #include "Player.h"
+#include "AreaTrigger.h"
 #include "AccountMgr.h"
 #include "AchievementMgr.h"
 #include "ArenaTeam.h"
@@ -2096,14 +2097,14 @@ void Player::ResetAllPowers()
         case POWER_LUNAR_POWER:
             SetPower(POWER_LUNAR_POWER, 0);
             break;
-        case POWER_CHI:  // monk
+        case POWER_CHI:
             SetPower(POWER_CHI, 0);
             break;
-        case POWER_PAIN: // DH tank
+        case POWER_PAIN:
             SetPower(POWER_PAIN, 0);
             break;
-        case POWER_INSANITY: // DH dd
-            SetPower(POWER_INSANITY, 0);
+        case POWER_FURY:
+            SetPower(POWER_FURY, 0);
             break;
         default:
             break;
@@ -2666,6 +2667,9 @@ void Player::InitStatsForLevel(bool reapplyMods)
     SetFloatValue(PLAYER_CRIT_PERCENTAGE, 0.0f);
     SetFloatValue(PLAYER_OFFHAND_CRIT_PERCENTAGE, 0.0f);
     SetFloatValue(PLAYER_RANGED_CRIT_PERCENTAGE, 0.0f);
+
+    for (uint8 i = 0; i < PlayerAvgItemLevelOffsets::MaxAvgItemLevel; i++)
+        SetFloatValue(PLAYER_FIELD_AVG_ITEM_LEVEL + i, 0.0f);
 
     // Init spell schools (will be recalculated in UpdateAllStats() at loading and in _ApplyAllStatBonuses() at reset
     SetFloatValue(PLAYER_SPELL_CRIT_PERCENTAGE1, 0.0f);
@@ -11846,6 +11850,7 @@ Item* Player::StoreItem(ItemPosCountVec const& dest, Item* pItem, bool update)
     }
 
     AutoUnequipChildItem(lastItem);
+    UpdateItemLevel();
 
     return lastItem;
 }
@@ -12079,6 +12084,8 @@ Item* Player::EquipItem(uint16 pos, Item* pItem, bool update)
     // only for full equip instead adding to stack
     UpdateCriteria(CRITERIA_TYPE_EQUIP_ITEM, pItem->GetEntry());
     UpdateCriteria(CRITERIA_TYPE_EQUIP_EPIC_ITEM, pItem->GetEntry(), slot);
+
+    UpdateItemLevel();
 
     return pItem;
 }
@@ -12338,6 +12345,8 @@ void Player::RemoveItem(uint8 bag, uint8 slot, bool update)
 
         AutoUnequipChildItem(pItem);
     }
+
+    UpdateItemLevel();
 }
 
 // Common operation need to remove item from inventory without delete in trade, auction, guild bank, mail....
