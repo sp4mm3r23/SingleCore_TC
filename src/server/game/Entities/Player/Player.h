@@ -1219,6 +1219,15 @@ private:
     SpecializationInfo& operator=(SpecializationInfo const&) = delete;
 };
 
+#pragma pack(push, 1)
+struct PlayerDynamicFieldSpellModByLabel
+{
+    uint32 Mod;
+    float Value;
+    uint32 Label;
+};
+#pragma pack(pop)
+
 class TC_GAME_API Player : public Unit, public GridObject<Player>
 {
     friend class WorldSession;
