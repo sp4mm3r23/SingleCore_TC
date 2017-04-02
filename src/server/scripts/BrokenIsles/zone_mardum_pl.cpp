@@ -109,7 +109,7 @@ public:
                     for (QuestObjective const& obj : qInfo->GetObjectives())
                     {
                         if (obj.ID == OBJECTIVE_FIRST_SUMMONED_GUARDIAN_ASHTONGUE)
-                            if (!player->IsQuestObjectiveComplete(qInfo, obj))
+                            if (!player->IsQuestObjectiveComplete(obj))
                             {
                                 Talk(CREATURE_TEXT_ZERO, who);
                                 player->KilledMonsterCredit(CREATURE_FIRST_SUMMONED_GUARDIAN);
@@ -168,7 +168,7 @@ public:
                     for (QuestObjective const& obj : qInfo->GetObjectives())
                     {
                         if (obj.ID == OBJECTIVE_FIRST_SUMMONED_GUARDIAN_COILSKAR)
-                            if (!player->IsQuestObjectiveComplete(qInfo, obj))
+                            if (!player->IsQuestObjectiveComplete(obj))
                             {
                                 Talk(CREATURE_TEXT_ZERO, who);
                                 Talk(CREATURE_TEXT_ONE, who);
@@ -228,7 +228,7 @@ public:
                     for (QuestObjective const& obj : qInfo->GetObjectives())
                     {
                         if (obj.ID == OBJECTIVE_FIRST_SUMMONED_GUARDIAN_SHIVARRA)
-                            if (!player->IsQuestObjectiveComplete(qInfo, obj))
+                            if (!player->IsQuestObjectiveComplete(obj))
                             {
                                 Talk(CREATURE_TEXT_ZERO, who);
                                 player->KilledMonsterCredit(CREATURE_FIRST_SUMMONED_GUARDIAN);
@@ -305,7 +305,7 @@ public:
                     for (QuestObjective const& obj : qInfo->GetObjectives())
                     {
                         if (obj.ID == OBJECTIVE_FIND_ALLARI)
-                            if (!player->IsQuestObjectiveComplete(qInfo, obj))
+                            if (!player->IsQuestObjectiveComplete(obj))
                                 player->KilledMonsterCredit(CREATURE_ALLARI_THE_SOULEATER);
                     }
 
