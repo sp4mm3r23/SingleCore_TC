@@ -1562,6 +1562,10 @@ class TC_GAME_API WorldSession
         void HandleHearthAndResurrect(WorldPackets::Battleground::HearthAndResurrect& hearthAndResurrect);
         void HandleRequestBattlefieldStatusOpcode(WorldPackets::Battleground::RequestBattlefieldStatus& requestBattlefieldStatus);
 
+        // playerbot mod
+        void HandleBotPackets();
+        // end of playerbot mod
+
         // Battlefield
         void SendBfInvitePlayerToWar(uint64 queueId, uint32 zoneId, uint32 acceptTime);
         void SendBfInvitePlayerToQueue(uint64 queueId, int8 battleState);

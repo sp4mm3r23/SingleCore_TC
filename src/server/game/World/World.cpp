@@ -86,6 +86,11 @@
 
 TC_GAME_API std::atomic<bool> World::m_stopEvent(false);
 TC_GAME_API uint8 World::m_ExitCode = SHUTDOWN_EXIT_CODE;
+// playerbot mod
+#include "../../plugins/ahbot/AhBot.h"
+#include "../../plugins/playerbot/PlayerbotAIConfig.h"
+#include "../../plugins/playerbot/RandomPlayerbotMgr.h"
+
 
 TC_GAME_API std::atomic<uint32> World::m_worldLoopCounter(0);
 
@@ -1258,7 +1263,30 @@ void World::LoadConfigSettings(bool reload)
     m_visibility_notify_periodOnContinents = sConfigMgr->GetIntDefault("Visibility.Notify.Period.OnContinents", DEFAULT_VISIBILITY_NOTIFY_PERIOD);
     m_visibility_notify_periodInInstances = sConfigMgr->GetIntDefault("Visibility.Notify.Period.InInstances",   DEFAULT_VISIBILITY_NOTIFY_PERIOD);
     m_visibility_notify_periodInBGArenas = sConfigMgr->GetIntDefault("Visibility.Notify.Period.InBGArenas",    DEFAULT_VISIBILITY_NOTIFY_PERIOD);
-
+    // Prepatch by LordPsyan
+    // 01
+    // 02
+    // 03
+    // 04
+    // 05
+    // 06
+    // 07
+    // 08
+    // 09
+    // 10
+    // 11
+    // 12
+    // 13
+    // 14
+    // 15
+    // 16
+    // 17
+    // 18
+    // 19
+    // 20
+    // Visit http://www.realmsofwarcraft.com/bb for forums and information
+    //
+    // End of prepatch
     ///- Load the CharDelete related config options
     m_int_configs[CONFIG_CHARDELETE_METHOD] = sConfigMgr->GetIntDefault("CharDelete.Method", 0);
     m_int_configs[CONFIG_CHARDELETE_MIN_LEVEL] = sConfigMgr->GetIntDefault("CharDelete.MinLevel", 0);
@@ -1492,6 +1520,30 @@ void World::LoadConfigSettings(bool reload)
 	rate_values[CONFIG_XP_FOR_PVP_LOW_RATE] = sConfigMgr->GetFloatDefault("Xp.For.Pvp.Low.Rate", 1.0f);
 	rate_values[CONFIG_XP_FOR_PVP_HIGH_RATE] = sConfigMgr->GetFloatDefault("Xp.For.Pvp.High.Rate", 1.0f);
 
+// Prepatch by LordPsyan
+// 01
+// 02
+// 03
+// 04
+// 05
+// 06
+// 07
+// 08
+// 09
+// 10
+// 11
+// 12
+// 13
+// 14
+// 15
+// 16
+// 17
+// 18
+// 19
+// 20
+// Visit http://www.realmsofwarcraft.com/bb for forums and information
+//
+// End of prepatch
     // call ScriptMgr if we're reloading the configuration
     if (reload)
         sScriptMgr->OnConfigLoad(reload);
@@ -2195,6 +2247,11 @@ void World::SetInitialWorldSettings()
 
     if (uint32 realmId = sConfigMgr->GetIntDefault("RealmID", 0)) // 0 reserved for auth
         sLog->SetRealmId(realmId);
+
+    TC_LOG_INFO("server.loading", "Initializing AuctionHouseBot...");
+    auctionbot.Init();
+
+    sPlayerbotAIConfig.Initialize();
 }
 
 void World::ResetTimeDiffRecord()
@@ -2319,8 +2376,15 @@ void World::Update(uint32 diff)
 
         ///- Handle expired auctions
         sAuctionMgr->Update();
+
+        // ahbot mod
+        auctionbot.Update();
     }
 
+    // playerbot mod
+    sRandomPlayerbotMgr.UpdateAI(diff);
+    sRandomPlayerbotMgr.UpdateSessions(diff);
+    
     if (m_timers[WUPDATE_AUCTIONS_PENDING].Passed())
     {
         m_timers[WUPDATE_AUCTIONS_PENDING].Reset();
@@ -2348,11 +2412,12 @@ void World::Update(uint32 diff)
     }
 
     /// <li> Handle AHBot operations
-    if (m_timers[WUPDATE_AHBOT].Passed())
-    {
-        sAuctionBot->Update();
-        m_timers[WUPDATE_AHBOT].Reset();
-    }
+    // if (m_timers[WUPDATE_AHBOT].Passed())
+    //{
+    //    sAuctionBot->Update();
+    //    m_timers[WUPDATE_AHBOT].Reset();
+    //}
+    // end of playerbot mod
 
     /// <li> Handle file changes
     if (m_timers[WUPDATE_CHECK_FILECHANGES].Passed())
@@ -2928,6 +2993,10 @@ void World::ShutdownServ(uint32 time, uint32 options, uint8 exitcode, const std:
         m_ShutdownTimer = time;
         ShutdownMsg(true, nullptr, reason);
     }
+
+    // playerbot mod
+    sRandomPlayerbotMgr.LogoutAllBots();
+    // end of playerbot mod
 
     sScriptMgr->OnShutdownInitiate(ShutdownExitCode(exitcode), ShutdownMask(options));
 }

@@ -110,6 +110,8 @@
 #include "WorldSession.h"
 #include "WorldStatePackets.h"
 #include "DynamicResurrection.h"
+#include "../../../../plugins/playerbot/playerbot.h"
+#include "../../../../plugins/playerbot/GuildTaskMgr.h"
 
 #define ZONE_UPDATE_INTERVAL (1*IN_MILLISECONDS)
 
@@ -356,6 +358,10 @@ Player::Player(WorldSession* session) : Unit(true), m_sceneMgr(this)
         _CUFProfiles[i] = nullptr;
 
     _advancedCombatLoggingEnabled = false;
+	
+	// playerbot mod
+    m_playerbotAI = NULL;
+    m_playerbotMgr = NULL;
 }
 
 Player::~Player()
@@ -1405,7 +1411,34 @@ void Player::Update(uint32 p_time)
     //because we don't want player's ghost teleported from graveyard
     if (IsHasDelayedTeleport() && IsAlive())
         TeleportTo(m_teleport_dest, m_teleport_options);
-
+    // Prepatch by LordPsyan
+    // 81
+    // 82
+    // 83
+    // 84
+    // 85
+    // 86
+    // 87
+    // 88
+    // 89
+    // 90
+    // 91
+    // 92
+    // 93
+    // 94
+    // 95
+    // 96
+    // 97
+    // 98
+    // 99
+    // Playerbot mod
+    if (m_playerbotAI)
+       m_playerbotAI->UpdateAI(p_time);
+    if (m_playerbotMgr)
+       m_playerbotMgr->UpdateAI(p_time);
+    // Visit http://www.realmsofwarcraft.com/bb for forums and information
+    //
+    // End of prepatch
 }
 
 void Player::setDeathState(DeathState s)
@@ -6520,6 +6553,30 @@ bool Player::RewardHonor(Unit* victim, uint32 groupsize, int32 honor, bool pvpto
     }
 
     honor_f *= sWorld->getRate(RATE_HONOR);
+    // Prepatch by LordPsyan
+    // 21
+    // 22
+    // 23
+    // 24
+    // 25
+    // 26
+    // 27
+    // 28
+    // 29
+    // 30
+    // 31
+    // 32
+    // 33
+    // 34
+    // 35
+    // 36
+    // 37
+    // 38
+    // 39
+    // 40
+    // Visit http://www.realmsofwarcraft.com/bb for forums and information
+    //
+    // End of prepatch
     // Back to int now
     honor = int32(honor_f);
     // honor - for show honor points in log
@@ -12354,6 +12411,30 @@ void Player::MoveItemFromInventory(uint8 bag, uint8 slot, bool update)
 {
     if (Item* it = GetItemByPos(bag, slot))
     {
+    // Prepatch by LordPsyan
+    // 01
+    // 02
+    // 03
+    // 04
+    // 05
+    // 06
+    // 07
+    // 08
+    // 09
+    // 10
+    // 11
+    // 12
+    // 13
+    // 14
+    // 15
+    // 16
+    // 17
+    // 18
+    // 19
+    // 20
+    // Visit http://www.realmsofwarcraft.com/bb for forums and information
+    //
+    // End of prepatch
         ItemRemovedQuestCheck(it->GetEntry(), it->GetCount());
         RemoveItem(bag, slot, update);
         it->SetNotRefundable(this, false, nullptr, false);
@@ -15460,7 +15541,7 @@ void Player::RewardQuest(Quest const* quest, uint32 reward, Object* questGiver, 
             if (quest->RewardDisplaySpell[i] > 0)
             {
                 SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(quest->RewardDisplaySpell[i]);
-                if (questGiver->isType(TYPEMASK_UNIT) && !spellInfo->HasEffect(DIFFICULTY_NONE, SPELL_EFFECT_LEARN_SPELL) && !spellInfo->HasEffect(DIFFICULTY_NONE, SPELL_EFFECT_CREATE_ITEM))
+				if (spellInfo && questGiver->isType(TYPEMASK_UNIT) && !spellInfo->HasEffect(DIFFICULTY_NONE, SPELL_EFFECT_LEARN_SPELL) && !spellInfo->HasEffect(DIFFICULTY_NONE, SPELL_EFFECT_CREATE_ITEM))
                 {
                     if (Unit* unit = questGiver->ToUnit())
                         unit->CastSpell(this, quest->RewardDisplaySpell[i], true);
@@ -24862,6 +24943,9 @@ bool Player::GetsRecruitAFriendBonus(bool forXP)
 void Player::RewardPlayerAndGroupAtKill(Unit* victim, bool isBattleGround)
 {
     KillRewarder(this, victim, isBattleGround).Reward();
+    // playerbot mod
+    sGuildTaskMgr.CheckKillTask(this, victim);
+    // end of playerbot mod
 }
 
 void Player::RewardPlayerAndGroupAtEvent(uint32 creature_id, WorldObject* pRewardSource)

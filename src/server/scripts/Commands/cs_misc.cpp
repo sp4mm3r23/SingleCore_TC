@@ -41,6 +41,10 @@
 #include "Transport.h"
 #include "MapManager.h"
 
+#include "../../../plugins/ahbot/AhBot.h"
+#include "../../../plugins/playerbot/playerbot.h"
+#include "../../../plugins/playerbot/GuildTaskMgr.h"
+
 class misc_commandscript : public CommandScript
 {
 public:

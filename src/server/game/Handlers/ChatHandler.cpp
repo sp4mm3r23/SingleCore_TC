@@ -40,6 +40,9 @@
 #include "AccountMgr.h"
 #include "ChatPackets.h"
 
+// Playerbot mod
+#include "../../plugins/playerbot/playerbot.h"
+
 void WorldSession::HandleChatMessageOpcode(WorldPackets::Chat::ChatMessage& chatMessage)
 {
     ChatMsg type;
@@ -289,8 +292,18 @@ void WorldSession::HandleChatMessage(ChatMsg type, uint32 lang, std::string msg,
             if (receiver->getLevel() < sWorld->getIntConfig(CONFIG_CHAT_WHISPER_LEVEL_REQ) ||
                 (HasPermission(rbac::RBAC_PERM_CAN_FILTER_WHISPERS) && !sender->isAcceptWhispers() && !sender->IsInWhisperWhiteList(receiver->GetGUID())))
                 sender->AddWhisperWhiteList(receiver->GetGUID());
-
-            GetPlayer()->Whisper(msg, Language(lang), receiver);
+             // Playerbot mod: handle whispered command to bot
+             if (receiver->GetPlayerbotAI() && lang != LANG_ADDON)
+             {
+                 receiver->GetPlayerbotAI()->HandleCommand(type, msg, *GetPlayer());
+                 receiver->m_speakTime = 0;
+                 receiver->m_speakCount = 0;
+             }
+             else
+             {
+                 GetPlayer()->Whisper(msg, Language(lang), receiver);
+             }
+             // END Playerbot mod
             break;
         }
         case CHAT_MSG_PARTY:
@@ -362,6 +375,19 @@ void WorldSession::HandleChatMessage(ChatMsg type, uint32 lang, std::string msg,
             if (!group || !group->isRaidGroup() || !(group->IsLeader(GetPlayer()->GetGUID()) || group->IsAssistant(GetPlayer()->GetGUID())) || group->isBGGroup())
                 return;
 
+            // Playerbot mod: broadcast message to bot members
+            for(GroupReference* itr = group->GetFirstMember(); itr != NULL; itr=itr->next())
+            {
+                Player* player = itr->GetSource();
+                if (player && player->GetPlayerbotAI() && lang != LANG_ADDON)
+                {
+                    player->GetPlayerbotAI()->HandleCommand(type, msg, *GetPlayer());
+                    GetPlayer()->m_speakTime = 0;
+                    GetPlayer()->m_speakCount = 0;
+                }
+            }
+            // END Playerbot mod
+
             sScriptMgr->OnPlayerChat(GetPlayer(), type, lang, msg, group);
 
             WorldPackets::Chat::Chat packet;
@@ -379,6 +405,18 @@ void WorldSession::HandleChatMessage(ChatMsg type, uint32 lang, std::string msg,
                     SendNotification(GetTrinityString(LANG_CHANNEL_REQ), sWorld->getIntConfig(CONFIG_CHAT_CHANNEL_LEVEL_REQ));
                     return;
                 }
+                // Playerbot mod: broadcast message to bot members
+                PlayerbotMgr *mgr = GetPlayer()->GetPlayerbotMgr();
+                if (mgr && lang != LANG_ADDON)
+                {
+                    for (PlayerBotMap::const_iterator it = mgr->GetPlayerBotsBegin(); it != mgr->GetPlayerBotsEnd(); ++it)
+                    {
+                        Player* const bot = it->second;
+                        if (bot->GetGuildId() == GetPlayer()->GetGuildId())
+                            bot->GetPlayerbotAI()->HandleCommand(type, msg, *GetPlayer());
+                    }
+                }
+                // END Playerbot mod
             }
 
             if (Channel* chn = ChannelMgr::GetChannelForPlayerByNamePart(target, sender))
@@ -396,6 +434,19 @@ void WorldSession::HandleChatMessage(ChatMsg type, uint32 lang, std::string msg,
 
             if (group->IsLeader(GetPlayer()->GetGUID()))
                 type = CHAT_MSG_INSTANCE_CHAT_LEADER;
+
+            // Playerbot mod: broadcast message to bot members
+            for(GroupReference* itr = group->GetFirstMember(); itr != NULL; itr=itr->next())
+            {
+                Player* player = itr->GetSource();
+                if (player && player->GetPlayerbotAI() && lang != LANG_ADDON)
+                {
+                    player->GetPlayerbotAI()->HandleCommand(type, msg, *GetPlayer());
+                    GetPlayer()->m_speakTime = 0;
+                    GetPlayer()->m_speakCount = 0;
+                }
+            }
+            // END Playerbot mod
 
             sScriptMgr->OnPlayerChat(GetPlayer(), type, lang, msg, group);
 

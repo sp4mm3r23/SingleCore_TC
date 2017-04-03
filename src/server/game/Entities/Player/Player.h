@@ -58,6 +58,10 @@ class PlayerAI;
 
 enum GroupCategory : uint8;
 
+// Playerbot mod
+class PlayerbotAI;
+class PlayerbotMgr;
+
 typedef std::deque<Mail*> PlayerMails;
 
 #define PLAYER_MAX_SKILLS                       128
@@ -2524,12 +2528,24 @@ class TC_GAME_API Player : public Unit, public GridObject<Player>
 
         bool CanFly() const override { return m_movementInfo.HasMovementFlag(MOVEMENTFLAG_CAN_FLY); }
 
+        // Playerbot mod:
+        // A Player can either have a playerbotMgr (to manage its bots), or have playerbotAI (if it is a bot), or
+        // neither. Code that enables bots must create the playerbotMgr and set it using SetPlayerbotMgr.
+		EquipmentSetContainer& GetEquipmentSets() { return _equipmentSets; }
+        void SetPlayerbotAI(PlayerbotAI* ai) { m_playerbotAI=ai; }
+        PlayerbotAI* GetPlayerbotAI() { return m_playerbotAI; }
+        void SetPlayerbotMgr(PlayerbotMgr* mgr) { m_playerbotMgr=mgr; }
+        PlayerbotMgr* GetPlayerbotMgr() { return m_playerbotMgr; }
+        void SetBotDeathTimer() { m_deathTimer = 0; }
+        PlayerTalentMap& GetTalentMap(uint8 spec) { return *m_talents[spec]; }
+        bool MinimalLoadFromDB( QueryResult result, uint32 guid );
+
         //! Return collision height sent to client
         float GetCollisionHeight(bool mounted) const;
 
         std::string GetMapAreaAndZoneString() const;
         std::string GetCoordsMapAreaAndZoneString() const;
-
+		
         // Void Storage
         bool IsVoidStorageUnlocked() const { return HasFlag(PLAYER_FLAGS, PLAYER_FLAGS_VOID_UNLOCKED); }
         void UnlockVoidStorage() { SetFlag(PLAYER_FLAGS, PLAYER_FLAGS_VOID_UNLOCKED); }
@@ -2554,6 +2570,31 @@ class TC_GAME_API Player : public Unit, public GridObject<Player>
         SceneMgr& GetSceneMgr() { return m_sceneMgr; }
 
 		void ShowNeutralPlayerFactionSelectUI();
+
+    // Prepatch by LordPsyan
+    // 01
+    // 02
+    // 03
+    // 04
+    // 05
+    // 06
+    // 07
+    // 08
+    // 09
+    // 10
+    // 11
+    // 12
+    // 13
+    // 14
+    // 15
+    // 16
+    // 17
+    // 18
+    // 19
+    // 20
+    // Visit http://www.realmsofwarcraft.com/bb for forums and information
+    //
+    // End of prepatch
 
     protected:
         // Gamemaster whisper whitelist
@@ -2908,6 +2949,12 @@ class TC_GAME_API Player : public Unit, public GridObject<Player>
         uint32 healthBeforeDuel;
         uint32 manaBeforeDuel;
 
+		// Playerbot mod:
+		WorldLocation _corpseLocation;
+
+		PlayerbotAI* m_playerbotAI;
+		PlayerbotMgr* m_playerbotMgr;
+
         WorldLocation _corpseLocation;
 
         SceneMgr m_sceneMgr;
@@ -2915,6 +2962,7 @@ class TC_GAME_API Player : public Unit, public GridObject<Player>
         std::unordered_map<ObjectGuid /*LootObject*/, ObjectGuid /*world object*/> m_AELootView;
 
         void _InitHonorLevelOnLoadFromDB(uint32 /*honor*/, uint32 /*honorLevel*/, uint32 /*prestigeLevel*/);
+
 };
 
 TC_GAME_API void AddItemsSetItem(Player* player, Item* item);
