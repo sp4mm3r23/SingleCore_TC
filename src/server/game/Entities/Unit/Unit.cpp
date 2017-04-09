@@ -6611,14 +6611,14 @@ void Unit::SendHealSpellLog(HealInfo& healInfo, bool critical /*= false*/)
 
 int32 Unit::HealBySpell(HealInfo& healInfo, bool critical /*= false*/)
 {
-    // calculate heal absorb and reduce healing
-    CalcHealAbsorb(healInfo);
+	// calculate heal absorb and reduce healing
+	CalcHealAbsorb(healInfo);
 
-	sScriptMgr->ModifyHealRecieved(this, victim, addHealth);
+	sScriptMgr->ModifyHealRecieved(healInfo);
 
-    DealHeal(healInfo);
-    SendHealSpellLog(healInfo, critical);
-    return healInfo.GetEffectiveHeal();
+	DealHeal(healInfo);
+	SendHealSpellLog(healInfo, critical);
+	return healInfo.GetEffectiveHeal();
 }
 
 void Unit::SendEnergizeSpellLog(Unit* victim, uint32 spellId, int32 damage, Powers powerType)

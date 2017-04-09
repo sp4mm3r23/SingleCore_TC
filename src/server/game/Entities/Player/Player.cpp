@@ -11852,9 +11852,10 @@ InventoryResult Player::CanUseItem(ItemTemplate const* proto) const
     if (!proto)
         return EQUIP_ERR_ITEM_NOT_FOUND;
 
-    if (((proto->Flags2 & ITEM_FLAG2_FACTION_HORDE) && GetCFSTeam() != HORDE)
-        (((proto->Flags2 & ITEM_FLAG2_FACTION_ALLIANCE) && GetCFSTeam() != ALLIANCE)))
-        return EQUIP_ERR_YOU_CAN_NEVER_USE_THAT_ITEM;
+	if ((proto->Flags2 & ITEM_FLAG2_FACTION_HORDE) && GetCFSTeam() != HORDE)
+		return EQUIP_ERR_YOU_CAN_NEVER_USE_THAT_ITEM;
+
+	if ((proto->Flags2 & ITEM_FLAG2_FACTION_ALLIANCE) && GetCFSTeam() != ALLIANCE)
 
     if ((proto->AllowableClass & getClassMask()) == 0 || (proto->AllowableRace & getCFSRaceMask()) == 0)
         return EQUIP_ERR_YOU_CAN_NEVER_USE_THAT_ITEM;
