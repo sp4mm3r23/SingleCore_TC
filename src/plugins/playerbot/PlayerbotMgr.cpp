@@ -56,6 +56,7 @@ void PlayerbotHolder::LogoutPlayerBot(uint64 guid)
     if (bot)
     {
         bot->GetPlayerbotAI()->TellMaster("Goodbye!");
+        sLog->outMessage("playerbot", LOG_LEVEL_INFO, "Bot %s logged out", bot->GetName());
         //bot->SaveToDB();
 
         WorldSession * botWorldSessionPtr = bot->GetSession();
@@ -207,6 +208,7 @@ void PlayerbotHolder::OnBotLogin(Player * const bot)
 
     ai->ResetStrategies();
     ai->TellMaster("Hey there!");
+    sLog->outMessage("playerbot", LOG_LEVEL_INFO, "Bot %s logged in", bot->GetName());
 }
 
 string PlayerbotHolder::ProcessBotCommand(string cmd, ObjectGuid guid, bool admin, uint32 masterAccountId, uint32 masterGuildId)
@@ -400,7 +402,7 @@ list<string> PlayerbotHolder::HandlePlayerbotCommand(char const* args, Player* m
 
     if (!*args)
     {
-        messages.push_back("Usage: .bot add / remove PLAYERNAME");
+        messages.push_back("usage: list or add/init/remove PLAYERNAME");
         messages.push_back("       .bot lookup [CLASS] (without to see list of classes)");
         messages.push_back("       .bot update / random / init=[QUALITY]");
         return messages;
@@ -661,6 +663,56 @@ uint32 PlayerbotHolder::GetAccountId(string name)
 
     return accountId;
 }
+
+string PlayerbotHolder::ListBots(Player* master)
+{
+    set<string> bots;
+    map<uint8,string> classNames;
+    classNames[CLASS_DRUID] = "Druid";
+    classNames[CLASS_HUNTER] = "Hunter";
+    classNames[CLASS_MAGE] = "Mage";
+    classNames[CLASS_PALADIN] = "Paladin";
+    classNames[CLASS_PRIEST] = "Priest";
+    classNames[CLASS_ROGUE] = "Rogue";
+    classNames[CLASS_SHAMAN] = "Shaman";
+    classNames[CLASS_WARLOCK] = "Warlock";
+    classNames[CLASS_WARRIOR] = "Warrior";
+    ostringstream out;
+    bool first = true;
+    out << "Bot roster: ";
+    for (PlayerBotMap::const_iterator it = GetPlayerBotsBegin(); it != GetPlayerBotsEnd(); ++it)
+    {
+        Player* const bot = it->second;
+        string name = bot->GetName();
+        bots.insert(name);
+
+        if (first) first = false; else out << ", ";
+        out << "+" << name << " " << classNames[bot->getClass()];
+    }
+
+    if (master)
+    {
+        QueryResult results = CharacterDatabase.PQuery("SELECT class,name FROM tc_characters_19.characters where account = '%u'",
+                master->GetSession()->GetAccountId());
+        if (results != NULL)
+        {
+            do
+            {
+                Field* fields = results->Fetch();
+                uint8 cls = fields[0].GetUInt8();
+                string name = fields[1].GetString();
+                if (bots.find(name) == bots.end() && name != master->GetSession()->GetPlayerName())
+                {
+                    if (first) first = false; else out << ", ";
+                    out << "-" << name << " " << classNames[cls];
+                }
+            } while (results->NextRow());
+        }
+    }
+
+    return out.str();
+}
+
 
 PlayerbotMgr::PlayerbotMgr(Player* const master) : PlayerbotHolder(),  master(master)
 {
