@@ -30,6 +30,7 @@
 #include "InstanceSaveMgr.h"
 #include "ObjectMgr.h"
 #include "Vehicle.h"
+#include "Chat.h"
 
 #define MOVEMENT_PACKET_TIME_DELAY 0
 
@@ -376,7 +377,11 @@ void WorldSession::HandleMovementOpcodes(WorldPacket& recvData)
         }
         return;
     }
+	
+//	if (mover->GetTypeId()==TypeID::TYPEID_PLAYER)
+//		ChatHandler(((Player *)mover)->GetSession()).PSendSysMessage("MOVED to %f,%f,%f", movementInfo.pos.GetPositionX(), movementInfo.pos.GetPositionY(), movementInfo.pos.GetPositionZ());
 
+	
     mover->UpdatePosition(movementInfo.pos);
 
     if (plrMover)                                            // nothing is charmed, or player charmed
