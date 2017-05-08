@@ -33,6 +33,7 @@ TC_GAME_API extern DB2Storage<ArtifactCategoryEntry>                sArtifactCat
 TC_GAME_API extern DB2Storage<ArtifactAppearanceEntry>              sArtifactAppearanceStore;
 TC_GAME_API extern DB2Storage<ArtifactAppearanceSetEntry>           sArtifactAppearanceSetStore;
 TC_GAME_API extern DB2Storage<ArtifactPowerEntry>                   sArtifactPowerStore;
+TC_GAME_API extern DB2Storage<ArtifactPowerPickerEntry>             sArtifactPowerPickerStore;
 TC_GAME_API extern DB2Storage<AuctionHouseEntry>                    sAuctionHouseStore;
 TC_GAME_API extern DB2Storage<BankBagSlotPricesEntry>               sBankBagSlotPricesStore;
 TC_GAME_API extern DB2Storage<BannedAddOnsEntry>                    sBannedAddOnsStore;
@@ -213,14 +214,19 @@ TC_GAME_API extern TaxiMask                                         sAllianceTax
 TC_GAME_API extern TaxiPathSetBySource                              sTaxiPathSetBySource;
 TC_GAME_API extern TaxiPathNodesByPath                              sTaxiPathNodesByPath;
 
-struct HotfixNotify
+struct HotfixRecord
 {
+    HotfixRecord(uint32 tableHash, int32 recordId) : TableHash(tableHash), RecordId(recordId) { }
+
     uint32 TableHash;
-    uint32 Timestamp;
-    uint32 Entry;
+    int32 RecordId;
 };
 
-typedef std::vector<HotfixNotify> HotfixData;
+struct HotfixData
+{
+    int32 Id;
+    std::vector<HotfixRecord> Records;
+};
 
 #define DEFINE_DB2_SET_COMPARATOR(structure) \
     struct structure ## Comparator \
@@ -290,8 +296,7 @@ public:
     DB2StorageBase const* GetStorage(uint32 type) const;
 
     void LoadHotfixData();
-    HotfixData const* GetHotfixData() const { return &_hotfixData; }
-    time_t GetHotfixDate(uint32 entry, uint32 type) const;
+    std::map<int32, HotfixData> const& GetHotfixData() const { return _hotfixData; }
 
     std::vector<uint32> GetAreasForGroup(uint32 areaGroupId) const;
     std::vector<ArtifactPowerEntry const*> GetArtifactPowers(uint8 artifactId) const;
@@ -363,7 +368,7 @@ public:
 
 private:
     StorageMap _stores;
-    HotfixData _hotfixData;
+    std::map<int32, HotfixData> _hotfixData;
 
     AreaGroupMemberContainer _areaGroupMembers;
     ArtifactPowersContainer _artifactPowers;
@@ -387,7 +392,6 @@ private:
     ItemClassByOldEnumContainer _itemClassByOldEnum;
     std::unordered_set<uint32> _itemsWithCurrencyCost;
     ItemModifiedAppearanceByItemContainer _itemModifiedAppearancesByItem;
-    ItemModifiedAppearanceByItemContainer _itemDefaultAppearancesByItem;
     ItemToBonusTreeContainer _itemToBonusTree;
     ItemSetSpellContainer _itemSetSpells;
     ItemSpecOverridesContainer _itemSpecOverrides;

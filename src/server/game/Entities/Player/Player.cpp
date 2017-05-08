@@ -4438,29 +4438,30 @@ Corpse* Player::CreateCorpse()
     corpse->SetUInt32Value(CORPSE_FIELD_BYTES_1, _cfb1);
     corpse->SetUInt32Value(CORPSE_FIELD_BYTES_2, _cfb2);
 
-    uint32 flags = CORPSE_FLAG_UNK2;
-    if (HasFlag(PLAYER_FLAGS, PLAYER_FLAGS_HIDE_HELM))
-        flags |= CORPSE_FLAG_HIDE_HELM;
-    if (HasFlag(PLAYER_FLAGS, PLAYER_FLAGS_HIDE_CLOAK))
-        flags |= CORPSE_FLAG_HIDE_CLOAK;
+    uint32 flags = 0;
+    if (HasByteFlag(UNIT_FIELD_BYTES_2, UNIT_BYTES_2_OFFSET_PVP_FLAG, UNIT_BYTE2_FLAG_PVP))
+        flags |= CORPSE_FLAG_PVP;
     if (InBattleground() && !InArena())
-        flags |= CORPSE_FLAG_LOOTABLE;                      // to be able to remove insignia
+        flags |= CORPSE_FLAG_SKINNABLE;                      // to be able to remove insignia
+    if (HasByteFlag(UNIT_FIELD_BYTES_2, UNIT_BYTES_2_OFFSET_PVP_FLAG, UNIT_BYTE2_FLAG_FFA_PVP))
+        flags |= CORPSE_FLAG_FFA_PVP;
 
     corpse->SetUInt32Value(CORPSE_FIELD_FLAGS, flags);
     corpse->SetUInt32Value(CORPSE_FIELD_DISPLAY_ID, GetNativeDisplayId());
+    corpse->SetUInt32Value(CORPSE_FIELD_FACTIONTEMPLATE, sChrRacesStore.AssertEntry(getRace())->FactionID);
 
-    uint32 iDisplayID;
-    uint32 iIventoryType;
-    uint32 _cfi;
     for (uint8 i = 0; i < EQUIPMENT_SLOT_END; i++)
     {
         if (m_items[i])
         {
-            iDisplayID = m_items[i]->GetDisplayId(this);
-            iIventoryType = m_items[i]->GetTemplate()->GetInventoryType();
+            uint32 itemDisplayId = m_items[i]->GetDisplayId(this);
+            uint32 itemInventoryType;
+            if (ItemEntry const* itemEntry = sItemStore.LookupEntry(m_items[i]->GetVisibleEntry(this)))
+                itemInventoryType = itemEntry->InventoryType;
+            else
+                itemInventoryType = m_items[i]->GetTemplate()->GetInventoryType();
 
-            _cfi = iDisplayID | (iIventoryType << 24);
-            corpse->SetUInt32Value(CORPSE_FIELD_ITEM + i, _cfi);
+            corpse->SetUInt32Value(CORPSE_FIELD_ITEM + i, itemDisplayId | (itemInventoryType << 24));
         }
     }
 
@@ -6816,6 +6817,19 @@ bool Player::HasCurrency(uint32 id, uint32 count) const
 {
     PlayerCurrenciesMap::const_iterator itr = _currencyStorage.find(id);
     return itr != _currencyStorage.end() && itr->second.Quantity >= count;
+}
+
+bool Player::IsQuestObjectiveProgressComplete(Quest const* quest) const
+{
+    float progress = 0;
+    for (QuestObjective const& obj : quest->GetObjectives())
+        if (obj.Flags & QUEST_OBJECTIVE_FLAG_PART_OF_PROGRESS_BAR)
+        {
+            progress += GetQuestObjectiveData(quest, obj.StorageIndex) * obj.ProgressBarWeight;
+            if (progress >= 100)
+                return true;
+        }
+    return false;
 }
 
 void Player::ModifyCurrency(uint32 id, int32 count, bool printLog/* = true*/, bool ignoreMultipliers/* = false*/)
@@ -11879,9 +11893,9 @@ Item* Player::_StoreItem(uint16 pos, Item* pItem, uint32 count, bool clone, bool
         if (!pItem)
             return nullptr;
 
-        if (pItem->GetTemplate()->GetBonding() == BIND_ON_ACQUIRE ||
-            pItem->GetTemplate()->GetBonding() == BIND_QUEST ||
-            (pItem->GetTemplate()->GetBonding() == BIND_ON_EQUIP && IsBagPos(pos)))
+        if (pItem->GetBonding() == BIND_ON_ACQUIRE ||
+            pItem->GetBonding() == BIND_QUEST ||
+            (pItem->GetBonding() == BIND_ON_EQUIP && IsBagPos(pos)))
             pItem->SetBinding(true);
 
         Bag* pBag = (bag == INVENTORY_SLOT_BAG_0) ? NULL : GetBagByPos(bag);
@@ -11922,9 +11936,9 @@ Item* Player::_StoreItem(uint16 pos, Item* pItem, uint32 count, bool clone, bool
     }
     else
     {
-        if (pItem2->GetTemplate()->GetBonding() == BIND_ON_ACQUIRE ||
-            pItem2->GetTemplate()->GetBonding() == BIND_QUEST ||
-            (pItem2->GetTemplate()->GetBonding() == BIND_ON_EQUIP && IsBagPos(pos)))
+        if (pItem2->GetBonding() == BIND_ON_ACQUIRE ||
+            pItem2->GetBonding() == BIND_QUEST ||
+            (pItem2->GetBonding() == BIND_ON_EQUIP && IsBagPos(pos)))
             pItem2->SetBinding(true);
 
         pItem2->SetCount(pItem2->GetCount() + count);
@@ -12234,7 +12248,7 @@ void Player::VisualizeItem(uint8 slot, Item* pItem)
         return;
 
     // check also  BIND_ON_ACQUIRE and BIND_QUEST for .additem or .additemset case by GM (not binded at adding to inventory)
-    if (pItem->GetTemplate()->GetBonding() == BIND_ON_EQUIP || pItem->GetTemplate()->GetBonding() == BIND_ON_ACQUIRE || pItem->GetTemplate()->GetBonding() == BIND_QUEST)
+    if (pItem->GetBonding() == BIND_ON_EQUIP || pItem->GetBonding() == BIND_ON_ACQUIRE || pItem->GetBonding() == BIND_QUEST)
     {
         pItem->SetBinding(true);
         if (IsInWorld())
@@ -14864,8 +14878,11 @@ bool Player::CanCompleteQuest(uint32 quest_id)
         {
             for (QuestObjective const& obj : qInfo->GetObjectives())
             {
-                if (!IsQuestObjectiveComplete(obj))
-                    return false;
+                if (!(obj.Flags & QUEST_OBJECTIVE_FLAG_OPTIONAL) && !(obj.Flags & QUEST_OBJECTIVE_FLAG_PART_OF_PROGRESS_BAR))
+                {
+                    if (!IsQuestObjectiveComplete(obj))
+                        return false;
+                }
             }
 
             if (qInfo->HasSpecialFlag(QUEST_SPECIAL_FLAGS_TIMED) && q_status.Timer == 0)
@@ -17046,6 +17063,10 @@ bool Player::IsQuestObjectiveComplete(QuestObjective const& objective) const
             if (!HasCurrency(objective.ObjectID, objective.Amount))
                 return false;
             break;
+        case QUEST_OBJECTIVE_PROGRESS_BAR:
+            if (!IsQuestObjectiveProgressComplete(quest))
+                return false;
+            break;
         default:
             TC_LOG_ERROR("entities.player.quest", "Player::CanCompleteQuest: Player '%s' (%s) tried to complete a quest (ID: %u) with an unknown objective type %u",
                 GetName().c_str(), GetGUID().ToString().c_str(), objective.QuestID, objective.Type);
@@ -17596,6 +17617,7 @@ bool Player::LoadFromDB(ObjectGuid guid, SQLQueryHolder *holder)
 
     // overwrite possible wrong/corrupted guid
     SetGuidValue(OBJECT_FIELD_GUID, guid);
+    SetGuidValue(PLAYER_WOW_ACCOUNT, GetSession()->GetAccountGUID());
 
     uint8 gender = fields[5].GetUInt8();
     if (!IsValidGender(gender))
@@ -18602,7 +18624,7 @@ void Player::_LoadInventory(PreparedQueryResult result, PreparedQueryResult arti
             {
                 auto artifactDataItr = artifactData.find(item->GetGUID());
                 if (item->GetTemplate()->GetArtifactID() && artifactDataItr != artifactData.end())
-                    item->LoadArtifactData(std::get<0>(artifactDataItr->second), std::get<1>(artifactDataItr->second), std::get<2>(artifactDataItr->second));
+                    item->LoadArtifactData(this, std::get<0>(artifactDataItr->second), std::get<1>(artifactDataItr->second), std::get<2>(artifactDataItr->second));
 
                 ObjectGuid bagGuid = fields[44].GetUInt64() ? ObjectGuid::Create<HighGuid::Item>(fields[44].GetUInt64()) : ObjectGuid::Empty;
                 uint8 slot = fields[45].GetUInt8();
@@ -23236,9 +23258,9 @@ bool Player::HaveAtClient(Object const* u) const
     return u == this || m_clientGUIDs.find(u->GetGUID()) != m_clientGUIDs.end();
 }
 
-bool Player::IsNeverVisible() const
+bool Player::IsNeverVisibleFor(WorldObject const* seer) const
 {
-    if (Unit::IsNeverVisible())
+    if (Unit::IsNeverVisibleFor(seer))
         return true;
 
     if (GetSession()->PlayerLogout() || GetSession()->PlayerLoading())
@@ -24807,10 +24829,8 @@ bool Player::isHonorOrXPTarget(Unit const* victim) const
 
     if (Creature const* const creature = victim->ToCreature())
     {
-        if (creature->IsTotem() ||
-            creature->IsPet() ||
-            creature->GetCreatureTemplate()->flags_extra & CREATURE_FLAG_EXTRA_NO_XP_AT_KILL)
-                return false;
+        if (!creature->CanGiveExperience())
+            return false;
     }
     return true;
 }
@@ -27075,14 +27095,12 @@ float Player::GetAverageItemLevel() const
         if (i == EQUIPMENT_SLOT_TABARD || i == EQUIPMENT_SLOT_RANGED || i == EQUIPMENT_SLOT_OFFHAND || i == EQUIPMENT_SLOT_BODY)
             continue;
 
-        if (m_items[i] && m_items[i]->GetTemplate())
+        if (m_items[i])
             sum += m_items[i]->GetItemLevel(this);
 
         ++count;
     }
 
-    if (count == 0)
-        return 0;
     return ((float)sum) / count;
 }
 
