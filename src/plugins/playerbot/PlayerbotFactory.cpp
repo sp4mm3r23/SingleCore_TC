@@ -1212,7 +1212,7 @@ ObjectGuid PlayerbotFactory::GetRandomBot()
         {
             Field* fields = result->Fetch();
             ObjectGuid guid = ObjectGuid(HighGuid::Player, fields[0].GetUInt32());
-            if (!sObjectMgr->GetPlayerByLowGUID(guid))
+            if (!ObjectAccessor::FindPlayerByLowGUID(guid))
                 guids.push_back(guid);
         } while (result->NextRow());
     }
@@ -1223,7 +1223,7 @@ ObjectGuid PlayerbotFactory::GetRandomBot()
     int index = urand(0, guids.size() - 1);
     return guids[index];
 }
-
+/*
 void AddPrevQuests(uint32 questId, list<uint32>& questIds)
 {
     Quest const *quest = sObjectMgr->GetQuestTemplate(questId);
@@ -1270,7 +1270,7 @@ void PlayerbotFactory::InitQuests()
         ClearInventory();
     }
 }
-
+*/
 void PlayerbotFactory::ClearInventory()
 {
     DestroyItemsVisitor visitor(bot);
@@ -1745,6 +1745,7 @@ void PlayerbotFactory::InitGuild()
     }
 
     int index = urand(0, guilds.size() - 1);
+	SQLTransaction trans(nullptr);
     uint32 guildId = guilds[index];
     Guild* guild = sGuildMgr->GetGuildById(guildId);
     if (!guild)
@@ -1754,5 +1755,5 @@ void PlayerbotFactory::InitGuild()
     }
 
     if (guild->GetMemberCount() < 10)
-        guild->AddMember(bot->GetGUID(), urand(GR_OFFICER, GR_INITIATE));
+        guild->AddMember(trans, bot->GetGUID(), urand(GR_OFFICER, GR_INITIATE));
 }

@@ -165,6 +165,10 @@ AiPlayerbot.RandomBotSpellIds = 54197
 # Enable LFG for random bots
 AiPlayerbot.RandomBotJoinLfg = 1
 
+# Enable BG for random bots
+AiPlayerbot.RandomBotJoinBG = 1
+AIPlayerbot.RandomBotBracketPlayer = 0
+
 # Level diff between random bots and nearby creatures for random teleports
 AiPlayerbot.RandomBotTeleLevel = 2
 
