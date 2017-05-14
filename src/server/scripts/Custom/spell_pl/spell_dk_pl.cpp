@@ -97,7 +97,7 @@ class spell_dk_howling_blast : public SpellScriptLoader
 
 // 108199 - Gorefiend's Grasp
 // 7.x.x
-class spell_dk_gorefiends_grasp : public SpellScriptLoader
+/*class spell_dk_gorefiends_grasp : public SpellScriptLoader
 {
     public:
         spell_dk_gorefiends_grasp() : SpellScriptLoader("spell_dk_gorefiends_grasp") { }
@@ -135,7 +135,7 @@ class spell_dk_gorefiends_grasp : public SpellScriptLoader
         {
             return new spell_dk_gorefiends_grasp_SpellScript();
         }
-};
+};*/
 
 // 119975 - Conversion
 // 7.x.x
@@ -251,7 +251,7 @@ void AddSC_deathknight_spell_scripts_pl()
 {
     new spell_dk_desecrated_ground();
     new spell_dk_howling_blast();
-    new spell_dk_gorefiends_grasp();
+    //new spell_dk_gorefiends_grasp();
     new spell_dk_conversion();
     new spell_dk_purgatory();
     new spell_dk_purgatory_absorb();
