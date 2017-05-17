@@ -1099,8 +1099,8 @@ void PlayerbotFactory::InitAvailableSpells()
             if (tSpell->learnedSpell)
                 bot->LearnSpell(tSpell->learnedSpell[0], false);
             else
-                ai->CastSpell(tSpell->spell, bot);
-        }
+			bot->LearnSpell(tSpell->spell, false);
+		}
     }
 }
 
