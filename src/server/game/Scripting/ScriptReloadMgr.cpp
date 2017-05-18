@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -37,7 +37,6 @@ ScriptReloadMgr* ScriptReloadMgr::instance()
 #else
 
 #include <algorithm>
-#include <regex>
 #include <vector>
 #include <future>
 #include <memory>
@@ -45,6 +44,8 @@ ScriptReloadMgr* ScriptReloadMgr::instance()
 #include <type_traits>
 #include <unordered_set>
 #include <unordered_map>
+
+#include "Regex.h"
 
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/filesystem.hpp>
@@ -66,6 +67,9 @@ namespace fs = boost::filesystem;
 #ifdef _WIN32
     #include <windows.h>
     #define HOTSWAP_PLATFORM_REQUIRES_CACHING
+#elif __APPLE__
+    #include <dlfcn.h>
+    #define HOTSWAP_PLATFORM_REQUIRES_CACHING
 #else // Posix
     #include <dlfcn.h>
     // #define HOTSWAP_PLATFORM_REQUIRES_CACHING
@@ -86,11 +90,13 @@ static char const* GetSharedLibraryPrefix()
 #endif
 }
 
-// Returns "dll" on Windows and "so" on posix.
+// Returns "dll" on Windows, "dylib" on OS X, and "so" on posix.
 static char const* GetSharedLibraryExtension()
 {
 #ifdef _WIN32
     return "dll";
+#elif __APPLE__
+    return "dylib";
 #else // Posix
     return "so";
 #endif
@@ -111,7 +117,7 @@ static fs::path GetDirectoryOfExecutable()
     if (path.is_absolute())
         return path.parent_path();
     else
-        return fs::absolute(path).parent_path();
+        return fs::canonical(fs::absolute(path)).parent_path();
 }
 
 class SharedLibraryUnloader
@@ -193,6 +199,8 @@ public:
 
     static Optional<std::shared_ptr<ScriptModule>>
         CreateFromPath(fs::path const& path, Optional<fs::path> cache_path);
+
+    static void ScheduleDelayedDelete(ScriptModule* module);
 
     char const* GetScriptModuleRevisionHash() const override
     {
@@ -287,8 +295,13 @@ Optional<std::shared_ptr<ScriptModule>>
         GetFunctionFromSharedLibrary(handle, "AddScripts", addScripts) &&
         GetFunctionFromSharedLibrary(handle, "GetScriptModule", getScriptModule) &&
         GetFunctionFromSharedLibrary(handle, "GetBuildDirective", getBuildDirective))
-        return std::make_shared<ScriptModule>(std::move(holder), getScriptModuleRevisionHash,
+    {
+        auto module = new ScriptModule(std::move(holder), getScriptModuleRevisionHash,
             addScripts, getScriptModule, getBuildDirective, path);
+
+        // Unload the module at the next update tick as soon as all references are removed
+        return std::shared_ptr<ScriptModule>(module, ScheduleDelayedDelete);
+    }
     else
     {
         TC_LOG_ERROR("scripts.hotswap", "Could not extract all required functions from the shared library \"%s\"!",
@@ -301,12 +314,12 @@ Optional<std::shared_ptr<ScriptModule>>
 static bool HasValidScriptModuleName(std::string const& name)
 {
     // Detects scripts_NAME.dll's / .so's
-    static std::regex const regex(
+    static Trinity::regex const regex(
         Trinity::StringFormat("^%s[sS]cripts_[a-zA-Z0-9_]+\\.%s$",
             GetSharedLibraryPrefix(),
             GetSharedLibraryExtension()));
 
-    return std::regex_match(name, regex);
+    return Trinity::regex_match(name, regex);
 }
 
 /// File watcher responsible for watching shared libraries
@@ -937,13 +950,6 @@ private:
             }
         }
 
-        sScriptMgr->SetScriptContext(module_name);
-        (*module)->AddScripts();
-        TC_LOG_TRACE("scripts.hotswap", ">> Registered all scripts of module %s.", module_name.c_str());
-
-        if (swap_context)
-            sScriptMgr->SwapScriptContext();
-
         // Create the source listener
         auto listener = Trinity::make_unique<SourceUpdateListener>(
             sScriptReloadMgr->GetSourceDirectory() / module_name,
@@ -952,8 +958,16 @@ private:
         // Store the module
         _known_modules_build_directives.insert(std::make_pair(module_name, (*module)->GetBuildDirective()));
         _running_script_modules.insert(std::make_pair(module_name,
-            std::make_pair(std::move(*module), std::move(listener))));
+            std::make_pair(*module, std::move(listener))));
         _running_script_module_names.insert(std::make_pair(path, module_name));
+
+        // Process the script loading after the module was registered correctly (#17557).
+        sScriptMgr->SetScriptContext(module_name);
+        (*module)->AddScripts();
+        TC_LOG_TRACE("scripts.hotswap", ">> Registered all scripts of module %s.", module_name.c_str());
+
+        if (swap_context)
+            sScriptMgr->SwapScriptContext();
     }
 
     void ProcessReloadScriptModule(fs::path const& path)
@@ -1435,6 +1449,26 @@ private:
     fs::path temporary_cache_path_;
 };
 
+class ScriptModuleDeleteMessage
+{
+public:
+    explicit ScriptModuleDeleteMessage(ScriptModule* module)
+        : module_(module) { }
+
+    void operator() (HotSwapScriptReloadMgr*)
+    {
+        module_.reset();
+    }
+
+private:
+    std::unique_ptr<ScriptModule> module_;
+};
+
+void ScriptModule::ScheduleDelayedDelete(ScriptModule* module)
+{
+    sScriptReloadMgr->QueueMessage(ScriptModuleDeleteMessage(module));
+}
+
 /// Maps efsw actions to strings
 static char const* ActionToString(efsw::Action action)
 {
@@ -1501,8 +1535,8 @@ void LibraryUpdateListener::handleFileAction(efsw::WatchID watchid, std::string 
 /// Returns true when the given path has a known C++ file extension
 static bool HasCXXSourceFileExtension(fs::path const& path)
 {
-    static std::regex const regex("^\\.(h|hpp|c|cc|cpp)$");
-    return std::regex_match(path.extension().generic_string(), regex);
+    static Trinity::regex const regex("^\\.(h|hpp|c|cc|cpp)$");
+    return Trinity::regex_match(path.extension().generic_string(), regex);
 }
 
 SourceUpdateListener::SourceUpdateListener(fs::path path, std::string script_module_name)
@@ -1592,11 +1626,15 @@ void SourceUpdateListener::handleFileAction(efsw::WatchID watchid, std::string c
 std::shared_ptr<ModuleReference>
     ScriptReloadMgr::AcquireModuleReferenceOfContext(std::string const& context)
 {
-    auto const itr = sScriptReloadMgr->_running_script_modules.find(context);
-    if (itr != sScriptReloadMgr->_running_script_modules.end())
-        return itr->second.first;
-    else
+    // Return empty references for the static context exported by the worldserver
+    if (context == ScriptMgr::GetNameOfStaticContext())
         return { };
+
+    auto const itr = sScriptReloadMgr->_running_script_modules.find(context);
+    ASSERT(itr != sScriptReloadMgr->_running_script_modules.end()
+           && "Requested a reference to a non existent script context!");
+
+    return itr->second.first;
 }
 
 // Returns the full hot swap implemented ScriptReloadMgr

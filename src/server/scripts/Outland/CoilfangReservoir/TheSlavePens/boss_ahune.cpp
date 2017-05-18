@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -201,7 +201,7 @@ public:
             {
                 if (Group* group = players.begin()->GetSource()->GetGroup())
                     if (group->isLFGGroup())
-                        sLFGMgr->FinishDungeon(group->GetGUID(), 286);
+                        sLFGMgr->FinishDungeon(group->GetGUID(), 286, me->GetMap());
             }
 
             _JustDied();
@@ -395,7 +395,7 @@ public:
             _summons.DespawnAll();
             ResetFlameCallers();
 
-            me->SummonGameObject(GO_ICE_STONE, -69.90455f, -162.2449f, -2.366563f, 2.426008f, 0.0f, 0.0f, 0.9366722f, 0.3502074f, 0);
+            me->SummonGameObject(GO_ICE_STONE, -69.90455f, -162.2449f, -2.366563f, 2.426008f, G3D::Quat(0.0f, 0.0f, 0.9366722f, 0.3502074f), 0);
         }
 
         void DoAction(int32 action) override
@@ -652,7 +652,7 @@ public:
         if (!instance)
             return false;
 
-        player->PlayerTalkClass->ClearMenus();
+        ClearGossipMenuFor(player);
 
         if (Creature* ahuneBunny = ObjectAccessor::GetCreature(*go, instance->GetGuidData(DATA_AHUNE_BUNNY)))
         {
@@ -661,7 +661,7 @@ public:
         }
         if (Creature* luma = ObjectAccessor::GetCreature(*go, instance->GetGuidData(DATA_LUMA_SKYMOTHER)))
             luma->CastSpell(player, SPELL_SUMMONING_RHYME_AURA, true);
-        player->CLOSE_GOSSIP_MENU();
+        CloseGossipMenuFor(player);
         go->Delete();
 
         return true;

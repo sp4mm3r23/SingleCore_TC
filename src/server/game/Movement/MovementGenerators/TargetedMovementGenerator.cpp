@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -36,10 +36,10 @@ void TargetedMovementGeneratorMedium<T, D>::_setTargetLocation(T* owner, bool up
     if (owner->HasUnitState(UNIT_STATE_NOT_MOVE))
         return;
 
-    if (owner->HasUnitState(UNIT_STATE_CASTING) && !owner->CanMoveDuringChannel())
+    if (owner->IsMovementPreventedByCasting())
         return;
 
-    if (owner->GetTypeId() == TYPEID_UNIT && !i_target->isInAccessiblePlaceFor(owner->ToCreature()))
+    if (i_target.getTarget()->GetTypeId() == TYPEID_UNIT && !((Unit *)i_target.getTarget())->isInAccessiblePlaceFor(owner->ToCreature()))
     {
         owner->ToCreature()->SetCannotReachTarget(true);
         return;
@@ -66,7 +66,7 @@ void TargetedMovementGeneratorMedium<T, D>::_setTargetLocation(T* owner, bool up
             float size;
 
             // Pets need special handling.
-            // We need to subtract GetObjectSize() because it gets added back further down the chain
+            // We need to subtract GetCombatReach() because it gets added back further down the chain
             //  and that makes pets too far away. Subtracting it allows pets to properly
             //  be (GetCombatReach() + i_offset) away.
             // Only applies when i_target is pet's owner otherwise pets and mobs end up
@@ -74,12 +74,12 @@ void TargetedMovementGeneratorMedium<T, D>::_setTargetLocation(T* owner, bool up
             if (owner->IsPet() && i_target->GetTypeId() == TYPEID_PLAYER)
             {
                 dist = 1.0f; //i_target->GetCombatReach();
-                size = 1.0f; //i_target->GetCombatReach() - i_target->GetObjectSize();
+                size = 1.0f; //i_target->GetCombatReach() - i_target->GetCombatReach();
             }
             else
             {
                 dist = i_offset + 1.0f;
-                size = owner->GetObjectSize();
+                size = owner->GetCombatReach();
             }
 
             if (i_target->IsWithinDistInMap(owner, dist))
@@ -104,9 +104,14 @@ void TargetedMovementGeneratorMedium<T, D>::_setTargetLocation(T* owner, bool up
     // allow pets to use shortcut if no path found when following their master
     bool forceDest = (owner->GetTypeId() == TYPEID_UNIT && owner->ToCreature()->IsPet()
         && owner->HasUnitState(UNIT_STATE_FOLLOW));
+	bool warsongFlag = false;
+	if (i_target->GetName() == "Warsong Flag")
+	{
+		warsongFlag = true;
+	}		
 
     bool result = i_path->CalculatePath(x, y, z, forceDest);
-    if (!result || (i_path->GetPathType() & PATHFIND_NOPATH))
+    if (!result || (!warsongFlag && (i_path->GetPathType() & PATHFIND_NOPATH)))
     {
         // can't reach target
         i_recalculateTravel = true;
@@ -149,7 +154,7 @@ bool TargetedMovementGeneratorMedium<T, D>::DoUpdate(T* owner, uint32 time_diff)
     }
 
     // prevent movement while casting spells with cast time or channel time
-    if (owner->HasUnitState(UNIT_STATE_CASTING) && !owner->CanMoveDuringChannel())
+    if (owner->IsMovementPreventedByCasting())
     {
         if (!owner->IsStopped())
             owner->StopMoving();
@@ -216,10 +221,14 @@ bool TargetedMovementGeneratorMedium<T, D>::DoUpdate(T* owner, uint32 time_diff)
 template<class T>
 void ChaseMovementGenerator<T>::_reachTarget(T* owner)
 {
-    if (owner->IsWithinMeleeRange(this->i_target.getTarget()))
-        owner->Attack(this->i_target.getTarget(), true);
-    if (owner->GetTypeId() == TYPEID_UNIT)
-        owner->ToCreature()->SetCannotReachTarget(false);
+    _clearUnitStateMove(owner);
+	if (this->GetTarget()!=NULL && this->GetTarget()->GetTypeId() == TYPEID_UNIT)
+	{
+		if (((Unit *)owner)->IsWithinMeleeRange((Unit *)this->i_target.getTarget()))
+			((Unit *)owner)->Attack((Unit *)this->i_target.getTarget(), true);
+	}
+	if (((Unit *)owner)->GetTypeId() == TYPEID_UNIT)
+		((Unit *)owner)->ToCreature()->SetCannotReachTarget(false);
 }
 
 template<>
@@ -264,7 +273,7 @@ void ChaseMovementGenerator<Creature>::MovementInform(Creature* unit)
 template<>
 bool FollowMovementGenerator<Creature>::EnableWalking() const
 {
-    return i_target.isValid() && i_target->IsWalking();
+    return i_target.isValid() && i_target->GetTypeId()==TypeID::TYPEID_PLAYER && ((Unit *)i_target.getTarget())->IsWalking();
 }
 
 template<>

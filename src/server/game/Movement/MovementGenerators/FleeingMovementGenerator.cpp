@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -38,7 +38,7 @@ void FleeingMovementGenerator<T>::_setTargetLocation(T* owner)
     if (owner->HasUnitState(UNIT_STATE_ROOT | UNIT_STATE_STUNNED))
         return;
 
-    if (owner->HasUnitState(UNIT_STATE_CASTING) && !owner->CanMoveDuringChannel())
+    if (owner->IsMovementPreventedByCasting())
     {
         owner->CastStop();
         return;
@@ -55,7 +55,8 @@ void FleeingMovementGenerator<T>::_setTargetLocation(T* owner)
                                                                                 mypos.m_positionX,
                                                                                 mypos.m_positionY,
                                                                                 mypos.m_positionZ + 2.0f,
-                                                                                x, y, z + 2.0f);
+                                                                                x, y, z + 2.0f,
+                                                                                VMAP::ModelIgnoreFlags::Nothing);
     if (!isInLOS)
     {
         i_nextCheckTime.Reset(200);
@@ -183,28 +184,28 @@ template void FleeingMovementGenerator<Creature>::DoReset(Creature*);
 template bool FleeingMovementGenerator<Player>::DoUpdate(Player*, uint32);
 template bool FleeingMovementGenerator<Creature>::DoUpdate(Creature*, uint32);
 
-void TimedFleeingMovementGenerator::Finalize(Unit* owner)
+void TimedFleeingMovementGenerator::Finalize(WorldObject* owner)
 {
-    owner->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_FLEEING);
-    owner->ClearUnitState(UNIT_STATE_FLEEING|UNIT_STATE_FLEEING_MOVE);
-    if (Unit* victim = owner->GetVictim())
+	((Unit *)owner)->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_FLEEING);
+	((Unit *)owner)->ClearUnitState(UNIT_STATE_FLEEING | UNIT_STATE_FLEEING_MOVE);
+	if (Unit* victim = ((Unit *)owner)->GetVictim())
     {
-        if (owner->IsAlive())
+		if (((Unit *)owner)->IsAlive())
         {
-            owner->AttackStop();
-            owner->ToCreature()->AI()->AttackStart(victim);
+			((Unit *)owner)->AttackStop();
+			((Unit *)owner)->ToCreature()->AI()->AttackStart(victim);
         }
     }
 }
 
-bool TimedFleeingMovementGenerator::Update(Unit* owner, uint32 time_diff)
+bool TimedFleeingMovementGenerator::Update(WorldObject* owner, uint32 time_diff)
 {
-    if (!owner->IsAlive())
+	if (!((Unit *)owner)->IsAlive())
         return false;
 
-    if (owner->HasUnitState(UNIT_STATE_ROOT | UNIT_STATE_STUNNED))
+	if (((Unit *)owner)->HasUnitState(UNIT_STATE_ROOT | UNIT_STATE_STUNNED))
     {
-        owner->ClearUnitState(UNIT_STATE_FLEEING_MOVE);
+		((Unit *)owner)->ClearUnitState(UNIT_STATE_FLEEING_MOVE);
         return true;
     }
 

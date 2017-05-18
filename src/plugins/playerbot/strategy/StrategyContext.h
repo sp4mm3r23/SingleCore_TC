@@ -17,11 +17,7 @@
 #include "generic/UseFoodStrategy.h"
 #include "generic/ConserveManaStrategy.h"
 #include "generic/EmoteStrategy.h"
-#include "generic/AttackRtiStrategy.h"
-#include "generic/AttackWeakStrategy.h"
 #include "generic/TankAoeStrategy.h"
-#include "generic/TankAssistStrategy.h"
-#include "generic/DpsAoeStrategy.h"
 #include "generic/DpsAssistStrategy.h"
 #include "generic/PassiveStrategy.h"
 #include "generic/GrindingStrategy.h"
@@ -61,7 +57,9 @@ namespace ai
             creators["pvp"] = &StrategyContext::pvp;
             creators["move random"] = &StrategyContext::move_random;
             creators["lfg"] = &StrategyContext::lfg;
-            creators["custom"] = &StrategyContext::custom;
+			creators["bg"] = &StrategyContext::bg;
+			creators["warsong"] = &StrategyContext::warsong;
+			creators["custom"] = &StrategyContext::custom;
         }
 
     private:
@@ -86,7 +84,9 @@ namespace ai
         static Strategy* pvp(PlayerbotAI* ai) { return new AttackEnemyPlayersStrategy(ai); }
         static Strategy* move_random(PlayerbotAI* ai) { return new MoveRandomStrategy(ai); }
         static Strategy* lfg(PlayerbotAI* ai) { return new LfgStrategy(ai); }
-        static Strategy* custom(PlayerbotAI* ai) { return new CustomStrategy(ai); }
+		static Strategy* bg(PlayerbotAI* ai) { return new BGStrategy(ai); }
+		static Strategy* warsong(PlayerbotAI* ai) { return new WarsongStrategy(ai); }
+		static Strategy* custom(PlayerbotAI* ai) { return new CustomStrategy(ai); }
     };
 
     class MovementStrategyContext : public NamedObjectContext<Strategy>
@@ -115,22 +115,14 @@ namespace ai
         AssistStrategyContext() : NamedObjectContext<Strategy>(false, true)
         {
             creators["dps assist"] = &AssistStrategyContext::dps_assist;
-            creators["dps aoe"] = &AssistStrategyContext::dps_aoe;
-            creators["tank assist"] = &AssistStrategyContext::tank_assist;
             creators["tank aoe"] = &AssistStrategyContext::tank_aoe;
-            creators["attack weak"] = &AssistStrategyContext::attack_weak;
             creators["grind"] = &AssistStrategyContext::grind;
-            creators["attack rti"] = &AssistStrategyContext::attack_rti;
         }
 
     private:
         static Strategy* dps_assist(PlayerbotAI* ai) { return new DpsAssistStrategy(ai); }
-        static Strategy* dps_aoe(PlayerbotAI* ai) { return new DpsAoeStrategy(ai); }
-        static Strategy* tank_assist(PlayerbotAI* ai) { return new TankAssistStrategy(ai); }
         static Strategy* tank_aoe(PlayerbotAI* ai) { return new TankAoeStrategy(ai); }
-        static Strategy* attack_weak(PlayerbotAI* ai) { return new AttackWeakStrategy(ai); }
         static Strategy* grind(PlayerbotAI* ai) { return new GrindingStrategy(ai); }
-        static Strategy* attack_rti(PlayerbotAI* ai) { return new AttackRtiStrategy(ai); }
     };
 
     class QuestStrategyContext : public NamedObjectContext<Strategy>

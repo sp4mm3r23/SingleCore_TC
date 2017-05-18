@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -108,13 +108,20 @@ bool Map::ExistVMap(uint32 mapid, int gx, int gy)
     {
         if (vmgr->isMapLoadingEnabled())
         {
-            bool exists = vmgr->existsMap((sWorld->GetDataPath()+ "vmaps").c_str(),  mapid, gx, gy);
-            if (!exists)
+            VMAP::LoadResult result = vmgr->existsMap((sWorld->GetDataPath() + "vmaps").c_str(), mapid, gx, gy);
+            std::string name = vmgr->getDirFileName(mapid, gx, gy);
+            switch (result)
             {
-                std::string name = vmgr->getDirFileName(mapid, gx, gy);
-                TC_LOG_ERROR("maps", "VMap file '%s' does not exist", (sWorld->GetDataPath()+"vmaps/"+name).c_str());
-                TC_LOG_ERROR("maps", "Please place VMAP-files (*.vmtree and *.vmtile) in the vmap-directory (%s), or correct the DataDir setting in your worldserver.conf file.", (sWorld->GetDataPath()+"vmaps/").c_str());
-                return false;
+                case VMAP::LoadResult::Success:
+                    break;
+                case VMAP::LoadResult::FileNotFound:
+                    TC_LOG_ERROR("maps", "VMap file '%s' does not exist", (sWorld->GetDataPath() + "vmaps/" + name).c_str());
+                    TC_LOG_ERROR("maps", "Please place VMAP files (*.vmtree and *.vmtile) in the vmap directory (%s), or correct the DataDir setting in your worldserver.conf file.", (sWorld->GetDataPath() + "vmaps/").c_str());
+                    return false;
+                case VMAP::LoadResult::VersionMismatch:
+                    TC_LOG_ERROR("maps", "VMap file '%s' couldn't be loaded", (sWorld->GetDataPath() + "vmaps/" + name).c_str());
+                    TC_LOG_ERROR("maps", "This is because the version of the VMap file and the version of this module are different, please re-extract the maps with the tools compiled with this module.");
+                    return false;
             }
         }
     }
@@ -449,7 +456,7 @@ void Map::EnsureGridCreated(const GridCoord &p)
 //But object data is not loaded here
 void Map::EnsureGridCreated_i(const GridCoord &p)
 {
-    if (!getNGrid(p.x_coord, p.y_coord))
+	if (p.x_coord<MAX_NUMBER_OF_GRIDS && p.y_coord<MAX_NUMBER_OF_GRIDS && !getNGrid(p.x_coord, p.y_coord))
     {
         TC_LOG_DEBUG("maps", "Creating grid[%u, %u] for map %u instance %u", p.x_coord, p.y_coord, GetId(), i_InstanceId);
 
@@ -714,14 +721,9 @@ void Map::Update(const uint32 t_diff)
 
         VisitNearbyCellsOf(player, grid_object_update, world_object_update);
 
-        // If player is using far sight, visit that object too
+        // If player is using far sight or mind vision, visit that object too
         if (WorldObject* viewPoint = player->GetViewpoint())
-        {
-            if (Creature* viewCreature = viewPoint->ToCreature())
-                VisitNearbyCellsOf(viewCreature, grid_object_update, world_object_update);
-            else if (DynamicObject* viewObject = viewPoint->ToDynObject())
-                VisitNearbyCellsOf(viewObject, grid_object_update, world_object_update);
-        }
+            VisitNearbyCellsOf(viewPoint, grid_object_update, world_object_update);
 
         // Handle updates for creatures in combat with player and are more than 60 yards away
         if (player->IsInCombat())
@@ -879,10 +881,15 @@ void Map::RemovePlayerFromMap(Player* player, bool remove)
 {
     sScriptMgr->OnPlayerLeaveMap(this, player);
 
+    player->getHostileRefManager().deleteReferences(); // multithreading crashfix
+
+    bool const inWorld = player->IsInWorld();
     player->RemoveFromWorld();
     SendRemoveTransports(player);
 
-    player->UpdateObjectVisibility(true);
+    if (!inWorld) // if was in world, RemoveFromWorld() called DestroyForNearbyPlayers()
+        player->DestroyForNearbyPlayers(); // previous player->UpdateObjectVisibility(true)
+
     if (player->IsInGrid())
         player->RemoveFromGrid();
     else
@@ -895,11 +902,15 @@ void Map::RemovePlayerFromMap(Player* player, bool remove)
 template<class T>
 void Map::RemoveFromMap(T *obj, bool remove)
 {
+    bool const inWorld = obj->IsInWorld() && obj->GetTypeId() >= TYPEID_UNIT && obj->GetTypeId() <= TYPEID_GAMEOBJECT;
     obj->RemoveFromWorld();
+
     if (obj->isActiveObject())
         RemoveFromActive(obj);
 
-    obj->UpdateObjectVisibility(true);
+    if (!inWorld) // if was in world, RemoveFromWorld() called DestroyForNearbyPlayers()
+        obj->DestroyForNearbyPlayers(); // previous obj->UpdateObjectVisibility(true)
+
     obj->RemoveFromGrid();
 
     obj->ResetMap();
@@ -2321,13 +2332,18 @@ float Map::GetHeight(float x, float y, float z, bool checkVMap /*= true*/, float
 {
     // find raw .map surface under Z coordinates
     float mapHeight = VMAP_INVALID_HEIGHT_VALUE;
-    if (GridMap* gmap = const_cast<Map*>(this)->GetGrid(x, y))
-    {
-        float gridHeight = gmap->getHeight(x, y);
-        // look from a bit higher pos to find the floor, ignore under surface case
-        if (z + 2.0f > gridHeight)
-            mapHeight = gridHeight;
-    }
+	if (!std::isnan(x) && !std::isnan(y))
+	{
+		if (GridMap* gmap = const_cast<Map*>(this)->GetGrid(x, y))
+		{
+			float gridHeight = gmap->getHeight(x, y);
+			// look from a bit higher pos to find the floor, ignore under surface case
+			if (z + 2.0f > gridHeight)
+				mapHeight = gridHeight;
+		}
+	}
+	else
+		return 0.0f;
 
     float vmapHeight = VMAP_INVALID_HEIGHT_VALUE;
     if (checkVMap)
@@ -2593,9 +2609,9 @@ float Map::GetWaterLevel(float x, float y) const
         return 0;
 }
 
-bool Map::isInLineOfSight(float x1, float y1, float z1, float x2, float y2, float z2, uint32 phasemask) const
+bool Map::isInLineOfSight(float x1, float y1, float z1, float x2, float y2, float z2, uint32 phasemask, VMAP::ModelIgnoreFlags ignoreFlags) const
 {
-    return VMAP::VMapFactory::createOrGetVMapManager()->isInLineOfSight(GetId(), x1, y1, z1, x2, y2, z2)
+    return VMAP::VMapFactory::createOrGetVMapManager()->isInLineOfSight(GetId(), x1, y1, z1, x2, y2, z2, ignoreFlags)
         && _dynamicTree.isInLineOfSight(x1, y1, z1, x2, y2, z2, phasemask);
 }
 
@@ -3311,7 +3327,7 @@ bool InstanceMap::Reset(uint8 method)
     return m_mapRefManager.isEmpty();
 }
 
-void InstanceMap::PermBindAllPlayers(Player* source)
+void InstanceMap::PermBindAllPlayers()
 {
     if (!IsDungeon())
         return;
@@ -3319,31 +3335,43 @@ void InstanceMap::PermBindAllPlayers(Player* source)
     InstanceSave* save = sInstanceSaveMgr->GetInstanceSave(GetInstanceId());
     if (!save)
     {
-        TC_LOG_ERROR("maps", "Cannot bind player (GUID: %u, Name: %s), because no instance save is available for instance map (Name: %s, Entry: %u, InstanceId: %u)!", source->GetGUID().GetCounter(), source->GetName().c_str(), source->GetMap()->GetMapName(), source->GetMapId(), GetInstanceId());
+        TC_LOG_ERROR("maps", "Cannot bind players to instance map (Name: %s, Entry: %u, Difficulty: %u, ID: %u) because no instance save is available!", GetMapName(), GetId(), GetDifficulty(), GetInstanceId());
         return;
     }
 
-    Group* group = source->GetGroup();
-    // group members outside the instance group don't get bound
+    // perm bind all players that are currently inside the instance
     for (MapRefManager::iterator itr = m_mapRefManager.begin(); itr != m_mapRefManager.end(); ++itr)
     {
         Player* player = itr->GetSource();
-        // players inside an instance cannot be bound to other instances
-        // some players may already be permanently bound, in this case nothing happens
+        // never instance bind GMs with GM mode enabled
+        if (player->IsGameMaster())
+            continue;
+
         InstancePlayerBind* bind = player->GetBoundInstance(save->GetMapId(), save->GetDifficulty());
-        if (!bind || !bind->perm)
+        if (bind && bind->perm)
+        {
+            if (bind->save && bind->save->GetInstanceId() != save->GetInstanceId())
+            {
+                TC_LOG_ERROR("maps", "Player (GUID: %u, Name: %s) is in instance map (Name: %s, Entry: %u, Difficulty: %u, ID: %u) that is being bound, but already has a save for the map on ID %u!", player->GetGUID().GetCounter(), player->GetName().c_str(), GetMapName(), save->GetMapId(), save->GetDifficulty(), save->GetInstanceId(), bind->save->GetInstanceId());
+            }
+            else if (!bind->save)
+            {
+                TC_LOG_ERROR("maps", "Player (GUID: %u, Name: %s) is in instance map (Name: %s, Entry: %u, Difficulty: %u, ID: %u) that is being bound, but already has a bind (without associated save) for the map!", player->GetGUID().GetCounter(), player->GetName().c_str(), GetMapName(), save->GetMapId(), save->GetDifficulty(), save->GetInstanceId());
+            }
+        }
+        else
         {
             player->BindToInstance(save, true);
             WorldPacket data(SMSG_INSTANCE_SAVE_CREATED, 4);
             data << uint32(0);
             player->GetSession()->SendPacket(&data);
-            if (!player->IsGameMaster())
-                player->GetSession()->SendCalendarRaidLockout(save, true);
-        }
+            player->GetSession()->SendCalendarRaidLockout(save, true);
 
-        // if the leader is not in the instance the group will not get a perm bind
-        if (group && group->GetLeaderGUID() == player->GetGUID())
-            group->BindToInstance(save, true);
+            // if group leader is in instance, group also gets bound
+            if (Group* group = player->GetGroup())
+                if (group->GetLeaderGUID() == player->GetGUID())
+                    group->BindToInstance(save, true);
+        }
     }
 }
 
@@ -3482,6 +3510,11 @@ void BattlegroundMap::RemoveAllPlayers()
             if (Player* player = itr->GetSource())
                 if (!player->IsBeingTeleportedFar())
                     player->TeleportTo(player->GetBattlegroundEntryPoint());
+}
+
+Player* Map::GetPlayer(ObjectGuid const& guid)
+{
+    return ObjectAccessor::GetPlayer(this, guid);
 }
 
 Corpse* Map::GetCorpse(ObjectGuid const& guid)

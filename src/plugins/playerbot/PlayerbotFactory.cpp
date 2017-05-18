@@ -2,7 +2,7 @@
 #include "playerbot.h"
 #include "PlayerbotFactory.h"
 #include "../../server/game/Guilds/GuildMgr.h"
-#include "../ItemPrototype.h"
+#include "../Entities/Item/ItemTemplate.h"
 #include "PlayerbotAIConfig.h"
 #include "../../shared/DataStores/DBCStore.h"
 #include "../Miscellaneous/SharedDefines.h"
@@ -92,7 +92,9 @@ void PlayerbotFactory::Randomize(bool incremental)
     bot->SaveToDB();
 
     sLog->outMessage("playerbot", LOG_LEVEL_INFO, "Initializing quests...");
-    //InitQuests();
+/*  Disabled, causing Worldserver to crash.
+    InitQuests();
+*/ 
     // quest rewards boost bot level, so reduce back
     bot->SetLevel(level);
     ClearInventory();
@@ -1097,8 +1099,8 @@ void PlayerbotFactory::InitAvailableSpells()
             if (tSpell->learnedSpell)
                 bot->LearnSpell(tSpell->learnedSpell[0], false);
             else
-                ai->CastSpell(tSpell->spell, bot);
-        }
+			bot->LearnSpell(tSpell->spell, false);
+		}
     }
 }
 
@@ -1109,6 +1111,25 @@ void PlayerbotFactory::InitSpecialSpells()
         uint32 spellId = *i;
         bot->LearnSpell(spellId, false);
     }
+	//Mounts
+	if (bot->getLevel() > 20 && bot->GetTeamId()==TeamId::TEAM_ALLIANCE)
+	{
+		bot->LearnSpell(6899, false);
+	}
+	if (bot->getLevel() > 20 && bot->GetTeamId() == TeamId::TEAM_HORDE)
+	{
+		bot->LearnSpell(8395, false);
+
+	}
+	if (bot->getLevel() > 40 && bot->GetTeamId() == TeamId::TEAM_ALLIANCE)
+	{
+		bot->LearnSpell(23240, false);
+
+	}
+	if (bot->getLevel() > 40 && bot->GetTeamId() == TeamId::TEAM_HORDE)
+	{
+		bot->LearnSpell(23242, false);
+	}	
 }
 
 void PlayerbotFactory::InitTalents(uint32 specNo)
@@ -1191,7 +1212,7 @@ ObjectGuid PlayerbotFactory::GetRandomBot()
         {
             Field* fields = result->Fetch();
             ObjectGuid guid = ObjectGuid(HighGuid::Player, fields[0].GetUInt32());
-            if (!sObjectMgr->GetPlayerByLowGUID(guid))
+            if (!ObjectAccessor::FindPlayerByLowGUID(guid))
                 guids.push_back(guid);
         } while (result->NextRow());
     }
@@ -1202,13 +1223,13 @@ ObjectGuid PlayerbotFactory::GetRandomBot()
     int index = urand(0, guids.size() - 1);
     return guids[index];
 }
-
+/*
 void AddPrevQuests(uint32 questId, list<uint32>& questIds)
 {
     Quest const *quest = sObjectMgr->GetQuestTemplate(questId);
     for (Quest::PrevQuests::const_iterator iter = quest->prevQuests.begin(); iter != quest->prevQuests.end(); ++iter)
     {
-        uint32 prevId = abs(*iter);
+        uint32 prevId = std::abs(*iter);
         AddPrevQuests(prevId, questIds);
         questIds.push_back(prevId);
     }
@@ -1249,7 +1270,7 @@ void PlayerbotFactory::InitQuests()
         ClearInventory();
     }
 }
-
+*/
 void PlayerbotFactory::ClearInventory()
 {
     DestroyItemsVisitor visitor(bot);
@@ -1724,6 +1745,7 @@ void PlayerbotFactory::InitGuild()
     }
 
     int index = urand(0, guilds.size() - 1);
+	SQLTransaction trans(nullptr);
     uint32 guildId = guilds[index];
     Guild* guild = sGuildMgr->GetGuildById(guildId);
     if (!guild)
@@ -1733,5 +1755,5 @@ void PlayerbotFactory::InitGuild()
     }
 
     if (guild->GetMemberCount() < 20)
-        guild->AddMember(bot->GetGUID(), urand(GR_OFFICER, GR_INITIATE));
+        guild->AddMember(trans, bot->GetGUID(), urand(GR_OFFICER, GR_INITIATE));
 }

@@ -46,9 +46,12 @@ namespace ai
             creators["no attackers"] = &TriggerContext::NoAttackers;
             creators["no target"] = &TriggerContext::NoTarget;
             creators["target in sight"] = &TriggerContext::TargetInSight;
-            creators["not least hp target active"] = &TriggerContext::not_least_hp_target_active;
+            creators["not dps target active"] = &TriggerContext::not_dps_target_active;
             creators["has nearest adds"] = &TriggerContext::has_nearest_adds;
             creators["enemy player is attacking"] = &TriggerContext::enemy_player_is_attacking;
+			creators["has no flag"] = &TriggerContext::player_has_no_flag;
+			creators["in battleground"] = &TriggerContext::player_is_in_battleground;
+			creators["in battleground without flag"] = &TriggerContext::player_is_in_battleground_no_flag;			
 
             creators["tank aoe"] = &TriggerContext::TankAoe;
             creators["lose aggro"] = &TriggerContext::LoseAggro;
@@ -133,10 +136,13 @@ namespace ai
         static Trigger* Timer(PlayerbotAI* ai) { return new TimerTrigger(ai); }
         static Trigger* NoTarget(PlayerbotAI* ai) { return new NoTargetTrigger(ai); }
         static Trigger* TargetInSight(PlayerbotAI* ai) { return new TargetInSightTrigger(ai); }
-        static Trigger* not_least_hp_target_active(PlayerbotAI* ai) { return new NotLeastHpTargetActiveTrigger(ai); }
+        static Trigger* not_dps_target_active(PlayerbotAI* ai) { return new NotDpsTargetActiveTrigger(ai); }
         static Trigger* has_nearest_adds(PlayerbotAI* ai) { return new HasNearestAddsTrigger(ai); }
         static Trigger* enemy_player_is_attacking(PlayerbotAI* ai) { return new EnemyPlayerIsAttacking(ai); }
-        static Trigger* Random(PlayerbotAI* ai) { return new RandomTrigger(ai); }
+		static Trigger* player_has_no_flag(PlayerbotAI* ai) { return new PlayerHasNoFlag(ai); }
+		static Trigger* player_is_in_battleground(PlayerbotAI *ai) { return new PlayerIsInBattleground(ai); }
+		static Trigger* player_is_in_battleground_no_flag(PlayerbotAI *ai) { return new PlayerIsInBattlegroundWithoutFlag(ai); }
+		static Trigger* Random(PlayerbotAI* ai) { return new RandomTrigger(ai); }
         static Trigger* seldom(PlayerbotAI* ai) { return new SeldomTrigger(ai); }
         static Trigger* often(PlayerbotAI* ai) { return new OftenTrigger(ai); }
         static Trigger* EnemyOutOfMelee(PlayerbotAI* ai) { return new EnemyOutOfMeleeTrigger(ai); }
