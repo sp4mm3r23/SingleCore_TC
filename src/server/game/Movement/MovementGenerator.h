@@ -34,14 +34,12 @@ class TC_GAME_API MovementGenerator
 
         virtual void Initialize(WorldObject*) = 0;
 		virtual void Finalize(WorldObject*) = 0;
-
 		virtual void Reset(WorldObject*) = 0;
-
-		virtual bool Update(WorldObject*, uint32 time_diff) = 0;
+        virtual bool Update(WorldObject*, uint32 diff) = 0;
 
         virtual MovementGeneratorType GetMovementGeneratorType() const = 0;
 
-        virtual void unitSpeedChanged() { }
+        virtual void UnitSpeedChanged() { }
 
         // used by Evade code for select point to evade with expected restart default movement
 		virtual bool GetResetPosition(WorldObject*, float& /*x*/, float& /*y*/, float& /*z*/) { return false; }
@@ -53,42 +51,39 @@ class MovementGeneratorMedium : public MovementGenerator
     public:
         void Initialize(WorldObject* u) override
         {
-            //u->AssertIsType<T>();
             (static_cast<D*>(this))->DoInitialize(static_cast<T*>(u));
         }
 
         void Finalize(WorldObject* u) override
         {
-            //u->AssertIsType<T>();
             (static_cast<D*>(this))->DoFinalize(static_cast<T*>(u));
         }
 
         void Reset(WorldObject* u) override
         {
-            //u->AssertIsType<T>();
             (static_cast<D*>(this))->DoReset(static_cast<T*>(u));
         }
 
         bool Update(WorldObject* u, uint32 time_diff) override
         {
-            //u->AssertIsType<T>();
             return (static_cast<D*>(this))->DoUpdate(static_cast<T*>(u), time_diff);
         }
 };
 
 struct SelectableMovement : public FactoryHolder<MovementGenerator, MovementGeneratorType>
 {
-    SelectableMovement(MovementGeneratorType mgt) : FactoryHolder<MovementGenerator, MovementGeneratorType>(mgt) { }
+    SelectableMovement(MovementGeneratorType movementGeneratorType) : FactoryHolder<MovementGenerator, MovementGeneratorType>(movementGeneratorType) { }
 };
 
-template<class REAL_MOVEMENT>
+template<class Movement>
 struct MovementGeneratorFactory : public SelectableMovement
 {
-    MovementGeneratorFactory(MovementGeneratorType mgt) : SelectableMovement(mgt) { }
+    MovementGeneratorFactory(MovementGeneratorType movementGeneratorType) : SelectableMovement(movementGeneratorType) { }
 
     MovementGenerator* Create(void *) const override;
 };
 
 typedef FactoryHolder<MovementGenerator, MovementGeneratorType> MovementGeneratorCreator;
 typedef FactoryHolder<MovementGenerator, MovementGeneratorType>::FactoryHolderRegistry MovementGeneratorRegistry;
+
 #endif

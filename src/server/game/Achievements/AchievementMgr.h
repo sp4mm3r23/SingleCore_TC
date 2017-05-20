@@ -218,7 +218,7 @@ struct AchievementCriteriaData
     }
 
     bool IsValid(AchievementCriteriaEntry const* criteria);
-    bool Meets(uint32 criteria_id, Player const* source, Unit const* target, uint32 miscValue1 = 0) const;
+    bool Meets(uint32 criteria_id, Player const* source, Unit const* target, uint32 miscValue1 = 0, uint32 miscValue2 = 0) const;
 };
 
 struct TC_GAME_API AchievementCriteriaDataSet
@@ -226,7 +226,7 @@ struct TC_GAME_API AchievementCriteriaDataSet
         AchievementCriteriaDataSet() : criteria_id(0) { }
         typedef std::vector<AchievementCriteriaData> Storage;
         void Add(AchievementCriteriaData const& data) { storage.push_back(data); }
-        bool Meets(Player const* source, Unit const* target, uint32 miscValue = 0) const;
+        bool Meets(Player const* source, Unit const* target, uint32 miscValue1 = 0, uint32 miscValue2 = 0) const;
         void SetCriteriaId(uint32 id) {criteria_id = id;}
     private:
         uint32 criteria_id;
@@ -237,20 +237,20 @@ typedef std::unordered_map<uint32, AchievementCriteriaDataSet> AchievementCriter
 
 struct AchievementReward
 {
-    uint32 titleId[2];
-    uint32 itemId;
-    uint32 sender;
-    std::string subject;
-    std::string text;
-    uint32 mailTemplate;
+    uint32 TitleID[2];
+    uint32 ItemID;
+    uint32 Sender;
+    std::string Subject;
+    std::string Text;
+    uint32 MailTemplateID;
 };
 
 typedef std::unordered_map<uint32, AchievementReward> AchievementRewards;
 
 struct AchievementRewardLocale
 {
-    std::vector<std::string> subject;
-    std::vector<std::string> text;
+    std::vector<std::string> Subject;
+    std::vector<std::string> Text;
 };
 
 typedef std::unordered_map<uint32, AchievementRewardLocale> AchievementRewardLocales;
