@@ -7,7 +7,6 @@
 #include "EventProcessor.h"
 #include "GossipDef.h"
 #include "Item.h"
-#include "ItemPrototype.h"
 #include "ObjectGuid.h"
 #include "ObjectMgr.h"
 #include "Player.h"
@@ -251,17 +250,17 @@ public:
 
     bool OnGossipHello(Player* player, Creature* creature) override
     {
-        player->ADD_GOSSIP_ITEM(GOSSIP_ICON_BATTLE, "Select slot of the item to reforge:", 0, Melt(MAIN_MENU, 0));
+        AddGossipItemFor(player, GOSSIP_ICON_BATTLE, "Select slot of the item to reforge:", 0, Melt(MAIN_MENU, 0));
         for (uint8 slot = EQUIPMENT_SLOT_START; slot < EQUIPMENT_SLOT_END; ++slot)
         {
             if (Item* invItem = player->GetItemByPos(INVENTORY_SLOT_BAG_0, slot))
                 if (IsReforgable(invItem, player))
                     if (const char* slotname = GetSlotName(slot, player->GetSession()))
-                        player->ADD_GOSSIP_ITEM(GOSSIP_ICON_TRAINER, slotname, 0, Melt(SELECT_STAT_REDUCE, slot));
+                        AddGossipItemFor(player, GOSSIP_ICON_TRAINER, slotname, 0, Melt(SELECT_STAT_REDUCE, slot));
         }
-        player->ADD_GOSSIP_ITEM(GOSSIP_ICON_TRAINER, "Remove reforges", 0, Melt(SELECT_RESTORE, 0));
-        player->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, "Update menu", 0, Melt(MAIN_MENU, 0));
-        player->SEND_GOSSIP_MENU(DEFAULT_GOSSIP_MESSAGE, creature->GetGUID());
+        AddGossipItemFor(player, GOSSIP_ICON_TRAINER, "Remove reforges", 0, Melt(SELECT_RESTORE, 0));
+        AddGossipItemFor(player, GOSSIP_ICON_CHAT, "Update menu", 0, Melt(MAIN_MENU, 0));
+        SendGossipMenuFor(player, DEFAULT_GOSSIP_MESSAGE, creature->GetGUID());
         return true;
     }
 
@@ -283,7 +282,7 @@ public:
                 {
                     uint32 guidlow = invItem->GetGUID().GetCounter();
                     const ItemTemplate* pProto = invItem->GetTemplate();
-                    player->ADD_GOSSIP_ITEM(GOSSIP_ICON_BATTLE, "Stat to decrease:", sender, melt);
+                    AddGossipItemFor(player, GOSSIP_ICON_BATTLE, "Stat to decrease:", sender, melt);
                     for (uint32 i = 0; i < pProto->StatsCount; ++i)
                     {
                         int32 stat_diff = ((int32)floorf((float)pProto->ItemStat[i].ItemStatValue * 0.4f));
@@ -292,11 +291,11 @@ public:
                             {
                                 std::ostringstream oss;
                                 oss << stat_name << " (" << pProto->ItemStat[i].ItemStatValue << " |cFFDB2222-" << stat_diff << "|r)";
-                                player->ADD_GOSSIP_ITEM(GOSSIP_ICON_TRAINER, oss.str(), guidlow, Melt(SELECT_STAT_INCREASE, i));
+                                AddGossipItemFor(player, GOSSIP_ICON_TRAINER, oss.str(), guidlow, Melt(SELECT_STAT_INCREASE, i));
                             }
                     }
-                    player->ADD_GOSSIP_ITEM(GOSSIP_ICON_TALK, "Back..", 0, Melt(MAIN_MENU, 0));
-                    player->SEND_GOSSIP_MENU(DEFAULT_GOSSIP_MESSAGE, creature->GetGUID());
+                    AddGossipItemFor(player, GOSSIP_ICON_TALK, "Back..", 0, Melt(MAIN_MENU, 0));
+                    SendGossipMenuFor(player, DEFAULT_GOSSIP_MESSAGE, creature->GetGUID());
                 }
                 else
                 {
@@ -320,7 +319,7 @@ public:
                     const ItemTemplate* pProto = invItem->GetTemplate();
                     int32 stat_diff = ((int32)floorf((float)pProto->ItemStat[action].ItemStatValue * 0.4f));
 
-                    player->ADD_GOSSIP_ITEM(GOSSIP_ICON_BATTLE, "Stat to increase:", sender, melt);
+                    AddGossipItemFor(player, GOSSIP_ICON_BATTLE, "Stat to increase:", sender, melt);
                     for (uint8 i = 0; i < stat_type_max; ++i)
                     {
                         bool cont = false;
@@ -341,8 +340,8 @@ public:
                             player->ADD_GOSSIP_ITEM_EXTENDED(GOSSIP_ICON_INTERACT_1, oss.str(), sender, Melt(i, (uint8)pProto->ItemStat[action].ItemStatType), "Are you sure you want to reforge\n\n" + pProto->Name1, (pProto->SellPrice < (10 * GOLD) ? (10 * GOLD) : pProto->SellPrice), false);
                         }
                     }
-                    player->ADD_GOSSIP_ITEM(GOSSIP_ICON_TALK, "Back..", 0, Melt(SELECT_STAT_REDUCE, invItem->GetSlot()));
-                    player->SEND_GOSSIP_MENU(DEFAULT_GOSSIP_MESSAGE, creature->GetGUID());
+                    AddGossipItemFor(player, GOSSIP_ICON_TALK, "Back..", 0, Melt(SELECT_STAT_REDUCE, invItem->GetSlot()));
+                    SendGossipMenuFor(player, DEFAULT_GOSSIP_MESSAGE, creature->GetGUID());
                 }
                 else
                 {
@@ -353,7 +352,7 @@ public:
             break;
         case SELECT_RESTORE:
             {
-                player->ADD_GOSSIP_ITEM(GOSSIP_ICON_BATTLE, "Select slot to remove reforge from:", sender, melt);
+                AddGossipItemFor(player, GOSSIP_ICON_BATTLE, "Select slot to remove reforge from:", sender, melt);
                 if (!player->reforgeMap.empty())
                 {
                     for (uint8 slot = EQUIPMENT_SLOT_START; slot < EQUIPMENT_SLOT_END; ++slot)
@@ -364,9 +363,9 @@ public:
                                     player->ADD_GOSSIP_ITEM_EXTENDED(GOSSIP_ICON_INTERACT_1, slotname, invItem->GetGUID().GetCounter(), Melt(RESTORE, 0), "Remove reforge from\n\n" + invItem->GetTemplate()->Name1, 0, false);
                     }
                 }
-                player->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, "Update menu", sender, melt);
-                player->ADD_GOSSIP_ITEM(GOSSIP_ICON_TALK, "Back..", 0, Melt(MAIN_MENU, 0));
-                player->SEND_GOSSIP_MENU(DEFAULT_GOSSIP_MESSAGE, creature->GetGUID());
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "Update menu", sender, melt);
+                AddGossipItemFor(player, GOSSIP_ICON_TALK, "Back..", 0, Melt(MAIN_MENU, 0));
+                SendGossipMenuFor(player, DEFAULT_GOSSIP_MESSAGE, creature->GetGUID());
             }
             break;
         case RESTORE:

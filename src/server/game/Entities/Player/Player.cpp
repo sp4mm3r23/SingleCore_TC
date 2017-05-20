@@ -22869,7 +22869,7 @@ void Player::SendInitialPacketsBeforeAddToMap()
     SendEquipmentSetList();
 
 	float speedrate = sWorld->getFloatConfig(CONFIG_SPEED_GAME);
-	uint32 speedtime = ((sWorld->GetGameTime() - sWorld->GetUptime()) + (sWorld->GetUptime() * speedrate));
+	uint32 speedtime = ((GameTime::GetGameTime() - GameTime::GetUptime()) + (GameTime::GetUptime() * speedrate));
 	
     data.Initialize(SMSG_LOGIN_SETTIMESPEED, 4 + 4 + 4);
 	data.AppendPackedTime(speedtime);

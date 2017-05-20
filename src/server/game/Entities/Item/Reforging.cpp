@@ -4,7 +4,6 @@
 #include "Player.h"
 #include "WorldSession.h"
 #include "Item.h"
-#include "ItemPrototype.h"
 #include "ObjectGuid.h"
 #include "WorldPacket.h"
 #include "Opcodes.h"

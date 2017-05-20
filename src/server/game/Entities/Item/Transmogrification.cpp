@@ -8,7 +8,6 @@
 #include "Field.h"
 #include "GameEventMgr.h"
 #include "Item.h"
-#include "ItemPrototype.h"
 #include "Language.h"
 #include "Log.h"
 #include "ObjectGuid.h"
@@ -467,10 +466,10 @@ bool Transmogrification::SuitableForTransmogrification(Player* player, ItemTempl
     if (!IsAllowedQuality(proto->Quality)) // (proto->Quality == ITEM_QUALITY_LEGENDARY)
         return false;
 
-    if ((proto->Flags2 & ITEM_FLAGS_EXTRA_HORDE_ONLY) && player->GetTeam() != HORDE)
+    if ((proto->Flags2 & ITEM_FLAG2_FACTION_HORDE) && player->GetTeam() != HORDE)
         return false;
 
-    if ((proto->Flags2 & ITEM_FLAGS_EXTRA_ALLIANCE_ONLY) && player->GetTeam() != ALLIANCE)
+    if ((proto->Flags2 & ITEM_FLAG2_FACTION_ALLIANCE) && player->GetTeam() != ALLIANCE)
         return false;
 
     if (!IgnoreReqClass && (proto->AllowableClass & player->getClassMask()) == 0)
