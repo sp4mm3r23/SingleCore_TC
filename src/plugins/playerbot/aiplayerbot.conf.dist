@@ -117,8 +117,13 @@ AiPlayerbot.NonCombatStrategies = +custom::say
 AiPlayerbot.RandomBotAutoCreate = 1
 
 # Random bot count
+<<<<<<< HEAD
 AiPlayerbot.MinRandomBots = 150
 AiPlayerbot.MaxRandomBots = 200
+=======
+AiPlayerbot.MinRandomBots = 50
+AiPlayerbot.MaxRandomBots = 150
+>>>>>>> 7b819a7a7ac7c8c914163851ff60f84dc16cd14f
 AiPlayerbot.RandomBotMinLevel = 1
 AiPlayerbot.RandomBotMaxLevel = 80
 
@@ -138,10 +143,17 @@ AiPlayerbot.EnableGuildTasks = 1
 # How often tasks are changed
 AiPlayerbot.MinGuildTaskChangeTime = 172800
 AiPlayerbot.MaxGuildTaskChangeTime = 432000
+<<<<<<< HEAD
 #Mail spam interval
 AiPlayerbot.MinGuildTaskAdvertisementTime = 300
 AiPlayerbot.MaxGuildTaskAdvertisementTime = 28800
 #Delay before reward is sent
+=======
+# Mail spam interval
+AiPlayerbot.MinGuildTaskAdvertisementTime = 300
+AiPlayerbot.MaxGuildTaskAdvertisementTime = 28800
+# Delay before reward is sent
+>>>>>>> 7b819a7a7ac7c8c914163851ff60f84dc16cd14f
 AiPlayerbot.MinGuildTaskRewardTime = 300
 AiPlayerbot.MaxGuildTaskRewardTime = 3600
 
@@ -155,7 +167,11 @@ AiPlayerbot.RandomBotMaps = 0,1,530,571
 AiPlayerbot.RandomGearLoweringChance = 0.1
 
 # Chance random bot has max level on first randomize
+<<<<<<< HEAD
 AiPlayerbot.RandomBotMaxLevelChance = 0.1
+=======
+AiPlayerbot.RandomBotMaxLevelChance = 0.5
+>>>>>>> 7b819a7a7ac7c8c914163851ff60f84dc16cd14f
 
 # Quest items to leave (do not destroy)
 AiPlayerbot.RandomBotQuestItems = 6948,5175,5176,5177,5178
@@ -166,10 +182,13 @@ AiPlayerbot.RandomBotSpellIds = 54197
 # Enable LFG for random bots
 AiPlayerbot.RandomBotJoinLfg = 1
 
+<<<<<<< HEAD
 # Enable BG for random bots
 AiPlayerbot.RandomBotJoinBG = 1
 AIPlayerbot.RandomBotBracketPlayer = 0
 
+=======
+>>>>>>> 7b819a7a7ac7c8c914163851ff60f84dc16cd14f
 # Level diff between random bots and nearby creatures for random teleports
 AiPlayerbot.RandomBotTeleLevel = 2
 
@@ -186,7 +205,11 @@ AiPlayerbot.MaxRandomBotsPerInterval = 50
 AiPlayerbot.MinRandomBotsPriceChangeInterval = 7200
 AiPlayerbot.MaxRandomBotsPriceChangeInterval = 172800
 AiPlayerbot.MinRandomBotReviveTime = 30
+<<<<<<< HEAD
 AiPlayerbot.MaxRandomReviveTime = 60
+=======
+AiPlayerbot.MaxRandomReviveTime = 90
+>>>>>>> 7b819a7a7ac7c8c914163851ff60f84dc16cd14f
 
 # Log on all random bots on start
 AiPlayerbot.RandomBotLoginAtStartup = 0

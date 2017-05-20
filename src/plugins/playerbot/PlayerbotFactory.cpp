@@ -212,8 +212,8 @@ void PlayerbotFactory::InitPet()
                 continue;
             }
 
-            pet->SetPosition(bot->GetPositionX(), bot->GetPositionY(), bot->GetPositionZ(), bot->GetOrientation());
-            pet->setFaction(bot->getFaction());
+            pet->UpdatePosition(bot->GetPositionX(), bot->GetPositionY(), bot->GetPositionZ(), bot->GetOrientation());
+            pet->SetFaction(bot->GetFaction());
             pet->SetLevel(bot->getLevel());
             bot->SetPetGUID(pet->GetGUID());
             bot->GetMap()->AddToMap(pet->ToCreature());
@@ -1089,17 +1089,17 @@ void PlayerbotFactory::InitAvailableSpells()
             if (!tSpell)
                 continue;
 
-            if (!tSpell->learnedSpell[0] && !bot->IsSpellFitByClassAndRace(tSpell->learnedSpell[0]))
+            if (!tSpell->ReqAbility[0] && !bot->IsSpellFitByClassAndRace(tSpell->ReqAbility[0]))
                 continue;
 
             TrainerSpellState state = bot->GetTrainerSpellState(tSpell);
             if (state != TRAINER_SPELL_GREEN)
                 continue;
 
-            if (tSpell->learnedSpell)
-                bot->LearnSpell(tSpell->learnedSpell[0], false);
+            if (tSpell->ReqAbility)
+                bot->LearnSpell(tSpell->ReqAbility[0], false);
             else
-			bot->LearnSpell(tSpell->spell, false);
+			bot->LearnSpell(tSpell->SpellID, false);
 		}
     }
 }

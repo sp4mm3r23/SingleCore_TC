@@ -38,7 +38,7 @@ AhBot.PricingStrategy.Food = default
 AhBot.PriceMultiplier = 1.0
 AhBot.DefaultMinPrice = 20
 AhBot.PriceQualityMultiplier = 1.0
-AhBot.AlwaysAvailableMoney = 2000000
+AhBot.AlwaysAvailableMoney = 200000
 
 # Buy/sell delays
 AhBot.ItemBuyMinInterval = 7200

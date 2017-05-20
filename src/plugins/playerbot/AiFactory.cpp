@@ -252,11 +252,11 @@ void AiFactory::AddDefaultNonCombatStrategies(Player* player, PlayerbotAI* const
 	
 	if (player->InBattleground())
 	{
-		nonCombatEngine->addStrategies("grind","warsong", "nc", "attack weak", "food", "chat",
+		nonCombatEngine->addStrategies("grind","warsong", "nc", "food", "chat",
 			"default", "quest", "loot", "gather", "duel", "emote", "lfg", "bg", NULL);
 	}
 	else {
-		nonCombatEngine->addStrategies("nc", "attack weak", "food", "stay", "chat",
+		nonCombatEngine->addStrategies("nc", "food", "stay", "chat",
 			"default", "quest", "loot", "gather", "duel", "emote", "follow", "lfg", "bg", "conserve mana", NULL);
 	}
 
