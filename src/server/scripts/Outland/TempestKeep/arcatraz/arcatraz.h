@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -23,7 +23,7 @@
 
 uint32 const EncounterCount = 4;
 
-enum AZDataTypes
+enum DataTypes
 {
     // Encounter States/Boss GUIDs
     DATA_ZEREKETH                               = 0,
@@ -42,7 +42,7 @@ enum AZDataTypes
     DATA_WARDENS_SHIELD                         = 11
 };
 
-enum AZCreatureIds
+enum CreatureIds
 {
     NPC_DALLIAH                                 = 20885,
     NPC_SOCCOTHRATES                            = 20886,
@@ -50,7 +50,7 @@ enum AZCreatureIds
     NPC_ALPHA_POD_TARGET                        = 21436
 };
 
-enum AZGameObjectIds
+enum GameObjectIds
 {
     GO_CONTAINMENT_CORE_SECURITY_FIELD_ALPHA    = 184318, // door opened when Wrath-Scryer Soccothrates dies
     GO_CONTAINMENT_CORE_SECURITY_FIELD_BETA     = 184319, // door opened when Dalliah the Doomsayer dies

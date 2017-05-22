@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -35,7 +35,6 @@ EndContentData */
 #include "Cell.h"
 #include "CellImpl.h"
 #include "GridNotifiers.h"
-#include "GridNotifiersImpl.h"
 
 /*######
 ## npc_shenthul
@@ -50,6 +49,21 @@ class npc_shenthul : public CreatureScript
 {
 public:
     npc_shenthul() : CreatureScript("npc_shenthul") { }
+
+    bool OnQuestAccept(Player* player, Creature* creature, Quest const* quest) override
+    {
+        if (quest->GetQuestId() == QUEST_SHATTERED_SALUTE)
+        {
+            ENSURE_AI(npc_shenthul::npc_shenthulAI, creature->AI())->CanTalk = true;
+            ENSURE_AI(npc_shenthul::npc_shenthulAI, creature->AI())->PlayerGUID = player->GetGUID();
+        }
+        return true;
+    }
+
+    CreatureAI* GetAI(Creature* creature) const override
+    {
+        return new npc_shenthulAI(creature);
+    }
 
     struct npc_shenthulAI : public ScriptedAI
     {
@@ -122,21 +136,8 @@ public:
                 }
             }
         }
-
-        void QuestAccept(Player* player, Quest const* quest) override
-        {
-            if (quest->GetQuestId() == QUEST_SHATTERED_SALUTE)
-            {
-                CanTalk = true;
-                PlayerGUID = player->GetGUID();
-            }
-        }
     };
 
-    CreatureAI* GetAI(Creature* creature) const override
-    {
-        return new npc_shenthulAI(creature);
-    }
 };
 
 /*######
@@ -174,6 +175,60 @@ class npc_thrall_warchief : public CreatureScript
 {
 public:
     npc_thrall_warchief() : CreatureScript("npc_thrall_warchief") { }
+
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action) override
+    {
+        player->PlayerTalkClass->ClearMenus();
+        switch (action)
+        {
+            case GOSSIP_ACTION_INFO_DEF+1:
+                player->ADD_GOSSIP_ITEM_DB(OPTION_WHAT_DISCOVERIES, GOSSIP_MENU_OPTION_ID_ALL, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+2);
+                player->SEND_GOSSIP_MENU(GOSSIP_THE_SHATTERED_HAND, creature->GetGUID());
+                break;
+            case GOSSIP_ACTION_INFO_DEF+2:
+                player->ADD_GOSSIP_ITEM_DB(OPTION_USURPER, GOSSIP_MENU_OPTION_ID_ALL, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+3);
+                player->SEND_GOSSIP_MENU(GOSSIP_IT_WOULD_APPEAR_AS, creature->GetGUID());
+                break;
+            case GOSSIP_ACTION_INFO_DEF+3:
+                player->ADD_GOSSIP_ITEM_DB(OPTION_WITH_ALL_DUE_RESPECT, GOSSIP_MENU_OPTION_ID_ALL, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+4);
+                player->SEND_GOSSIP_MENU(GOSSIP_THE_BROOD_MOTHER, creature->GetGUID());
+                break;
+            case GOSSIP_ACTION_INFO_DEF+4:
+                player->ADD_GOSSIP_ITEM_DB(OPTION_I_I_DID_NOT_THINK_OF, GOSSIP_MENU_OPTION_ID_ALL, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+5);
+                player->SEND_GOSSIP_MENU(GOSSIP_SO_MUCH_TO_LEARN, creature->GetGUID());
+                break;
+            case GOSSIP_ACTION_INFO_DEF+5:
+                player->ADD_GOSSIP_ITEM_DB(OPTION_I_LIVE_ONLY_TO_SERVE, GOSSIP_MENU_OPTION_ID_ALL, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+6);
+                player->SEND_GOSSIP_MENU(GOSSIP_I_DO_NOT_FAULT_YOU, creature->GetGUID());
+                break;
+            case GOSSIP_ACTION_INFO_DEF+6:
+                player->ADD_GOSSIP_ITEM_DB(OPTION_OF_COURSE_WARCHIEF, GOSSIP_MENU_OPTION_ID_ALL, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+7);
+                player->SEND_GOSSIP_MENU(GOSSIP_NOW_PAY_ATTENTION, creature->GetGUID());
+                break;
+            case GOSSIP_ACTION_INFO_DEF+7:
+                player->CLOSE_GOSSIP_MENU();
+                player->AreaExploredOrEventHappens(QUEST_WHAT_THE_WIND_CARRIES);
+                break;
+        }
+        return true;
+    }
+
+    bool OnGossipHello(Player* player, Creature* creature) override
+    {
+        if (creature->IsQuestGiver())
+            player->PrepareQuestMenu(creature->GetGUID());
+
+        if (player->GetQuestStatus(QUEST_WHAT_THE_WIND_CARRIES) == QUEST_STATUS_INCOMPLETE)
+            player->ADD_GOSSIP_ITEM_DB(OPTION_PLEASE_SHARE_YOUR, GOSSIP_MENU_OPTION_ID_ALL, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+1);
+
+        player->SEND_GOSSIP_MENU(GOSSIP_MEMBERS_OF_THE_HORDE, creature->GetGUID());
+        return true;
+    }
+
+    CreatureAI* GetAI(Creature* creature) const override
+    {
+        return new npc_thrall_warchiefAI(creature);
+    }
 
     struct npc_thrall_warchiefAI : public ScriptedAI
     {
@@ -217,62 +272,8 @@ public:
 
             DoMeleeAttackIfReady();
         }
-
-        bool GossipSelect(Player* player, uint32 /*menuId*/, uint32 gossipListId) override
-        {
-            uint32 const action = player->PlayerTalkClass->GetGossipOptionAction(gossipListId);
-            ClearGossipMenuFor(player);
-            switch (action)
-            {
-                case GOSSIP_ACTION_INFO_DEF + 1:
-                    AddGossipItemFor(player, OPTION_WHAT_DISCOVERIES, GOSSIP_MENU_OPTION_ID_ALL, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF + 2);
-                    SendGossipMenuFor(player, GOSSIP_THE_SHATTERED_HAND, me->GetGUID());
-                    break;
-                case GOSSIP_ACTION_INFO_DEF + 2:
-                    AddGossipItemFor(player, OPTION_USURPER, GOSSIP_MENU_OPTION_ID_ALL, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF + 3);
-                    SendGossipMenuFor(player, GOSSIP_IT_WOULD_APPEAR_AS, me->GetGUID());
-                    break;
-                case GOSSIP_ACTION_INFO_DEF + 3:
-                    AddGossipItemFor(player, OPTION_WITH_ALL_DUE_RESPECT, GOSSIP_MENU_OPTION_ID_ALL, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF + 4);
-                    SendGossipMenuFor(player, GOSSIP_THE_BROOD_MOTHER, me->GetGUID());
-                    break;
-                case GOSSIP_ACTION_INFO_DEF + 4:
-                    AddGossipItemFor(player, OPTION_I_I_DID_NOT_THINK_OF, GOSSIP_MENU_OPTION_ID_ALL, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF + 5);
-                    SendGossipMenuFor(player, GOSSIP_SO_MUCH_TO_LEARN, me->GetGUID());
-                    break;
-                case GOSSIP_ACTION_INFO_DEF + 5:
-                    AddGossipItemFor(player, OPTION_I_LIVE_ONLY_TO_SERVE, GOSSIP_MENU_OPTION_ID_ALL, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF + 6);
-                    SendGossipMenuFor(player, GOSSIP_I_DO_NOT_FAULT_YOU, me->GetGUID());
-                    break;
-                case GOSSIP_ACTION_INFO_DEF + 6:
-                    AddGossipItemFor(player, OPTION_OF_COURSE_WARCHIEF, GOSSIP_MENU_OPTION_ID_ALL, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF + 7);
-                    SendGossipMenuFor(player, GOSSIP_NOW_PAY_ATTENTION, me->GetGUID());
-                    break;
-                case GOSSIP_ACTION_INFO_DEF + 7:
-                    CloseGossipMenuFor(player);
-                    player->AreaExploredOrEventHappens(QUEST_WHAT_THE_WIND_CARRIES);
-                    break;
-            }
-            return true;
-        }
-
-        bool GossipHello(Player* player) override
-        {
-            if (me->IsQuestGiver())
-                player->PrepareQuestMenu(me->GetGUID());
-
-            if (player->GetQuestStatus(QUEST_WHAT_THE_WIND_CARRIES) == QUEST_STATUS_INCOMPLETE)
-                AddGossipItemFor(player, OPTION_PLEASE_SHARE_YOUR, GOSSIP_MENU_OPTION_ID_ALL, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF + 1);
-
-            SendGossipMenuFor(player, GOSSIP_MEMBERS_OF_THE_HORDE, me->GetGUID());
-            return true;
-        }
     };
 
-    CreatureAI* GetAI(Creature* creature) const override
-    {
-        return new npc_thrall_warchiefAI(creature);
-    }
 };
 
 /* --------- Herald of War ------------- */
@@ -362,7 +363,7 @@ public:
                         me->GetMotionMaster()->MoveIdle();
                         if (Creature* gryshka = ObjectAccessor::GetCreature(*me, gryshkaGUID))
                         {
-                            me->SetFacingToObject(gryshka);
+                            me->SetFacingTo(me->GetAngle(gryshka->GetPositionX(), gryshka->GetPositionY()));
                             gryshka->AI()->Talk(SAY_GRYSHKA_1);
                         }
                         events.ScheduleEvent(EVENT_SCENE_2, 4500);
@@ -630,7 +631,7 @@ public:
 
                 if (Creature* jaina = me->SummonCreature(NPC_JAINA_PROUDMOORE, PortalSpawnPosition))
                 {
-                    me->SetFacingToObject(jaina);
+                    me->SetFacingTo(me->GetAngle(jaina->GetPositionX(), jaina->GetPositionY()));
                     jainaGUID = jaina->GetGUID();
                     jaina->CastSpell(jaina, SPELL_JAINA_SPAWNIN);
                 }
@@ -688,7 +689,7 @@ public:
                     case EVENT_HERALD_SCENE2:
                         Talk(SAY_THRALL_1);
                         if (Creature* jaina = ObjectAccessor::GetCreature(*me, jainaGUID))
-                            me->SetFacingToObject(jaina);
+                            me->SetFacingTo(me->GetAngle(jaina->GetPositionX(), jaina->GetPositionY()));
                         events.ScheduleEvent(EVENT_HERALD_SCENE3, 3500);
                         break;
                     case EVENT_HERALD_SCENE3:

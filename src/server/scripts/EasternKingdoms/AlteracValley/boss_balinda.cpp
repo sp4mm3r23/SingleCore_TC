@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -90,7 +90,7 @@ public:
         void JustSummoned(Creature* summoned) override
         {
             summoned->AI()->AttackStart(SelectTarget(SELECT_TARGET_RANDOM, 0, 50, true));
-            summoned->SetFaction(me->GetFaction());
+            summoned->setFaction(me->getFaction());
             WaterElementalGUID = summoned->GetGUID();
             summons.Summon(summoned);
         }
@@ -169,9 +169,6 @@ public:
                     default:
                         break;
                 }
-
-                if (me->HasUnitState(UNIT_STATE_CASTING))
-                    return;
             }
 
             DoMeleeAttackIfReady();

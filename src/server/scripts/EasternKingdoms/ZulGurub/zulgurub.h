@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -24,7 +24,7 @@ uint32 const EncounterCount = 13;
 
 #define ZGScriptName "instance_zulgurub"
 
-enum ZGDataTypes
+enum DataTypes
 {
     DATA_JEKLIK             = 0,  // Main boss
     DATA_VENOXIS            = 1,  // Main boss
@@ -42,7 +42,7 @@ enum ZGDataTypes
     TYPE_EDGE_OF_MADNESS    = 13  // Boss storage
 };
 
-enum ZGCreatureIds
+enum CreatureIds
 {
     NPC_ARLOKK              = 14515, // Arlokk Event
     NPC_PANTHER_TRIGGER     = 15091, // Arlokk Event
@@ -61,16 +61,16 @@ enum ZGCreatureIds
 
 };
 
-enum ZGGameObjectIds
+enum GameobjectIds
 {
     GO_FORCEFIELD           = 180497, // Arlokk Event
     GO_GONG_OF_BETHEKK      = 180526  // Arlokk Event
 };
 
-template<class AI, class T>
-AI* GetZulGurubAI(T* obj)
+template<class AI>
+AI* GetZulGurubAI(Creature* creature)
 {
-    return GetInstanceAI<AI>(obj, ZGScriptName);
+    return GetInstanceAI<AI>(creature, ZGScriptName);
 }
 
 #endif

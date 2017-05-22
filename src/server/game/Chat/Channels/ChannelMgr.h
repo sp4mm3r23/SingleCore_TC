@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -19,33 +19,36 @@
 #define __TRINITY_CHANNELMGR_H
 
 #include "Common.h"
+#include "Channel.h"
 
-class Channel;
+#include <map>
+#include <string>
+
+#include "World.h"
+
+#define MAX_CHANNEL_PASS_STR 31
 
 class TC_GAME_API ChannelMgr
 {
-    typedef std::unordered_map<std::wstring, Channel*> CustomChannelContainer; // custom channels only differ in name
-    typedef std::unordered_map<std::pair<uint32 /*channelId*/, uint32 /*zoneId*/>, Channel*> BuiltinChannelContainer; //identify builtin (DBC) channels by zoneId instead, since name changes by client locale
+    typedef std::map<std::wstring, Channel*> ChannelMap;
 
     protected:
-        explicit ChannelMgr(uint32 team) : _team(team) { }
+        ChannelMgr() : team(0) { }
         ~ChannelMgr();
 
     public:
         static ChannelMgr* forTeam(uint32 team);
-        static Channel* GetChannelForPlayerByNamePart(std::string const& namePart, Player* playerSearcher);
+        void setTeam(uint32 newTeam) { team = newTeam; }
 
-        Channel* GetJoinChannel(uint32 channelId, std::string const& name, AreaTableEntry const* zoneEntry = nullptr);
-        Channel* GetChannel(uint32 channelId, std::string const& name, Player* player, bool pkt = true, AreaTableEntry const* zoneEntry = nullptr) const;
+        Channel* GetJoinChannel(std::string const& name, uint32 channel_id);
+        Channel* GetChannel(std::string const& name, Player* p, bool pkt = true);
         void LeftChannel(std::string const& name);
-        void LeftChannel(uint32 channelId, AreaTableEntry const* zoneEntry);
 
     private:
-        CustomChannelContainer _customChannels;
-        BuiltinChannelContainer _channels;
-        uint32 const _team;
+        ChannelMap channels;
+        uint32 team;
 
-        static void MakeNotOnPacket(WorldPacket* data, std::string const& name);
+        void MakeNotOnPacket(WorldPacket* data, std::string const& name);
 };
 
 #endif

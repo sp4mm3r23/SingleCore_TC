@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -21,8 +21,8 @@
 
 // ---== RECTANGLE ==---
 RectangleBoundary::RectangleBoundary(float southX, float northX, float eastY, float westY, bool isInverted) :
-    AreaBoundary(isInverted), _minX(southX), _maxX(northX), _minY(eastY), _maxY(westY) { }
-bool RectangleBoundary::IsWithinBoundaryArea(Position const* pos) const
+    AreaBoundary(BoundaryType::BOUNDARY_RECTANGLE, isInverted), _minX(southX), _maxX(northX), _minY(eastY), _maxY(westY) { }
+bool RectangleBoundary::IsWithinBoundaryArea(const Position* pos) const
 {
     if (!pos)
         return false;
@@ -38,10 +38,14 @@ bool RectangleBoundary::IsWithinBoundaryArea(Position const* pos) const
 
 // ---== CIRCLE ==---
 CircleBoundary::CircleBoundary(Position const& center, double radius, bool isInverted) :
-    AreaBoundary(isInverted), _center(center), _radiusSq(radius*radius) { }
+    CircleBoundary(DoublePosition(center), radius, isInverted) { }
+CircleBoundary::CircleBoundary(DoublePosition const& center, double radius, bool isInverted) :
+    AreaBoundary(BoundaryType::BOUNDARY_CIRCLE, isInverted), _center(center), _radiusSq(radius*radius) { }
 CircleBoundary::CircleBoundary(Position const& center, Position const& pointOnCircle, bool isInverted) :
-    AreaBoundary(isInverted), _center(center), _radiusSq(_center.GetDoubleExactDist2dSq(pointOnCircle)) { }
-bool CircleBoundary::IsWithinBoundaryArea(Position const* pos) const
+    CircleBoundary(DoublePosition(center), DoublePosition(pointOnCircle), isInverted) { }
+CircleBoundary::CircleBoundary(DoublePosition const& center, DoublePosition const& pointOnCircle, bool isInverted) :
+    AreaBoundary(BoundaryType::BOUNDARY_CIRCLE, isInverted), _center(center), _radiusSq(center.GetDoubleExactDist2dSq(pointOnCircle)) { }
+bool CircleBoundary::IsWithinBoundaryArea(const Position* pos) const
 {
     if (!pos)
         return false;
@@ -54,8 +58,10 @@ bool CircleBoundary::IsWithinBoundaryArea(Position const* pos) const
 
 // ---== ELLIPSE ==---
 EllipseBoundary::EllipseBoundary(Position const& center, double radiusX, double radiusY, bool isInverted) :
-    AreaBoundary(isInverted), _center(center), _radiusYSq(radiusY*radiusY), _scaleXSq(_radiusYSq / (radiusX*radiusX)) { }
-bool EllipseBoundary::IsWithinBoundaryArea(Position const* pos) const
+    EllipseBoundary(DoublePosition(center), radiusX, radiusY, isInverted) { }
+EllipseBoundary::EllipseBoundary(DoublePosition const& center, double radiusX, double radiusY, bool isInverted) :
+    AreaBoundary(BoundaryType::BOUNDARY_ELLIPSE, isInverted), _center(center), _radiusYSq(radiusY*radiusY), _scaleXSq(_radiusYSq / (radiusX*radiusX)) { }
+bool EllipseBoundary::IsWithinBoundaryArea(const Position* pos) const
 {
     if (!pos)
         return false;
@@ -67,8 +73,10 @@ bool EllipseBoundary::IsWithinBoundaryArea(Position const* pos) const
 
 // ---== TRIANGLE ==---
 TriangleBoundary::TriangleBoundary(Position const& pointA, Position const& pointB, Position const& pointC, bool isInverted) :
-    AreaBoundary(isInverted), _a(pointA), _b(pointB), _c(pointC), _abx(_b.GetDoublePositionX()-_a.GetDoublePositionX()), _bcx(_c.GetDoublePositionX()-_b.GetDoublePositionX()), _cax(_a.GetDoublePositionX() - _c.GetDoublePositionX()), _aby(_b.GetDoublePositionY()-_a.GetDoublePositionY()), _bcy(_c.GetDoublePositionY()-_b.GetDoublePositionY()), _cay(_a.GetDoublePositionY() - _c.GetDoublePositionY()) { }
-bool TriangleBoundary::IsWithinBoundaryArea(Position const* pos) const
+    TriangleBoundary(DoublePosition(pointA), DoublePosition(pointB), DoublePosition(pointC), isInverted) { }
+TriangleBoundary::TriangleBoundary(DoublePosition const& pointA, DoublePosition const& pointB, DoublePosition const& pointC, bool isInverted) :
+    AreaBoundary(BoundaryType::BOUNDARY_TRIANGLE, isInverted), _a(pointA), _b(pointB), _c(pointC), _abx(_b.GetDoublePositionX()-_a.GetDoublePositionX()), _bcx(_c.GetDoublePositionX()-_b.GetDoublePositionX()), _cax(_a.GetDoublePositionX() - _c.GetDoublePositionX()), _aby(_b.GetDoublePositionY()-_a.GetDoublePositionY()), _bcy(_c.GetDoublePositionY()-_b.GetDoublePositionY()), _cay(_a.GetDoublePositionY() - _c.GetDoublePositionY()) { }
+bool TriangleBoundary::IsWithinBoundaryArea(const Position* pos) const
 {
     if (!pos)
         return false;
@@ -85,8 +93,10 @@ bool TriangleBoundary::IsWithinBoundaryArea(Position const* pos) const
 
 // ---== PARALLELOGRAM ==---
 ParallelogramBoundary::ParallelogramBoundary(Position const& cornerA, Position const& cornerB, Position const& cornerD, bool isInverted) :
-    AreaBoundary(isInverted), _a(cornerA), _b(cornerB), _d(cornerD), _c(DoublePosition(_d.GetDoublePositionX() + (_b.GetDoublePositionX() - _a.GetDoublePositionX()), _d.GetDoublePositionY() + (_b.GetDoublePositionY() - _a.GetDoublePositionY()))), _abx(_b.GetDoublePositionX() - _a.GetDoublePositionX()), _dax(_a.GetDoublePositionX() - _d.GetDoublePositionX()), _aby(_b.GetDoublePositionY() - _a.GetDoublePositionY()), _day(_a.GetDoublePositionY() - _d.GetDoublePositionY()) { }
-bool ParallelogramBoundary::IsWithinBoundaryArea(Position const* pos) const
+    ParallelogramBoundary(DoublePosition(cornerA), DoublePosition(cornerB), DoublePosition(cornerD), isInverted) { }
+ParallelogramBoundary::ParallelogramBoundary(DoublePosition const& cornerA, DoublePosition const& cornerB, DoublePosition const& cornerD, bool isInverted) :
+    AreaBoundary(BoundaryType::BOUNDARY_PARALLELOGRAM, isInverted), _a(cornerA), _b(cornerB), _d(cornerD), _c(DoublePosition(_d.GetDoublePositionX() + (_b.GetDoublePositionX() - _a.GetDoublePositionX()), _d.GetDoublePositionY() + (_b.GetDoublePositionY() - _a.GetDoublePositionY()))), _abx(_b.GetDoublePositionX() - _a.GetDoublePositionX()), _dax(_a.GetDoublePositionX() - _d.GetDoublePositionX()), _aby(_b.GetDoublePositionY() - _a.GetDoublePositionY()), _day(_a.GetDoublePositionY() - _d.GetDoublePositionY()) { }
+bool ParallelogramBoundary::IsWithinBoundaryArea(const Position* pos) const
 {
     if (!pos)
         return false;
@@ -104,8 +114,8 @@ bool ParallelogramBoundary::IsWithinBoundaryArea(Position const* pos) const
 
 // ---== Z RANGE ==---
 ZRangeBoundary::ZRangeBoundary(float minZ, float maxZ, bool isInverted) :
-    AreaBoundary(isInverted), _minZ(minZ), _maxZ(maxZ) { }
-bool ZRangeBoundary::IsWithinBoundaryArea(Position const* pos) const
+    AreaBoundary(BoundaryType::BOUNDARY_Z_RANGE, isInverted), _minZ(minZ), _maxZ(maxZ) { }
+bool ZRangeBoundary::IsWithinBoundaryArea(const Position* pos) const
 {
     if (!pos)
         return false;

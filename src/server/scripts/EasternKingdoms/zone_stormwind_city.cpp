@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -52,19 +52,34 @@ class npc_bartleby : public CreatureScript
 public:
     npc_bartleby() : CreatureScript("npc_bartleby") { }
 
+    bool OnQuestAccept(Player* player, Creature* creature, Quest const* quest) override
+    {
+        if (quest->GetQuestId() == QUEST_BEAT)
+        {
+            creature->setFaction(FACTION_ENEMY);
+            creature->AI()->AttackStart(player);
+        }
+        return true;
+    }
+
+    CreatureAI* GetAI(Creature* creature) const override
+    {
+        return new npc_bartlebyAI(creature);
+    }
+
     struct npc_bartlebyAI : public ScriptedAI
     {
         npc_bartlebyAI(Creature* creature) : ScriptedAI(creature)
         {
-            m_uiNormalFaction = creature->GetFaction();
+            m_uiNormalFaction = creature->getFaction();
         }
 
         uint32 m_uiNormalFaction;
 
         void Reset() override
         {
-            if (me->GetFaction() != m_uiNormalFaction)
-                me->SetFaction(m_uiNormalFaction);
+            if (me->getFaction() != m_uiNormalFaction)
+                me->setFaction(m_uiNormalFaction);
         }
 
         void AttackedBy(Unit* pAttacker) override
@@ -90,21 +105,7 @@ public:
                 EnterEvadeMode();
             }
         }
-
-        void QuestAccept(Player* player, Quest const* quest) override
-        {
-            if (quest->GetQuestId() == QUEST_BEAT)
-            {
-                me->SetFaction(FACTION_ENEMY);
-                AttackStart(player);
-            }
-        }
     };
-
-    CreatureAI* GetAI(Creature* creature) const override
-    {
-        return new npc_bartlebyAI(creature);
-    }
 };
 
 /*######
@@ -266,8 +267,8 @@ public:
                             if (Creature* pTyrion = me->FindNearestCreature(NPC_TYRION, 20.0f, true))
                                 pTyrion->AI()->Talk(SAY_TYRION_2);
                             if (Creature* pMarzon = ObjectAccessor::GetCreature(*me, MarzonGUID))
-                                pMarzon->SetFaction(14);
-                            me->SetFaction(14);
+                                pMarzon->setFaction(14);
+                            me->setFaction(14);
                             uiTimer = 0;
                             uiPhase = 0;
                             break;
@@ -540,26 +541,18 @@ class npc_tyrion : public CreatureScript
 public:
     npc_tyrion() : CreatureScript("npc_tyrion") { }
 
-    struct npc_tyrionAI : ScriptedAI
+    bool OnQuestAccept(Player* player, Creature* creature, Quest const* quest) override
     {
-        npc_tyrionAI(Creature* creature) : ScriptedAI(creature) { }
-
-        void QuestAccept(Player* player, Quest const* quest) override
+        if (quest->GetQuestId() == QUEST_THE_ATTACK)
         {
-            if (quest->GetQuestId() == QUEST_THE_ATTACK)
+            if (Creature* pSpybot = creature->FindNearestCreature(NPC_TYRION_SPYBOT, 5.0f, true))
             {
-                if (Creature* spybot = me->FindNearestCreature(NPC_TYRION_SPYBOT, 5.0f, true))
-                {
-                    ENSURE_AI(npc_tyrion_spybot::npc_tyrion_spybotAI, spybot->AI())->Start(false, false, player->GetGUID());
-                    ENSURE_AI(npc_tyrion_spybot::npc_tyrion_spybotAI, spybot->AI())->SetMaxPlayerDistance(200.0f);
-                }
+                ENSURE_AI(npc_tyrion_spybot::npc_tyrion_spybotAI, pSpybot->AI())->Start(false, false, player->GetGUID());
+                ENSURE_AI(npc_tyrion_spybot::npc_tyrion_spybotAI, pSpybot->AI())->SetMaxPlayerDistance(200.0f);
             }
+            return true;
         }
-    };
-
-    CreatureAI* GetAI(Creature* creature) const override
-    {
-        return new npc_tyrionAI(creature);
+        return false;
     }
 };
 

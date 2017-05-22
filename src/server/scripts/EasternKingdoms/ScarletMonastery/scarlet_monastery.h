@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -23,7 +23,7 @@
 
 uint32 const EncounterCount = 10;
 
-enum SMDataTypes
+enum DataTypes
 {
     DATA_MOGRAINE_AND_WHITE_EVENT   = 1,
     DATA_MOGRAINE                   = 2,
@@ -43,7 +43,7 @@ enum SMDataTypes
     DATA_SCORN                      = 14
 };
 
-enum SMCreatureIds
+enum CreatureIds
 {
     NPC_MOGRAINE                    = 3976,
     NPC_WHITEMANE                   = 3977,
@@ -54,16 +54,16 @@ enum SMCreatureIds
     NPC_PUMPKIN                     = 23694
 };
 
-enum SMGameObjectIds
+enum GameObjectIds
 {
     GO_HIGH_INQUISITORS_DOOR        = 104600,
     GO_PUMPKIN_SHRINE               = 186267
 };
 
-template<class AI, class T>
-inline AI* GetScarletMonasteryAI(T* obj)
+template<class AI>
+inline AI* GetScarletMonasteryAI(Creature* creature)
 {
-    return GetInstanceAI<AI>(obj, SMScriptName);
+    return GetInstanceAI<AI>(creature, SMScriptName);
 }
 
 #endif // SCARLET_M_

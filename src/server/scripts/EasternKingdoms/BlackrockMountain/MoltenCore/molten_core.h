@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -21,7 +21,7 @@
 
 #define DataHeader "MC"
 
-enum MCEncounters
+enum Encounters
 {
     BOSS_LUCIFRON                   = 0,
     BOSS_MAGMADAR                   = 1,
@@ -36,7 +36,7 @@ enum MCEncounters
     MAX_ENCOUNTER,
 };
 
-enum MCActions
+enum Actions
 {
     ACTION_START_RAGNAROS       = 0,
     ACTION_START_RAGNAROS_ALT   = 1,
@@ -45,7 +45,7 @@ enum MCActions
 Position const RagnarosTelePos   = {829.159f, -815.773f, -228.972f, 5.30500f};
 Position const RagnarosSummonPos = {838.510f, -829.840f, -232.000f, 2.00000f};
 
-enum MCCreatures
+enum Creatures
 {
     NPC_LUCIFRON                    = 12118,
     NPC_MAGMADAR                    = 11982,
@@ -61,12 +61,12 @@ enum MCCreatures
     NPC_FLAMEWAKER_ELITE            = 11664,
 };
 
-enum MCGameObjects
+enum GameObjects
 {
     GO_CACHE_OF_THE_FIRELORD        = 179703,
 };
 
-enum MCData
+enum Data
 {
     DATA_RAGNAROS_ADDS  = 0,
 };

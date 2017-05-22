@@ -78,7 +78,7 @@ private:
 
 			_unitDifficulty[player->GetGUID()] = difficulty;
 			for (int32 i = STAT_STRENGTH; i < MAX_STATS; ++i) {
-				player->ApplyStatPctModifier(UnitMods(UNIT_MOD_STAT_START + i), TOTAL_PCT, float(difficulty * 100));
+				player->HandleStatModifier(UnitMods(UNIT_MOD_STAT_START + i), TOTAL_PCT, float(difficulty * 100), true);
 			}
 			player->SetFullHealth();
 			if (player->getPowerType() == POWER_MANA) {
@@ -97,7 +97,7 @@ private:
 					map->GetMapName(), difficulty);
 
 			for (int32 i = STAT_STRENGTH; i < MAX_STATS; ++i) {
-				player->ApplyStatPctModifier(UnitMods(UNIT_MOD_STAT_START + i), TOTAL_PCT, float(difficulty * 100));
+				player->HandleStatModifier(UnitMods(UNIT_MOD_STAT_START + i), TOTAL_PCT, float(difficulty * 100), false);
 			}
 		}
 	}

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -28,147 +28,480 @@
 
 struct AchievementEntry
 {
-    uint32 ID;
-    int32 Faction;                                                  // -1=all, 0=horde, 1=alliance
-    int32 MapID;                                                    // -1 = none
-    //uint32 Supercedes;                                            // its Achievement parent (can`t start while parent uncomplete, use its Criteria if don`t have own, use its progress on begin)
-    char* Title[16];
-    //uint32 Title_flags;
-    //char* Description[16];
-    //uint32 Description_flags;
-    uint32 Category;
-    uint32 Points;
-    //uint32 UIOrder;
-    uint32 Flags;
-    //uint32  IconID;
-    //char* Reward[16];
-    //uint32 Reward_flags;
-    uint32 MinimumCriteria;                                         // need this count of completed criterias (own or referenced achievement criterias)
-    uint32 SharesCriteria;                                          // referenced achievement (counting of all completed criterias)
+    uint32    ID;                                           // 0
+    int32    requiredFaction;                               // 1 -1=all, 0=horde, 1=alliance
+    int32    mapID;                                         // 2 -1=none
+    //uint32 parentAchievement;                             // 3 its Achievement parent (can`t start while parent uncomplete, use its Criteria if don`t have own, use its progress on begin)
+    char *name[16];                                         // 4-19
+    //uint32 name_flags;                                    // 20
+    //char *description[16];                                // 21-36
+    //uint32 desc_flags;                                    // 37
+    uint32    categoryId;                                   // 38
+    uint32    points;                                       // 39 reward points
+    //uint32 OrderInCategory;                               // 40
+    uint32    flags;                                        // 41
+    //uint32    icon;                                       // 42 icon (from SpellIcon.dbc)
+    //char *titleReward[16];                                // 43-58
+    //uint32 titleReward_flags;                             // 59
+    uint32 count;                                           // 60 - need this count of completed criterias (own or referenced achievement criterias)
+    uint32 refAchievement;                                  // 61 - referenced achievement (counting of all completed criterias)
+};
+
+struct AchievementCategoryEntry
+{
+    uint32    ID;                                           // 0
+    uint32    parentCategory;                               // 1 -1 for main category
+    //char *name[16];                                       // 2-17
+    //uint32 name_flags;                                    // 18
+    //uint32    sortOrder;                                  // 19
 };
 
 struct AchievementCriteriaEntry
 {
-    uint32 ID;
-    uint32 ReferredAchievement;
-    uint32 Type;
+    uint32  ID;                                             // 0
+    uint32  referredAchievement;                            // 1
+    uint32  requiredType;                                   // 2
     union
     {
-        uint32 ID;
         // ACHIEVEMENT_CRITERIA_TYPE_KILL_CREATURE          = 0
-        // ACHIEVEMENT_CRITERIA_TYPE_KILLED_BY_CREATURE     = 20
-        uint32 CreatureID;
+        /// @todo also used for player deaths..
+        struct
+        {
+            uint32  creatureID;                             // 3
+            uint32  creatureCount;                          // 4
+        } kill_creature;
 
         // ACHIEVEMENT_CRITERIA_TYPE_WIN_BG                 = 1
-        // ACHIEVEMENT_CRITERIA_TYPE_COMPLETE_BATTLEGROUND  = 15
-        // ACHIEVEMENT_CRITERIA_TYPE_DEATH_AT_MAP           = 16
-        // ACHIEVEMENT_CRITERIA_TYPE_WIN_ARENA              = 32
-        // ACHIEVEMENT_CRITERIA_TYPE_PLAY_ARENA             = 33
-        uint32 MapID;
+        struct
+        {
+            uint32  bgMapID;                                // 3
+            uint32  winCount;                               // 4
+        } win_bg;
+
+        // ACHIEVEMENT_CRITERIA_TYPE_REACH_LEVEL            = 5
+        struct
+        {
+            uint32  unused;                                 // 3
+            uint32  level;                                  // 4
+        } reach_level;
 
         // ACHIEVEMENT_CRITERIA_TYPE_REACH_SKILL_LEVEL      = 7
-        // ACHIEVEMENT_CRITERIA_TYPE_LEARN_SKILL_LEVEL      = 40
-        // ACHIEVEMENT_CRITERIA_TYPE_LEARN_SKILLLINE_SPELLS = 75
-        // ACHIEVEMENT_CRITERIA_TYPE_LEARN_SKILL_LINE       = 112
-        uint32 SkillID;
+        struct
+        {
+            uint32  skillID;                                // 3
+            uint32  skillLevel;                             // 4
+        } reach_skill_level;
 
         // ACHIEVEMENT_CRITERIA_TYPE_COMPLETE_ACHIEVEMENT   = 8
-        uint32 AchievementID;
+        struct
+        {
+            uint32  linkedAchievement;                      // 3
+        } complete_achievement;
+
+        // ACHIEVEMENT_CRITERIA_TYPE_COMPLETE_QUEST_COUNT   = 9
+        struct
+        {
+            uint32  unused;                                 // 3
+            uint32  totalQuestCount;                        // 4
+        } complete_quest_count;
+
+        // ACHIEVEMENT_CRITERIA_TYPE_COMPLETE_DAILY_QUEST_DAILY = 10
+        struct
+        {
+            uint32  unused;                                 // 3
+            uint32  numberOfDays;                           // 4
+        } complete_daily_quest_daily;
 
         // ACHIEVEMENT_CRITERIA_TYPE_COMPLETE_QUESTS_IN_ZONE = 11
-        uint32 ZoneID;
+        struct
+        {
+            uint32  zoneID;                                 // 3
+            uint32  questCount;                             // 4
+        } complete_quests_in_zone;
 
-        // ACHIEVEMENT_CRITERIA_TYPE_CURRENCY = 12
-        uint32 CurrencyID;
+        // ACHIEVEMENT_CRITERIA_TYPE_COMPLETE_DAILY_QUEST   = 14
+        struct
+        {
+            uint32  unused;                                 // 3
+            uint32  questCount;                             // 4
+        } complete_daily_quest;
+
+        // ACHIEVEMENT_CRITERIA_TYPE_COMPLETE_BATTLEGROUND  = 15
+        struct
+        {
+            uint32  mapID;                                  // 3
+        } complete_battleground;
+
+        // ACHIEVEMENT_CRITERIA_TYPE_DEATH_AT_MAP           = 16
+        struct
+        {
+            uint32  mapID;                                  // 3
+        } death_at_map;
 
         // ACHIEVEMENT_CRITERIA_TYPE_DEATH_IN_DUNGEON       = 18
+        struct
+        {
+            uint32  manLimit;                               // 3
+        } death_in_dungeon;
+
         // ACHIEVEMENT_CRITERIA_TYPE_COMPLETE_RAID          = 19
-        uint32 GroupSize;
+        struct
+        {
+            uint32  groupSize;                              // 3 can be 5, 10 or 25
+        } complete_raid;
+
+        // ACHIEVEMENT_CRITERIA_TYPE_KILLED_BY_CREATURE     = 20
+        struct
+        {
+            uint32  creatureEntry;                          // 3
+        } killed_by_creature;
+
+        // ACHIEVEMENT_CRITERIA_TYPE_FALL_WITHOUT_DYING     = 24
+        struct
+        {
+            uint32  unused;                                 // 3
+            uint32  fallHeight;                             // 4
+        } fall_without_dying;
 
         // ACHIEVEMENT_CRITERIA_TYPE_DEATHS_FROM            = 26
-        uint32 DamageType;
+        struct
+        {
+            uint32 type;                                    // 3, see enum EnviromentalDamage
+        } death_from;
 
         // ACHIEVEMENT_CRITERIA_TYPE_COMPLETE_QUEST         = 27
-        uint32 QuestID;
+        struct
+        {
+            uint32  questID;                                // 3
+            uint32  questCount;                             // 4
+        } complete_quest;
 
         // ACHIEVEMENT_CRITERIA_TYPE_BE_SPELL_TARGET        = 28
         // ACHIEVEMENT_CRITERIA_TYPE_BE_SPELL_TARGET2       = 69
+        struct
+        {
+            uint32  spellID;                                // 3
+            uint32  spellCount;                             // 4
+        } be_spell_target;
+
         // ACHIEVEMENT_CRITERIA_TYPE_CAST_SPELL             = 29
         // ACHIEVEMENT_CRITERIA_TYPE_CAST_SPELL2            = 110
-        // ACHIEVEMENT_CRITERIA_TYPE_LEARN_SPELL            = 34
-        uint32 SpellID;
+        struct
+        {
+            uint32  spellID;                                // 3
+            uint32  castCount;                              // 4
+        } cast_spell;
 
         // ACHIEVEMENT_CRITERIA_TYPE_BG_OBJECTIVE_CAPTURE
-        uint32 ObjectiveId;
+        struct
+        {
+            uint32 objectiveId;                             // 3
+            uint32 completeCount;                           // 4
+        } bg_objective;
 
         // ACHIEVEMENT_CRITERIA_TYPE_HONORABLE_KILL_AT_AREA = 31
-        uint32 AreaID;
+        struct
+        {
+            uint32  areaID;                                 // 3 Reference to AreaTable.dbc
+            uint32  killCount;                              // 4
+        } honorable_kill_at_area;
+
+        // ACHIEVEMENT_CRITERIA_TYPE_WIN_ARENA              = 32
+        struct
+        {
+            uint32 mapID;                                   // 3 Reference to Map.dbc
+            uint32 count;                                   // 4 Number of times that the arena must be won.
+        } win_arena;
+
+        // ACHIEVEMENT_CRITERIA_TYPE_PLAY_ARENA             = 33
+        struct
+        {
+            uint32  mapID;                                  // 3 Reference to Map.dbc
+        } play_arena;
+
+        // ACHIEVEMENT_CRITERIA_TYPE_LEARN_SPELL            = 34
+        struct
+        {
+            uint32  spellID;                                // 3 Reference to Map.dbc
+        } learn_spell;
 
         // ACHIEVEMENT_CRITERIA_TYPE_OWN_ITEM               = 36
-        // ACHIEVEMENT_CRITERIA_TYPE_USE_ITEM               = 41
-        // ACHIEVEMENT_CRITERIA_TYPE_LOOT_ITEM              = 42
-        // ACHIEVEMENT_CRITERIA_TYPE_EQUIP_ITEM             = 57
-        uint32 ItemID;
+        struct
+        {
+            uint32  itemID;                                 // 3
+            uint32  itemCount;                              // 4
+        } own_item;
+
+        // ACHIEVEMENT_CRITERIA_TYPE_WIN_RATED_ARENA        = 37
+        struct
+        {
+            uint32  unused;                                 // 3
+            uint32  count;                                  // 4
+        } win_rated_arena;
 
         // ACHIEVEMENT_CRITERIA_TYPE_HIGHEST_TEAM_RATING    = 38
+        struct
+        {
+            uint32  teamtype;                               // 3 {2, 3, 5}
+        } highest_team_rating;
+
         // ACHIEVEMENT_CRITERIA_TYPE_REACH_TEAM_RATING      = 39
-        // ACHIEVEMENT_CRITERIA_TYPE_HIGHEST_PERSONAL_RATING = 39
-        uint32 TeamType;
+        struct
+        {
+            uint32  teamtype;                               // 3 {2, 3, 5}
+            uint32  PersonalRating;                             // 4
+        } highest_personal_rating;
+
+        // ACHIEVEMENT_CRITERIA_TYPE_LEARN_SKILL_LEVEL      = 40
+        struct
+        {
+            uint32  skillID;                                // 3
+            uint32  skillLevel;                             // 4 apprentice=1, journeyman=2, expert=3, artisan=4, master=5, grand master=6
+        } learn_skill_level;
+
+        // ACHIEVEMENT_CRITERIA_TYPE_USE_ITEM               = 41
+        struct
+        {
+            uint32  itemID;                                 // 3
+            uint32  itemCount;                              // 4
+        } use_item;
+
+        // ACHIEVEMENT_CRITERIA_TYPE_LOOT_ITEM              = 42
+        struct
+        {
+            uint32  itemID;                                 // 3
+            uint32  itemCount;                              // 4
+        } loot_item;
 
         // ACHIEVEMENT_CRITERIA_TYPE_EXPLORE_AREA           = 43
-        uint32 WorldMapOverlayID;
+        struct
+        {
+            /// @todo This rank is _NOT_ the index from AreaTable.dbc
+            uint32  areaReference;                          // 3
+        } explore_area;
+
+        // ACHIEVEMENT_CRITERIA_TYPE_OWN_RANK               = 44
+        struct
+        {
+            /// @todo This rank is _NOT_ the index from CharTitles.dbc
+            uint32  rank;                                   // 3
+        } own_rank;
+
+        // ACHIEVEMENT_CRITERIA_TYPE_BUY_BANK_SLOT          = 45
+        struct
+        {
+            uint32  unused;                                 // 3
+            uint32  numberOfSlots;                          // 4
+        } buy_bank_slot;
 
         // ACHIEVEMENT_CRITERIA_TYPE_GAIN_REPUTATION        = 46
-        uint32 FactionID;
+        struct
+        {
+            uint32  factionID;                              // 3
+            uint32  reputationAmount;                       // 4 Total reputation amount, so 42000 = exalted
+        } gain_reputation;
+
+        // ACHIEVEMENT_CRITERIA_TYPE_GAIN_EXALTED_REPUTATION= 47
+        struct
+        {
+            uint32  unused;                                 // 3
+            uint32  numberOfExaltedFactions;                // 4
+        } gain_exalted_reputation;
+
+        // ACHIEVEMENT_CRITERIA_TYPE_VISIT_BARBER_SHOP      = 48
+        struct
+        {
+            uint32 unused;                                  // 3
+            uint32 numberOfVisits;                          // 4
+        } visit_barber;
 
         // ACHIEVEMENT_CRITERIA_TYPE_EQUIP_EPIC_ITEM        = 49
-        uint32 ItemSlot;
+        /// @todo where is the required itemlevel stored?
+        struct
+        {
+            uint32  itemSlot;                               // 3
+            uint32  count;                                  // 4
+        } equip_epic_item;
 
         // ACHIEVEMENT_CRITERIA_TYPE_ROLL_NEED_ON_LOOT      = 50
-        // ACHIEVEMENT_CRITERIA_TYPE_ROLL_GREED_ON_LOOT     = 51
-        uint32 RollValue;
+        struct
+        {
+            uint32  rollValue;                              // 3
+            uint32  count;                                  // 4
+        } roll_need_on_loot;
+       // ACHIEVEMENT_CRITERIA_TYPE_ROLL_GREED_ON_LOOT      = 51
+        struct
+        {
+            uint32  rollValue;                              // 3
+            uint32  count;                                  // 4
+        } roll_greed_on_loot;
 
         // ACHIEVEMENT_CRITERIA_TYPE_HK_CLASS               = 52
-        uint32 ClassID;
+        struct
+        {
+            uint32  classID;                                // 3
+            uint32  count;                                  // 4
+        } hk_class;
 
         // ACHIEVEMENT_CRITERIA_TYPE_HK_RACE                = 53
-        uint32 RaceID;
+        struct
+        {
+            uint32  raceID;                                 // 3
+            uint32  count;                                  // 4
+        } hk_race;
 
         // ACHIEVEMENT_CRITERIA_TYPE_DO_EMOTE               = 54
-        uint32 EmoteID;
+        /// @todo where is the information about the target stored?
+        struct
+        {
+            uint32  emoteID;                                // 3 enum TextEmotes
+            uint32  count;                                  // 4 count of emotes, always required special target or requirements
+        } do_emote;
+        // ACHIEVEMENT_CRITERIA_TYPE_DAMAGE_DONE            = 13
+        // ACHIEVEMENT_CRITERIA_TYPE_HEALING_DONE           = 55
+        struct
+        {
+            uint32  unused;                                 // 3
+            uint32  count;                                  // 4
+        } healing_done;
+
+        // ACHIEVEMENT_CRITERIA_TYPE_GET_KILLING_BLOWS      = 56
+        struct
+        {
+            uint32  unused;
+            uint32  killCount;
+        } get_killing_blow;
+
+        // ACHIEVEMENT_CRITERIA_TYPE_EQUIP_ITEM             = 57
+        struct
+        {
+            uint32  itemID;                                 // 3
+            uint32  count;                                  // 4
+        } equip_item;
+
+        // ACHIEVEMENT_CRITERIA_TYPE_MONEY_FROM_QUEST_REWARD= 62
+        struct
+        {
+            uint32  unused;                                 // 3
+            uint32  goldInCopper;                           // 4
+        } quest_reward_money;
+
+        // ACHIEVEMENT_CRITERIA_TYPE_LOOT_MONEY             = 67
+        struct
+        {
+            uint32  unused;                                 // 3
+            uint32  goldInCopper;                           // 4
+        } loot_money;
 
         // ACHIEVEMENT_CRITERIA_TYPE_USE_GAMEOBJECT         = 68
+        struct
+        {
+            uint32  goEntry;                                // 3
+            uint32  useCount;                               // 4
+        } use_gameobject;
+
+        // ACHIEVEMENT_CRITERIA_TYPE_SPECIAL_PVP_KILL       = 70
+        /// @todo are those special criteria stored in the dbc or do we have to add another sql table?
+        struct
+        {
+            uint32  unused;                                 // 3
+            uint32  killCount;                              // 4
+        } special_pvp_kill;
+
         // ACHIEVEMENT_CRITERIA_TYPE_FISH_IN_GAMEOBJECT     = 72
-        uint32 GameObjectID;
+        struct
+        {
+            uint32  goEntry;                                // 3
+            uint32  lootCount;                              // 4
+        } fish_in_gameobject;
+
+        // ACHIEVEMENT_CRITERIA_TYPE_LEARN_SKILLLINE_SPELLS = 75
+        struct
+        {
+            uint32  skillLine;                              // 3
+            uint32  spellCount;                             // 4
+        } learn_skillline_spell;
+
+        // ACHIEVEMENT_CRITERIA_TYPE_WIN_DUEL               = 76
+        struct
+        {
+            uint32  unused;                                 // 3
+            uint32  duelCount;                              // 4
+        } win_duel;
 
         // ACHIEVEMENT_CRITERIA_TYPE_HIGHEST_POWER          = 96
-        uint32 PowerType;
+        struct
+        {
+            uint32  powerType;                              // 3 mana=0, 1=rage, 3=energy, 6=runic power
+        } highest_power;
 
         // ACHIEVEMENT_CRITERIA_TYPE_HIGHEST_STAT           = 97
-        uint32 StatType;
+        struct
+        {
+            uint32  statType;                               // 3 4=spirit, 3=int, 2=stamina, 1=agi, 0=strength
+        } highest_stat;
 
         // ACHIEVEMENT_CRITERIA_TYPE_HIGHEST_SPELLPOWER     = 98
-        uint32 SpellSchool;
+        struct
+        {
+            uint32  spellSchool;                            // 3
+        } highest_spellpower;
+
+        // ACHIEVEMENT_CRITERIA_TYPE_HIGHEST_RATING         = 100
+        struct
+        {
+            uint32  ratingType;                             // 3
+        } highest_rating;
 
         // ACHIEVEMENT_CRITERIA_TYPE_LOOT_TYPE              = 109
-        uint32 LootType;
-    } Asset;
+        struct
+        {
+            uint32  lootType;                               // 3 3=fishing, 2=pickpocket, 4=disentchant
+            uint32  lootTypeCount;                          // 4
+        } loot_type;
 
-    uint32 Amount;
+        // ACHIEVEMENT_CRITERIA_TYPE_LEARN_SKILL_LINE       = 112
+        struct
+        {
+            uint32  skillLine;                              // 3
+            uint32  spellCount;                             // 4
+        } learn_skill_line;
+
+        // ACHIEVEMENT_CRITERIA_TYPE_EARN_HONORABLE_KILL    = 113
+        struct
+        {
+            uint32  unused;                                 // 3
+            uint32  killCount;                              // 4
+        } honorable_kill;
+
+        struct
+        {
+            uint32  unused;
+            uint32  dungeonsComplete;
+        } use_lfg;
+
+        struct
+        {
+            uint32  field3;                                 // 3 main requirement
+            uint32  count;                                  // 4 main requirement count
+        } raw;
+    };
 
     struct
     {
-        uint32  Type;
-        uint32  Asset;
-    } AdditionalRequirements[MAX_CRITERIA_REQUIREMENTS];
+        uint32  additionalRequirement_type;
+        uint32  additionalRequirement_value;
+    } additionalRequirements[MAX_CRITERIA_REQUIREMENTS];
 
-    //char*  Description[16];
-    //uint32 Description_flags;
-    uint32 Flags;
-    uint32 StartEvent;
-    uint32 StartAsset;
-    uint32 StartTimer;
-    //uint32 OrderIndex;
+    //char*  name[16];                                      // 9-24
+    //uint32 name_flags;                                    // 25
+    uint32  flags;                                          // 26
+    uint32  timedType;                                      // 27
+    uint32  timerStartEvent;                                // 28 Alway appears with timed events
+                                                            // for timed spells it is spell id for
+                                                            // timed kills it is creature id
+    uint32  timeLimit;                                      // 29 time limit in seconds
+    //uint32 showOrder;                                     // 30 show order
 };
 
 struct AreaTableEntry
@@ -191,17 +524,6 @@ struct AreaTableEntry
         if (mapid == 609)
             return true;
         return (flags & AREA_FLAG_SANCTUARY) != 0;
-    }
-
-    bool IsFlyable() const
-    {
-        if (flags & AREA_FLAG_OUTLAND)
-        {
-            if (!(flags & AREA_FLAG_NO_FLY_ZONE))
-                return true;
-        }
-
-        return false;
     }
 };
 

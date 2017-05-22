@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -114,13 +114,13 @@ class npc_professor_phizzlethorpe : public CreatureScript
                 Talk(SAY_AGGRO);
             }
 
-            void QuestAccept(Player* player, Quest const* quest) override
+            void sQuestAccept(Player* player, Quest const* quest) override
             {
                 if (quest->GetQuestId() == QUEST_SUNKEN_TREASURE)
                 {
                     Talk(SAY_PROGRESS_1, player);
                     npc_escortAI::Start(false, false, player->GetGUID(), quest);
-                    me->SetFaction(FACTION_SUNKEN_TREASURE);
+                    me->setFaction(FACTION_SUNKEN_TREASURE);
                 }
             }
 

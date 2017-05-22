@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2006-2013 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -51,13 +51,13 @@ public:
     {
         npc_willixAI(Creature* creature) : npc_escortAI(creature) { }
 
-        void QuestAccept(Player* player, Quest const* quest) override
+        void sQuestAccept(Player* player, Quest const* quest) override
         {
             if (quest->GetQuestId() == QUEST_WILLIX_THE_IMPORTER)
             {
                 Start(true, false, player->GetGUID());
                 Talk(SAY_READY, player);
-                me->SetFaction(113);
+                me->setFaction(113);
             }
         }
 
@@ -113,9 +113,9 @@ public:
 
         void Reset() override { }
 
-        void EnterCombat(Unit* who) override
+        void EnterCombat(Unit* /*who*/) override
         {
-            Talk(SAY_AGGRO1, who);
+            Talk(SAY_AGGRO1);
         }
 
         void JustSummoned(Creature* summoned) override

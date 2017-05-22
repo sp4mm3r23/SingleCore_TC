@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -22,7 +22,7 @@
 
 uint32 const EncounterCount = 4;
 
-enum VAData
+enum Data
 {
     DATA_ARCHAVON       = 0,
     DATA_EMALON         = 1,
@@ -30,7 +30,7 @@ enum VAData
     DATA_TORAVON        = 3,
 };
 
-enum VACreatureIds
+enum CreatureIds
 {
     NPC_ARCHAVON        = 31125,
     NPC_EMALON          = 33993,
@@ -38,13 +38,13 @@ enum VACreatureIds
     NPC_TORAVON         = 38433
 };
 
-enum VAAchievementCriteriaIds
+enum AchievementCriteriaIds
 {
     CRITERIA_EARTH_WIND_FIRE_10 = 12018,
     CRITERIA_EARTH_WIND_FIRE_25 = 12019,
 };
 
-enum VAAchievementSpells
+enum AchievementSpells
 {
     SPELL_EARTH_WIND_FIRE_ACHIEVEMENT_CHECK = 68308,
 };

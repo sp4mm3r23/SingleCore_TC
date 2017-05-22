@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -24,7 +24,6 @@ EndScriptData */
 
 #include "ScriptMgr.h"
 #include "Chat.h"
-#include "Channel.h"
 #include "ChannelMgr.h"
 #include "Language.h"
 #include "Player.h"
@@ -64,49 +63,21 @@ public:
         if (!*args)
             return false;
         char const* channelStr = strtok((char*)args, " ");
-        char const* argStr = strtok(nullptr, "");
+        char const* argStr = strtok(NULL, "");
 
         if (!channelStr || !argStr)
             return false;
 
-        uint32 channelId = 0;
-        for (uint32 i = 0; i < sChatChannelsStore.GetNumRows(); ++i)
-        {
-            ChatChannelsEntry const* entry = sChatChannelsStore.LookupEntry(i);
-            if (!entry)
-                continue;
-
-            if (strstr(entry->pattern[handler->GetSessionDbcLocale()], channelStr))
-            {
-                channelId = i;
-                break;
-            }
-        }
-
-        AreaTableEntry const* zoneEntry = nullptr;
-        for (uint32 i = 0; i < sAreaTableStore.GetNumRows(); ++i)
-        {
-            AreaTableEntry const* entry = sAreaTableStore.LookupEntry(i);
-            if (!entry)
-                continue;
-
-            if (strstr(entry->area_name[handler->GetSessionDbcLocale()], channelStr))
-            {
-                zoneEntry = entry;
-                break;
-            }
-        }
-
         Player* player = handler->GetSession()->GetPlayer();
-        Channel* channel = nullptr;
+        Channel* channcel = NULL;
 
         if (ChannelMgr* cMgr = ChannelMgr::forTeam(player->GetTeam()))
-            channel = cMgr->GetChannel(channelId, channelStr, player, false, zoneEntry);
+            channcel = cMgr->GetChannel(channelStr, player);
 
         if (strcmp(argStr, "on") == 0)
         {
-            if (channel)
-                channel->SetOwnership(true);
+            if (channcel)
+                channcel->SetOwnership(true);
             PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_UPD_CHANNEL_OWNERSHIP);
             stmt->setUInt8 (0, 1);
             stmt->setString(1, channelStr);
@@ -115,8 +86,8 @@ public:
         }
         else if (strcmp(argStr, "off") == 0)
         {
-            if (channel)
-                channel->SetOwnership(false);
+            if (channcel)
+                channcel->SetOwnership(false);
             PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_UPD_CHANNEL_OWNERSHIP);
             stmt->setUInt8 (0, 0);
             stmt->setString(1, channelStr);
@@ -160,7 +131,9 @@ public:
         if (!*args)
             return false;
 
-        sWorld->SendServerMessage(SERVER_MSG_STRING, Trinity::StringFormat(handler->GetTrinityString(LANG_SYSTEMMESSAGE), args).c_str());
+        char buff[2048];
+        sprintf(buff, handler->GetTrinityString(LANG_SYSTEMMESSAGE), args);
+        sWorld->SendServerMessage(SERVER_MSG_STRING, buff);
         return true;
     }
     // announce to logged in GMs

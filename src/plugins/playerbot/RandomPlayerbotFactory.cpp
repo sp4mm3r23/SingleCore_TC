@@ -313,7 +313,7 @@ void RandomPlayerbotFactory::CreateRandomGuilds()
         }
         else
         {
-            Player* player = ObjectAccessor::FindPlayerByLowGUID(leader);
+            Player* player = sObjectMgr->GetPlayerByLowGUID(leader);
             if (player)
                 availableLeaders.push_back(leader);
         }
@@ -333,7 +333,7 @@ void RandomPlayerbotFactory::CreateRandomGuilds()
 
         int index = urand(0, availableLeaders.size() - 1);
         ObjectGuid leader = availableLeaders[index];
-        Player* player = ObjectAccessor::FindPlayerByLowGUID(leader);
+        Player* player = sObjectMgr->GetPlayerByLowGUID(leader);
         if (!player)
         {
             sLog->outMessage("playerbot", LOG_LEVEL_ERROR, "Cannot find player for leader %u", leader);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -23,7 +23,6 @@ Category: commandscripts
 EndScriptData */
 
 #include "AccountMgr.h"
-#include "CharacterCache.h"
 #include "Chat.h"
 #include "Language.h"
 #include "ObjectAccessor.h"
@@ -295,28 +294,23 @@ public:
         if (!*args)
             return false;
 
-        std::string name(args);
-        if (!normalizePlayerName(name))
-        {
-            handler->SendSysMessage(LANG_BANINFO_NOCHARACTER);
-            handler->SetSentErrorMessage(true);
-            return false;
-        }
-
-        Player* target = ObjectAccessor::FindPlayerByName(name);
+        Player* target = ObjectAccessor::FindPlayerByName(args);
         ObjectGuid::LowType targetGuid = 0;
+        std::string name(args);
 
         if (!target)
         {
-            ObjectGuid fullGuid = sCharacterCache->GetCharacterGuidByName(name);
-            if (fullGuid.IsEmpty())
+            PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_GUID_BY_NAME);
+            stmt->setString(0, name);
+            PreparedQueryResult resultCharacter = CharacterDatabase.Query(stmt);
+
+            if (!resultCharacter)
             {
-                handler->SendSysMessage(LANG_BANINFO_NOCHARACTER);
-                handler->SetSentErrorMessage(true);
+                handler->PSendSysMessage(LANG_BANINFO_NOCHARACTER);
                 return false;
             }
 
-            targetGuid = fullGuid.GetCounter();
+            targetGuid = (*resultCharacter)[0].GetUInt32();
         }
         else
             targetGuid = target->GetGUID().GetCounter();

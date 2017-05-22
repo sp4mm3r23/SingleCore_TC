@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -109,11 +109,11 @@ Battlefield* BattlefieldMgr::GetBattlefieldToZoneId(uint32 zoneId)
     if (itr == _battlefieldMap.end())
     {
         // no handle for this zone, return
-        return nullptr;
+        return NULL;
     }
 
     if (!itr->second->IsEnabled())
-        return nullptr;
+        return NULL;
 
     return itr->second;
 }
@@ -125,7 +125,7 @@ Battlefield* BattlefieldMgr::GetBattlefieldByBattleId(uint32 battleId)
         if ((*itr)->GetBattleId() == battleId)
             return *itr;
     }
-    return nullptr;
+    return NULL;
 }
 
 ZoneScript* BattlefieldMgr::GetZoneScript(uint32 zoneId)
@@ -134,7 +134,7 @@ ZoneScript* BattlefieldMgr::GetZoneScript(uint32 zoneId)
     if (itr != _battlefieldMap.end())
         return itr->second;
 
-    return nullptr;
+    return NULL;
 }
 
 void BattlefieldMgr::Update(uint32 diff)

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -23,7 +23,7 @@
 
 uint32 const EncounterCount = 3;
 
-enum BFDataTypes
+enum DataTypes
 {
     // Encounter States/Boss GUIDs
     DATA_THE_MAKER              = 0,
@@ -43,7 +43,7 @@ enum BFDataTypes
     DATA_BROGGOK_LEVER          = 12
 };
 
-enum BFCreatureIds
+enum CreatureIds
 {
     NPC_THE_MAKER               = 17381,
     NPC_BROGGOK                 = 17380,
@@ -52,7 +52,7 @@ enum BFCreatureIds
     NPC_BROGGOK_POISON_CLOUD    = 17662
 };
 
-enum BFGameObjectIds
+enum GameObjectIds
 {
     GO_PRISON_DOOR_01           = 181766, // Final Exit Door
     GO_PRISON_DOOR_02           = 181811, // The Maker Front Door
@@ -73,17 +73,18 @@ enum BFGameObjectIds
     GO_BROGGOK_LEVER            = 181982
 };
 
-enum BFActionIds
+enum ActionIds
 {
     ACTION_ACTIVATE_BROGGOK     = 1,
     ACTION_RESET_BROGGOK        = 2,
     ACTION_PREPARE_BROGGOK      = 3
 };
 
-template<class AI, class T>
-AI* GetBloodFurnaceAI(T* obj)
+template<class AI>
+AI* GetBloodFurnaceAI(Creature* creature)
 {
-    return GetInstanceAI<AI>(obj, BFScriptName);
+    return GetInstanceAI<AI>(creature, BFScriptName);
 }
 
 #endif // BLOOD_FURNACE_H_
+

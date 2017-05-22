@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -141,7 +141,7 @@ class npc_verdisa_beglaristrasz_eternos : public CreatureScript
                 player->DestroyItemCount(itemId, 1, true, false);
             }
 
-            bool GossipSelect(Player* player, uint32 menuId, uint32 gossipListId) override
+            void sGossipSelect(Player* player, uint32 menuId, uint32 gossipListId) override
             {
                 switch (menuId)
                 {
@@ -156,7 +156,7 @@ class npc_verdisa_beglaristrasz_eternos : public CreatureScript
                             StoreEssence(player, ITEM_EMERALD_ESSENCE);
                             break;
                         }
-                        return false;
+                        return;
                     case GOSSIP_MENU_ETERNOS:
                         if (gossipListId >= 1 && gossipListId <= 3)
                         {
@@ -168,7 +168,7 @@ class npc_verdisa_beglaristrasz_eternos : public CreatureScript
                             StoreEssence(player, ITEM_AMBER_ESSENCE);
                             break;
                         }
-                        return false;
+                        return;
                     case GOSSIP_MENU_BELGARISTRASZ:
                         if (gossipListId <= 2)
                         {
@@ -180,12 +180,11 @@ class npc_verdisa_beglaristrasz_eternos : public CreatureScript
                             StoreEssence(player, ITEM_RUBY_ESSENCE);
                             break;
                         }
-                        return false;
+                        return;
                     default:
-                        return false;
+                        return;
                 }
                 player->PlayerTalkClass->SendCloseGossip();
-                return false;
             }
 
             void MovementInform(uint32 /*type*/, uint32 id) override
@@ -605,11 +604,8 @@ class spell_oculus_temporal_rift : public SpellScriptLoader
             void HandleProc(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
             {
                 PreventDefaultAction();
-                DamageInfo* damageInfo = eventInfo.GetDamageInfo();
-                if (!damageInfo || !damageInfo->GetDamage())
-                    return;
+                int32 amount = aurEff->GetAmount() + eventInfo.GetDamageInfo()->GetDamage();
 
-                int32 amount = aurEff->GetAmount() + damageInfo->GetDamage();
                 if (amount >= 15000)
                 {
                     if (Unit* caster = GetCaster())

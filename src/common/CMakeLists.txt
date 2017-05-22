@@ -1,4 +1,4 @@
-# Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+# Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
 #
 # This file is free software; as a special exception the author gives
 # unlimited permission to copy and/or distribute it, with or without
@@ -61,11 +61,9 @@ target_include_directories(common
     ${CMAKE_CURRENT_BINARY_DIR})
 
 target_link_libraries(common
-  PRIVATE
-    process
   PUBLIC
     boost
-    fmt
+    cppformat
     g3dlib
     Detour
     sfmt
@@ -73,7 +71,9 @@ target_link_libraries(common
     openssl
     valgrind
     threads
-    jemalloc)
+    jemalloc
+  PRIVATE
+    process)
 
 add_dependencies(common revision_data.h)
 

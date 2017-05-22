@@ -44,16 +44,6 @@ namespace ai
 		virtual string getName() { return "barmor"; }
 	};
 
-	class PaladinBuffThreatStrategy : public Strategy
-	{
-	public:
-		PaladinBuffThreatStrategy(PlayerbotAI* ai) : Strategy(ai) {}
-
-	public:
-		virtual void InitTriggers(std::list<TriggerNode*> &triggers);
-		virtual string getName() { return "bthreat"; }
-	};
-
 	class PaladinBuffSpeedStrategy : public Strategy
 	{
 	public:

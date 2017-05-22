@@ -15,6 +15,10 @@ void GenericPaladinNonCombatStrategy::InitTriggers(std::list<TriggerNode*> &trig
 {
     NonCombatStrategy::InitTriggers(triggers);
 
+    triggers.push_back(new TriggerNode(
+        "blessing of kings on party",
+        NextAction::array(0, new NextAction("blessing of kings on party", 11.0f), NULL)));
+
 	triggers.push_back(new TriggerNode(
 		"party member dead",
 		NextAction::array(0, new NextAction("redemption", 30.0f), NULL)));
@@ -58,9 +62,4 @@ void GenericPaladinNonCombatStrategy::InitTriggers(std::list<TriggerNode*> &trig
     triggers.push_back(new TriggerNode(
         "cleanse party member cure magic",
         NextAction::array(0, new NextAction("cleanse magic on party", 40.0f), NULL)));
-
-	triggers.push_back(new TriggerNode(
-		"in battleground without flag",
-		NextAction::array(0, new NextAction("mount", 1.0f), NULL)));
-		
 }

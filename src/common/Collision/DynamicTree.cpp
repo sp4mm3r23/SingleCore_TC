@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -26,7 +26,6 @@
 #include "Timer.h"
 #include "GameObjectModel.h"
 #include "ModelInstance.h"
-#include "ModelIgnoreFlags.h"
 
 #include <G3D/AABox.h>
 #include <G3D/Ray.h>
@@ -152,7 +151,7 @@ struct DynamicTreeIntersectionCallback
     DynamicTreeIntersectionCallback(uint32 phasemask) : did_hit(false), phase_mask(phasemask) { }
     bool operator()(const G3D::Ray& r, const GameObjectModel& obj, float& distance)
     {
-        did_hit = obj.intersectRay(r, distance, true, phase_mask, VMAP::ModelIgnoreFlags::Nothing);
+        did_hit = obj.intersectRay(r, distance, true, phase_mask);
         return did_hit;
     }
     bool didHit() const { return did_hit;}
@@ -169,7 +168,7 @@ struct DynamicTreeIntersectionCallback_WithLogger
     bool operator()(const G3D::Ray& r, const GameObjectModel& obj, float& distance)
     {
         TC_LOG_DEBUG("maps", "testing intersection with %s", obj.name.c_str());
-        bool hit = obj.intersectRay(r, distance, true, phase_mask, VMAP::ModelIgnoreFlags::Nothing);
+        bool hit = obj.intersectRay(r, distance, true, phase_mask);
         if (hit)
         {
             did_hit = true;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -50,9 +50,8 @@
 
 BattlegroundMgr::BattlegroundMgr() :
     m_NextRatedArenaUpdate(sWorld->getIntConfig(CONFIG_ARENA_RATED_UPDATE_TIMER)),
-	m_NextBGUpdate(sWorld->getIntConfig(CONFIG_ARENA_RATED_UPDATE_TIMER)),
-	m_NextAutoDistributionTime(0),
-    m_AutoDistributionTimeChecker(0), m_UpdateTimer(0), m_ArenaTesting(false), m_Testing(false)
+    m_NextAutoDistributionTime(0),
+    m_AutoDistributionTimeChecker(0), m_ArenaTesting(false), m_Testing(false)
 { }
 
 BattlegroundMgr::~BattlegroundMgr()
@@ -86,34 +85,28 @@ BattlegroundMgr* BattlegroundMgr::instance()
 // used to update running battlegrounds, and delete finished ones
 void BattlegroundMgr::Update(uint32 diff)
 {
-    m_UpdateTimer += diff;
-    if (m_UpdateTimer > BATTLEGROUND_OBJECTIVE_UPDATE_INTERVAL)
+    for (BattlegroundDataContainer::iterator itr1 = bgDataStore.begin(); itr1 != bgDataStore.end(); ++itr1)
     {
-        for (BattlegroundDataContainer::iterator itr1 = bgDataStore.begin(); itr1 != bgDataStore.end(); ++itr1)
+        BattlegroundContainer& bgs = itr1->second.m_Battlegrounds;
+        BattlegroundContainer::iterator itrDelete = bgs.begin();
+        // first one is template and should not be deleted
+        for (BattlegroundContainer::iterator itr = ++itrDelete; itr != bgs.end();)
         {
-            BattlegroundContainer& bgs = itr1->second.m_Battlegrounds;
-            BattlegroundContainer::iterator itrDelete = bgs.begin();
-            // first one is template and should not be deleted
-            for (BattlegroundContainer::iterator itr = ++itrDelete; itr != bgs.end();)
+            itrDelete = itr++;
+            Battleground* bg = itrDelete->second;
+
+            bg->Update(diff);
+            if (bg->ToBeDeleted())
             {
-                itrDelete = itr++;
-                Battleground* bg = itrDelete->second;
+                itrDelete->second = NULL;
+                bgs.erase(itrDelete);
+                BattlegroundClientIdsContainer& clients = itr1->second.m_ClientBattlegroundIds[bg->GetBracketId()];
+                if (!clients.empty())
+                     clients.erase(bg->GetClientInstanceID());
 
-                bg->Update(m_UpdateTimer);
-                if (bg->ToBeDeleted())
-                {
-                    itrDelete->second = nullptr;
-                    bgs.erase(itrDelete);
-                    BattlegroundClientIdsContainer& clients = itr1->second.m_ClientBattlegroundIds[bg->GetBracketId()];
-                    if (!clients.empty())
-                        clients.erase(bg->GetClientInstanceID());
-
-                    delete bg;
-                }
+                delete bg;
             }
         }
-
-        m_UpdateTimer = 0;
     }
 
     // update events timer
@@ -136,19 +129,7 @@ void BattlegroundMgr::Update(uint32 diff)
             m_BattlegroundQueues[bgQueueTypeId].BattlegroundQueueUpdate(diff, bgTypeId, bracket_id, arenaType, arenaMMRating > 0, arenaMMRating);
         }
     }
-	
-	// forced update for battlegrounds
-	if (m_NextBGUpdate < diff)
-	{
-		for (int qtype = BATTLEGROUND_QUEUE_WS; qtype <= BATTLEGROUND_QUEUE_AB; ++qtype)
-			for (int bracket = BG_BRACKET_ID_FIRST; bracket < MAX_BATTLEGROUND_BRACKETS; ++bracket)
-				m_BattlegroundQueues[qtype].BattlegroundQueueUpdate(diff,
-				(BattlegroundTypeId)qtype, BattlegroundBracketId(bracket),
-				BattlegroundMgr::BGArenaType(BattlegroundQueueTypeId(qtype)), false, 0);
-		}
-	else
-		m_NextBGUpdate -= diff;
-	
+
     // if rating difference counts, maybe force-update queues
     if (sWorld->getIntConfig(CONFIG_ARENA_MAX_RATING_DIFFERENCE) && sWorld->getIntConfig(CONFIG_ARENA_RATED_UPDATE_TIMER))
     {
@@ -856,7 +837,7 @@ void BattlegroundMgr::ScheduleQueueUpdate(uint32 arenaMatchmakerRating, uint8 ar
 {
     //This method must be atomic, @todo add mutex
     //we will use only 1 number created of bgTypeId and bracket_id
-    uint64 const scheduleId = ((uint64)arenaMatchmakerRating << 32) | ((uint64)arenaType << 24) | ((uint64)bgQueueTypeId << 16) | ((uint64)bgTypeId << 8) | (uint64)bracket_id;
+    uint64 const scheduleId = ((uint64)arenaMatchmakerRating << 32) | (uint32(arenaType) << 24) | (bgQueueTypeId << 16) | (bgTypeId << 8) | bracket_id;
     if (std::find(m_QueueUpdateScheduler.begin(), m_QueueUpdateScheduler.end(), scheduleId) == m_QueueUpdateScheduler.end())
         m_QueueUpdateScheduler.push_back(scheduleId);
 }

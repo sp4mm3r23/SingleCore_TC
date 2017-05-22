@@ -57,12 +57,9 @@ int32_t libmpq__decompress_huffman(uint8_t *in_buf, uint32_t in_size, uint8_t *o
 	struct huffman_input_stream_s *is;
 
 	/* allocate memory for the huffman tree. */
-    if ((ht = malloc(sizeof(struct huffman_tree_s))) == NULL) {
-        /* memory allocation problem. */
-        return LIBMPQ_ERROR_MALLOC;
-    }
+	if ((ht = malloc(sizeof(struct huffman_tree_s))) == NULL ||
+	    (is = malloc(sizeof(struct huffman_input_stream_s))) == NULL) {
 
-    if ((is = malloc(sizeof(struct huffman_input_stream_s))) == NULL) {
 		/* memory allocation problem. */
 		return LIBMPQ_ERROR_MALLOC;
 	}

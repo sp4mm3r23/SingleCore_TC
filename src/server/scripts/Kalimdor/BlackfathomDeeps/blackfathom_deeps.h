@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -23,7 +23,7 @@
 
 uint32 const EncounterCount = 3;
 
-enum BFDData64
+enum Data64
 {
     DATA_SHRINE1,
     DATA_SHRINE2,
@@ -35,7 +35,7 @@ enum BFDData64
     DATA_MAINDOOR,
 };
 
-enum BFDData
+enum Data
 {
     DATA_GELIHAST,
     DATA_KELRIS,
@@ -44,7 +44,7 @@ enum BFDData
     DATA_EVENT
 };
 
-enum BFDCreatureIds
+enum CreatureIds
 {
     NPC_TWILIGHT_LORD_KELRIS                               = 4832,
     NPC_LORGUS_JETT                                        = 12902,
@@ -57,7 +57,7 @@ enum BFDCreatureIds
     NPC_MORRIDUNE                                          = 6729
 };
 
-enum BFDGameObjectIds
+enum GameObjectIds
 {
     GO_SHRINE_OF_GELIHAST                                  = 103015,
     GO_FIRE_OF_AKU_MAI_1                                   = 21118,

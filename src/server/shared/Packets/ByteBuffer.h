@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -442,23 +442,10 @@ class TC_SHARED_API ByteBuffer
 
             ASSERT(size() < 10000000);
 
-            size_t const newSize = _wpos + cnt;
-            if (_storage.capacity() < newSize) // custom memory allocation rules
-            {
-                if (newSize < 100)
-                    _storage.reserve(300);
-                else if (newSize < 750)
-                    _storage.reserve(2500);
-                else if (newSize < 6000)
-                    _storage.reserve(10000);
-                else
-                    _storage.reserve(400000);
-            }
-
-            if (_storage.size() < newSize)
-                _storage.resize(newSize);
+            if (_storage.size() < _wpos + cnt)
+                _storage.resize(_wpos + cnt);
             std::memcpy(&_storage[_wpos], src, cnt);
-            _wpos = newSize;
+            _wpos += cnt;
         }
 
         void append(const ByteBuffer& buffer)

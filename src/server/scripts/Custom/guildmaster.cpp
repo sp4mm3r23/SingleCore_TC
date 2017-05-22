@@ -1,5 +1,4 @@
 #include "Config.h"
-#include "ScriptedCreature.h"
 
 #define MSG_GOSSIP_TELE          "Teleport to GuildHouse"
 #define MSG_GOSSIP_BUY           "Buy GuildHouse"
@@ -119,7 +118,7 @@ bool showBuyList(Player *player, Creature *_creature, uint32 showFromId = 0)
 
  //send comment as a gossip item
  //transmit guildhouseId in Action variable
- AddGossipItemFor(player, ICON_GOSSIP_TABARD, comment, GOSSIP_SENDER_MAIN,
+ player->ADD_GOSSIP_ITEM(ICON_GOSSIP_TABARD, comment, GOSSIP_SENDER_MAIN,
  guildhouseId + OFFSET_GH_ID_TO_ACTION);
  }
  while (result->NextRow());
@@ -128,11 +127,11 @@ bool showBuyList(Player *player, Creature *_creature, uint32 showFromId = 0)
  {
  //assume that we have additional page
  //add link to next GOSSIP_COUNT_MAX items
- AddGossipItemFor(player, ICON_GOSSIP_BALOONDOTS, MSG_GOSSIP_NEXTPAGE, GOSSIP_SENDER_MAIN,
+ player->ADD_GOSSIP_ITEM(ICON_GOSSIP_BALOONDOTS, MSG_GOSSIP_NEXTPAGE, GOSSIP_SENDER_MAIN,
  guildhouseId + OFFSET_SHOWBUY_FROM);
  }
 
- SendGossipMenuFor(player, DEFAULT_GOSSIP_MESSAGE, _creature->GetGUID());
+ player->SEND_GOSSIP_MENU(DEFAULT_GOSSIP_MESSAGE, _creature->GetGUID());
 
  return true;
  }
@@ -140,7 +139,7 @@ bool showBuyList(Player *player, Creature *_creature, uint32 showFromId = 0)
  {
  //all guildhouses are occupied
  _creature->Whisper(MSG_NOFREEGH, LANG_UNIVERSAL, player);
- CloseGossipMenuFor(player);
+ player->CLOSE_GOSSIP_MENU();
  }
  else
  {
@@ -246,7 +245,7 @@ void sellGuildhouse(Player *player, Creature *_creature)
  {
  case ACTION_TELE:
  //teleport player to GH
- CloseGossipMenuFor(player);
+ player->CLOSE_GOSSIP_MENU();
  teleportPlayerToGuildHouse(player, _creature);
  break;
  case ACTION_SHOW_BUYLIST:
@@ -255,7 +254,7 @@ void sellGuildhouse(Player *player, Creature *_creature)
  break;
  case ACTION_SELL_GUILDHOUSE:
   sellGuildhouse(player, _creature);
-  CloseGossipMenuFor(player);
+  player->CLOSE_GOSSIP_MENU();
  break;
  default:
  if (action > OFFSET_SHOWBUY_FROM)
@@ -265,7 +264,7 @@ void sellGuildhouse(Player *player, Creature *_creature)
  else if (action > OFFSET_GH_ID_TO_ACTION)
  {
  //player clicked on buy list
- CloseGossipMenuFor(player);
+ player->CLOSE_GOSSIP_MENU();
 
  //get guildhouseId from action
  //guildhouseId = action - OFFSET_GH_ID_TO_ACTION
@@ -280,24 +279,24 @@ void sellGuildhouse(Player *player, Creature *_creature)
 
  bool OnGossipHello(Player *player, Creature *_creature)
  {
- AddGossipItemFor(player, ICON_GOSSIP_BALOON, MSG_GOSSIP_TELE, GOSSIP_SENDER_MAIN, ACTION_TELE);
+ player->ADD_GOSSIP_ITEM(ICON_GOSSIP_BALOON, MSG_GOSSIP_TELE, GOSSIP_SENDER_MAIN, ACTION_TELE);
 
  if (isPlayerGuildLeader(player))
  {
  if (isPlayerHasGuildhouse(player, _creature))
  {
  //and additional for guildhouse owner (Removed :
- AddGossipItemFor(player, ICON_GOSSIP_GOLD, MSG_GOSSIP_SELL, GOSSIP_SENDER_MAIN, ACTION_SELL_GUILDHOUSE, MSG_SELL_CONFIRM, 0, false);
+ player->ADD_GOSSIP_ITEM_EXTENDED(ICON_GOSSIP_GOLD, MSG_GOSSIP_SELL, GOSSIP_SENDER_MAIN, ACTION_SELL_GUILDHOUSE, MSG_SELL_CONFIRM, 0, false);
 
  }
  else
  {
  //show additional menu for guild leader
- AddGossipItemFor(player, ICON_GOSSIP_GOLD, MSG_GOSSIP_BUY, GOSSIP_SENDER_MAIN, ACTION_SHOW_BUYLIST);
+ player->ADD_GOSSIP_ITEM(ICON_GOSSIP_GOLD, MSG_GOSSIP_BUY, GOSSIP_SENDER_MAIN, ACTION_SHOW_BUYLIST);
  }
  }
 
- SendGossipMenuFor(player, DEFAULT_GOSSIP_MESSAGE, _creature->GetGUID());
+ player->SEND_GOSSIP_MENU(DEFAULT_GOSSIP_MESSAGE, _creature->GetGUID());
  return true;
  }
 

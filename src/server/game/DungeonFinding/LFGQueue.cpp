@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -535,7 +535,7 @@ LfgCompatibility LFGQueue::CheckCompatibility(GuidList check)
     for (GuidList::const_iterator it = check.begin(); it != check.end(); ++it)
     {
         ObjectGuid guid = *it;
-        Player *player = ObjectAccessor::FindPlayerByLowGUID(guid);
+        Player *player = sObjectMgr->GetPlayerByLowGUID(guid);
         if (guid.IsGroup() || (player && !player->GetPlayerbotAI()))
         {
             nonBotFound = true;

@@ -496,8 +496,8 @@ class VAS_AutoBalance_AllCreatureScript : public AllCreatureScript
 		creature->SetCreateMana(scaledMana);
 		creature->SetMaxPower(POWER_MANA, scaledMana);
 		creature->SetPower(POWER_MANA, scaledMana);
-		creature->SetStatFlatModifier(UNIT_MOD_HEALTH, BASE_VALUE, (float)scaledHealth);
-		creature->SetStatFlatModifier(UNIT_MOD_MANA, BASE_VALUE, (float)scaledMana);
+		creature->SetModifierValue(UNIT_MOD_HEALTH, BASE_VALUE, (float)scaledHealth);
+		creature->SetModifierValue(UNIT_MOD_MANA, BASE_VALUE, (float)scaledMana);
 		CreatureInfo[creature->GetGUID()].DamageMultiplier = damageMultiplier;
 	}
 };

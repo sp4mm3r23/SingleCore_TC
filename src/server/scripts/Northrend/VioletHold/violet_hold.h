@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -40,7 +40,7 @@ extern Position const PortalIntroPositions[];
  * 7 - Cyanigosa
  */
 
-enum VHData
+enum Data
 {
     // Main encounters
     DATA_1ST_BOSS       = 0,
@@ -83,7 +83,7 @@ enum VHData
     DATA_HANDLE_CELLS
 };
 
-enum VHCreaturesIds
+enum CreaturesIds
 {
     NPC_TELEPORTATION_PORTAL                    = 30679,
     NPC_TELEPORTATION_PORTAL_ELITE              = 32174,
@@ -118,7 +118,7 @@ enum VHCreaturesIds
     NPC_DEFENSE_SYSTEM                          = 30837
 };
 
-enum VHGameObjectIds
+enum GameObjectIds
 {
     GO_MAIN_DOOR                                = 191723,
     GO_XEVOZZ_DOOR                              = 191556,
@@ -133,28 +133,28 @@ enum VHGameObjectIds
     GO_INTRO_ACTIVATION_CRYSTAL                 = 193615
 };
 
-enum VHWorldStateIds
+enum WorldStateIds
 {
     WORLD_STATE_VH_SHOW                         = 3816,
     WORLD_STATE_VH_PRISON_STATE                 = 3815,
     WORLD_STATE_VH_WAVE_COUNT                   = 3810,
 };
 
-enum VHEvents
+enum Events
 {
     EVENT_ACTIVATE_CRYSTAL                      = 20001
 };
 
-enum VHInstanceMisc
+enum InstanceMisc
 {
     ACTION_SINCLARI_OUTRO                       = 1,
     POINT_INTRO                                 = 1
 };
 
-template<class AI, class T>
-inline AI* GetVioletHoldAI(T* obj)
+template<class AI>
+inline AI* GetVioletHoldAI(Creature* creature)
 {
-    return GetInstanceAI<AI>(obj, VioletHoldScriptName);
+    return GetInstanceAI<AI>(creature, VioletHoldScriptName);
 }
 
 #endif // VIOLET_HOLD_H_

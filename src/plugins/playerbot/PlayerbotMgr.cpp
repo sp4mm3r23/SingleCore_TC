@@ -3,7 +3,6 @@
 #include "PlayerbotAIConfig.h"
 #include "PlayerbotFactory.h"
 #include "RandomPlayerbotMgr.h"
-#include "CharacterCache.h"
 
 
 class LoginQueryHolder;
@@ -58,7 +57,6 @@ void PlayerbotHolder::LogoutPlayerBot(uint64 guid)
     if (bot)
     {
         bot->GetPlayerbotAI()->TellMaster("Goodbye!");
-        sLog->outMessage("playerbot", LOG_LEVEL_INFO, "Bot %s logged out", bot->GetName());
         //bot->SaveToDB();
 
         WorldSession * botWorldSessionPtr = bot->GetSession();
@@ -99,7 +97,7 @@ void PlayerbotHolder::OnBotLogin(Player * const bot)
         for (Group::MemberSlotList::const_iterator i = slots.begin(); i != slots.end(); ++i)
         {
             ObjectGuid member = i->guid;
-            uint32 account = sCharacterCache->GetCharacterAccountIdByGuid(member);
+            uint32 account = sObjectMgr->GetPlayerAccountIdByGUID(member);
             if (!sPlayerbotAIConfig.IsInRandomAccountList(account))
             {
                 groupValid = true;
@@ -118,7 +116,6 @@ void PlayerbotHolder::OnBotLogin(Player * const bot)
 
     ai->ResetStrategies();
     ai->TellMaster("Hello!");
-    sLog->outMessage("playerbot", LOG_LEVEL_INFO, "Bot %s logged in", bot->GetName());
 }
 
 string PlayerbotHolder::ProcessBotCommand(string cmd, ObjectGuid guid, bool admin, uint32 masterAccountId, uint32 masterGuildId)
@@ -126,14 +123,14 @@ string PlayerbotHolder::ProcessBotCommand(string cmd, ObjectGuid guid, bool admi
     if (!sPlayerbotAIConfig.enabled || guid.IsEmpty())
         return "bot system is disabled";
 
-    uint32 botAccount = sCharacterCache->GetCharacterAccountIdByGuid(guid);
+    uint32 botAccount = sObjectMgr->GetPlayerAccountIdByGUID(guid);
     bool isRandomBot = sRandomPlayerbotMgr.IsRandomBot(guid);
     bool isRandomAccount = sPlayerbotAIConfig.IsInRandomAccountList(botAccount);
     bool isMasterAccount = (masterAccountId == botAccount);
 
     if (isRandomAccount && !isRandomBot && !admin)
     {
-        Player* bot = ObjectAccessor::FindPlayerByLowGUID(guid);
+        Player* bot = sObjectMgr->GetPlayerByLowGUID(guid);
         if (bot->GetGuildId() != masterGuildId)
             return "not in your guild";
     }
@@ -143,7 +140,7 @@ string PlayerbotHolder::ProcessBotCommand(string cmd, ObjectGuid guid, bool admi
 
     if (cmd == "add" || cmd == "login")
     {
-        if (ObjectAccessor::FindPlayerByLowGUID(guid))
+        if (sObjectMgr->GetPlayerByLowGUID(guid))
             return "player already logged in";
 
         AddPlayerBot(guid.GetRawValue(), masterAccountId);
@@ -151,7 +148,7 @@ string PlayerbotHolder::ProcessBotCommand(string cmd, ObjectGuid guid, bool admi
     }
     else if (cmd == "remove" || cmd == "logout" || cmd == "rm")
     {
-        if (!ObjectAccessor::FindPlayerByLowGUID(guid))
+        if (!sObjectMgr->GetPlayerByLowGUID(guid))
             return "player is offline";
 
         if (!GetPlayerBot(guid.GetRawValue()))
@@ -258,27 +255,15 @@ list<string> PlayerbotHolder::HandlePlayerbotCommand(char const* args, Player* m
 
     if (!*args)
     {
-        messages.push_back("usage: list or add/init/remove PLAYERNAME");
+        messages.push_back("usage: add/init/remove PLAYERNAME");
         return messages;
     }
 
     char *cmd = strtok ((char*)args, " ");
     char *charname = strtok (NULL, " ");
-    if (!cmd)
+    if (!cmd || !charname)
     {
-        messages.push_back("usage: list or add/init/remove PLAYERNAME");
-        return messages;
-    }
-
-    if (!strcmp(cmd, "list"))
-    {
-        messages.push_back(ListBots(master));
-        return messages;
-    }
-
-    if (!charname)
-    {
-        messages.push_back("usage: list or add/init/remove PLAYERNAME");
+        messages.push_back("usage: add/init/remove PLAYERNAME");
         return messages;
     }
 
@@ -304,7 +289,7 @@ list<string> PlayerbotHolder::HandlePlayerbotCommand(char const* args, Player* m
 				continue;
 
 			string bot;
-			if (sCharacterCache->GetCharacterNameByGuid(member, bot))
+			if (sObjectMgr->GetPlayerNameByGUID(member, bot))
 			    bots.insert(bot);
         }
     }
@@ -351,7 +336,7 @@ list<string> PlayerbotHolder::HandlePlayerbotCommand(char const* args, Player* m
         ostringstream out;
         out << cmdStr << ": " << bot << " - ";
 
-        ObjectGuid member = sCharacterCache->GetCharacterGuidByName(bot);
+        ObjectGuid member = sObjectMgr->GetPlayerGUIDByName(bot);
         if (!member)
         {
             out << "character not found";
@@ -388,54 +373,6 @@ uint32 PlayerbotHolder::GetAccountId(string name)
     return accountId;
 }
 
-string PlayerbotHolder::ListBots(Player* master)
-{
-    set<string> bots;
-    map<uint8,string> classNames;
-    classNames[CLASS_DRUID] = "Druid";
-    classNames[CLASS_HUNTER] = "Hunter";
-    classNames[CLASS_MAGE] = "Mage";
-    classNames[CLASS_PALADIN] = "Paladin";
-    classNames[CLASS_PRIEST] = "Priest";
-    classNames[CLASS_ROGUE] = "Rogue";
-    classNames[CLASS_SHAMAN] = "Shaman";
-    classNames[CLASS_WARLOCK] = "Warlock";
-    classNames[CLASS_WARRIOR] = "Warrior";
-    ostringstream out;
-    bool first = true;
-    out << "Bot roster: ";
-    for (PlayerBotMap::const_iterator it = GetPlayerBotsBegin(); it != GetPlayerBotsEnd(); ++it)
-    {
-        Player* const bot = it->second;
-        string name = bot->GetName();
-        bots.insert(name);
-
-        if (first) first = false; else out << ", ";
-        out << "+" << name << " " << classNames[bot->getClass()];
-    }
-
-    if (master)
-    {
-        QueryResult results = CharacterDatabase.PQuery("SELECT class,name FROM tc_characters_19.characters where account = '%u'",
-                master->GetSession()->GetAccountId());
-        if (results != NULL)
-        {
-            do
-            {
-                Field* fields = results->Fetch();
-                uint8 cls = fields[0].GetUInt8();
-                string name = fields[1].GetString();
-                if (bots.find(name) == bots.end() && name != master->GetSession()->GetPlayerName())
-                {
-                    if (first) first = false; else out << ", ";
-                    out << "-" << name << " " << classNames[cls];
-                }
-            } while (results->NextRow());
-        }
-    }
-
-    return out.str();
-}
 
 
 PlayerbotMgr::PlayerbotMgr(Player* const master) : PlayerbotHolder(),  master(master)
@@ -532,3 +469,4 @@ void PlayerbotMgr::OnBotLoginInternal(Player * const bot)
     bot->GetPlayerbotAI()->SetMaster(master);
     bot->GetPlayerbotAI()->ResetStrategies();
 }
+

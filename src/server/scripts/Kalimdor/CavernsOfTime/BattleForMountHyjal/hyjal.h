@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -23,7 +23,7 @@
 
 uint32 const EncounterCount     = 5;
 
-enum HYDataTypes
+enum DataTypes
 {
     DATA_ANETHERON              = 1,
     DATA_ANETHERONEVENT         = 2,
@@ -48,14 +48,14 @@ enum HYDataTypes
     DATA_CHANNEL_TARGET         = 21
 };
 
-enum HYWorldStateIds
+enum WorldStateIds
 {
     WORLD_STATE_WAVES           = 2842,
     WORLD_STATE_ENEMY           = 2453,
     WORLD_STATE_ENEMYCOUNT      = 2454
 };
 
-enum HYCreaturesIds
+enum CreaturesIds
 {
     // Trash Mobs summoned in waves
     NECROMANCER                 = 17899,
@@ -82,7 +82,7 @@ enum HYCreaturesIds
     NPC_CHANNEL_TARGET          = 22418
 };
 
-enum HYGameobjectIds
+enum GameobjectIds
 {
     GO_HORDE_ENCAMPMENT_PORTAL  = 182060,
     GO_NIGHT_ELF_VILLAGE_PORTAL = 182061,

@@ -49,7 +49,7 @@ public:
     virtual bool Accept(const ItemTemplate* proto)
     {
         return proto->Class == ITEM_CLASS_CONSUMABLE &&
-            (proto->SubClass == ITEM_SUBCLASS_CONSUMABLE || proto->SubClass == ITEM_SUBCLASS_FOOD) &&
+            proto->SubClass == ITEM_SUBCLASS_FOOD &&
             proto->Spells[0].SpellCategory == spellCategory;
     }
 
@@ -242,7 +242,7 @@ list<Item*> InventoryAction::parseItems(string text)
         found.insert(visitor.GetResult().begin(), visitor.GetResult().end());
     }
 
-    FindNamedItemVisitor visitor(bot, text);
+    FindUsableNamedItemVisitor visitor(bot, text);
     IterateItems(&visitor, ITERATE_ITEMS_IN_BAGS);
     found.insert(visitor.GetResult().begin(), visitor.GetResult().end());
 

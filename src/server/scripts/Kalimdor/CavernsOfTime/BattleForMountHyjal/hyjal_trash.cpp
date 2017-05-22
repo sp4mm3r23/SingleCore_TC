@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -467,7 +467,7 @@ public:
                 if (Creature* trigger = me->SummonCreature(NPC_WORLD_TRIGGER_TINY, me->GetPositionWithOffset({ 8.0f, 8.0f, frand(25.0f, 35.0f), 0.0f }), TEMPSUMMON_TIMED_DESPAWN, 1000))
                 {
                     trigger->SetVisible(false);
-                    trigger->SetFaction(me->GetFaction());
+                    trigger->setFaction(me->getFaction());
                     trigger->SetDisableGravity(true);
                     trigger->CastSpell(me, SPELL_METEOR, true);
                 }
@@ -574,7 +574,8 @@ public:
             {
                 if ((faction == 0 && LastOverronPos == 17) || (faction == 1 && LastOverronPos == 21))
                 {
-                    me->DespawnOrUnsummon();
+                    me->setDeathState(DEAD);
+                    me->RemoveCorpse();
                 }
             }
         }
@@ -673,7 +674,8 @@ public:
                 me->SetUInt32Value(UNIT_NPC_EMOTESTATE, EMOTE_ONESHOT_ATTACK_UNARMED);
                 if ((faction == 0 && LastOverronPos == 17) || (faction == 1 && LastOverronPos == 21))
                 {
-                    me->DespawnOrUnsummon();
+                    me->setDeathState(DEAD);
+                    me->RemoveCorpse();
                 }
             }
         }
@@ -1172,7 +1174,7 @@ public:
             me->GetPosition(x, y, z);
             z = me->GetMap()->GetHeight(me->GetPhaseMask(), x, y, z);
             me->GetMotionMaster()->MovePoint(0, x, y, z);
-            me->UpdatePosition(x, y, z, 0);
+            me->SetPosition(x, y, z, 0);
         }
 
         void EnterCombat(Unit* /*who*/) override { }
@@ -1290,7 +1292,7 @@ public:
             me->GetPosition(x, y, z);
             z = me->GetMap()->GetHeight(me->GetPhaseMask(), x, y, z);
             me->GetMotionMaster()->MovePoint(0, x, y, z);
-            me->UpdatePosition(x, y, z, 0);
+            me->SetPosition(x, y, z, 0);
             hyjal_trashAI::JustDied(killer);
         }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -155,17 +155,22 @@ public:
 
             DoMeleeAttackIfReady();
         }
+    };
 
-        void QuestAccept(Player* player, Quest const* quest) override
+    bool OnQuestAccept(Player* player, Creature* creature, const Quest* quest) override
+    {
+        if (quest->GetQuestId() == QUEST_SLEEPER_AWAKENED)
         {
-            if (quest->GetQuestId() == QUEST_SLEEPER_AWAKENED)
+            if (npc_kerlonianAI* pKerlonianAI = CAST_AI(npc_kerlonian::npc_kerlonianAI, creature->AI()))
             {
-                me->SetStandState(UNIT_STAND_STATE_STAND);
-                Talk(SAY_KER_START, player);
-                StartFollow(player, FACTION_KER_ESCORTEE, quest);
+                creature->SetStandState(UNIT_STAND_STATE_STAND);
+                creature->AI()->Talk(SAY_KER_START, player);
+                pKerlonianAI->StartFollow(player, FACTION_KER_ESCORTEE, quest);
             }
         }
-    };
+
+        return true;
+    }
 
     CreatureAI* GetAI(Creature* creature) const override
     {
@@ -283,16 +288,20 @@ public:
                 }
             }
         }
-
-        void QuestAccept(Player* player, Quest const* quest) override
-        {
-            if (quest->GetQuestId() == QUEST_ABSENT_MINDED_PT2)
-            {
-                Start(false, false, player->GetGUID());
-                me->SetFaction(FACTION_ESCORTEE);
-            }
-        }
     };
+
+    bool OnQuestAccept(Player* player, Creature* creature, const Quest* quest) override
+    {
+        if (quest->GetQuestId() == QUEST_ABSENT_MINDED_PT2)
+        {
+            if (npc_escortAI* pEscortAI = CAST_AI(npc_prospector_remtravel::npc_prospector_remtravelAI, creature->AI()))
+                pEscortAI->Start(false, false, player->GetGUID());
+
+            creature->setFaction(FACTION_ESCORTEE);
+        }
+
+        return true;
+    }
 
     CreatureAI* GetAI(Creature* creature) const override
     {
@@ -307,7 +316,7 @@ public:
 enum Threshwackonator
 {
     EMOTE_START             = 0,
-    SAY_AT_CLOSE            = 0,
+    SAY_AT_CLOSE            = 1,
     QUEST_GYROMAST_REV      = 2078,
     NPC_GELKAK              = 6667,
     FACTION_HOSTILE         = 14
@@ -335,7 +344,7 @@ public:
             {
                 if (me->IsWithinDistInMap(who, 10.0f))
                 {
-                    who->ToCreature()->AI()->Talk(SAY_AT_CLOSE, who);
+                    Talk(SAY_AT_CLOSE, who);
                     DoAtEnd();
                 }
             }
@@ -343,38 +352,40 @@ public:
 
         void DoAtEnd()
         {
-            me->SetFaction(FACTION_HOSTILE);
+            me->setFaction(FACTION_HOSTILE);
 
             if (Player* pHolder = GetLeaderForFollower())
                 AttackStart(pHolder);
 
             SetFollowComplete(true);
         }
-
-        bool GossipSelect(Player* player, uint32 /*menuId*/, uint32 gossipListId) override
-        {
-            uint32 const action = player->PlayerTalkClass->GetGossipOptionAction(gossipListId);
-            ClearGossipMenuFor(player);
-            if (action == GOSSIP_ACTION_INFO_DEF + 1)
-            {
-                CloseGossipMenuFor(player);
-
-                Talk(EMOTE_START);
-                StartFollow(player);
-            }
-
-            return true;
-        }
-
-        bool GossipHello(Player* player) override
-        {
-            if (player->GetQuestStatus(QUEST_GYROMAST_REV) == QUEST_STATUS_INCOMPLETE)
-                AddGossipItemFor(player, GOSSIP_ICON_CHAT, GOSSIP_ITEM_INSERT_KEY, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF + 1);
-
-            SendGossipMenuFor(player, player->GetGossipTextId(me), me->GetGUID());
-            return true;
-        }
     };
+
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action) override
+    {
+        player->PlayerTalkClass->ClearMenus();
+        if (action == GOSSIP_ACTION_INFO_DEF+1)
+        {
+            player->CLOSE_GOSSIP_MENU();
+
+            if (npc_threshwackonatorAI* pThreshAI = CAST_AI(npc_threshwackonator::npc_threshwackonatorAI, creature->AI()))
+            {
+                creature->AI()->Talk(EMOTE_START);
+                pThreshAI->StartFollow(player);
+            }
+        }
+
+        return true;
+    }
+
+    bool OnGossipHello(Player* player, Creature* creature) override
+    {
+        if (player->GetQuestStatus(QUEST_GYROMAST_REV) == QUEST_STATUS_INCOMPLETE)
+            player->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_ITEM_INSERT_KEY, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+1);
+
+        player->SEND_GOSSIP_MENU(player->GetGossipTextId(creature), creature->GetGUID());
+        return true;
+    }
 
     CreatureAI* GetAI(Creature* creature) const override
     {

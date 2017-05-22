@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -19,7 +19,6 @@
 #include "ScriptedCreature.h"
 #include "ScriptedEscortAI.h"
 #include "ScriptedGossip.h"
-#include "GameObjectAI.h"
 #include "blackrock_depths.h"
 #include "Player.h"
 #include "WorldSession.h"
@@ -27,35 +26,25 @@
 //go_shadowforge_brazier
 class go_shadowforge_brazier : public GameObjectScript
 {
-    public:
-        go_shadowforge_brazier() : GameObjectScript("go_shadowforge_brazier") { }
+public:
+    go_shadowforge_brazier() : GameObjectScript("go_shadowforge_brazier") { }
 
-        struct go_shadowforge_brazierAI : public GameObjectAI
+    bool OnGossipHello(Player* /*player*/, GameObject* go) override
+    {
+        if (InstanceScript* instance = go->GetInstanceScript())
         {
-            go_shadowforge_brazierAI(GameObject* go) : GameObjectAI(go), instance(go->GetInstanceScript()) { }
-
-            InstanceScript* instance;
-
-            bool GossipHello(Player* /*player*/, bool /*reportUse*/) override
-            {
-                if (instance->GetData(TYPE_LYCEUM) == IN_PROGRESS)
-                    instance->SetData(TYPE_LYCEUM, DONE);
-                else
-                    instance->SetData(TYPE_LYCEUM, IN_PROGRESS);
-                // If used brazier open linked doors (North or South)
-                if (me->GetGUID() == instance->GetGuidData(DATA_SF_BRAZIER_N))
-                    instance->HandleGameObject(instance->GetGuidData(DATA_GOLEM_DOOR_N), true);
-                else if (me->GetGUID() == instance->GetGuidData(DATA_SF_BRAZIER_S))
-                    instance->HandleGameObject(instance->GetGuidData(DATA_GOLEM_DOOR_S), true);
-
-                return false;
-            }
-        };
-
-        GameObjectAI* GetAI(GameObject* go) const override
-        {
-            return GetInstanceAI<go_shadowforge_brazierAI>(go);
+            if (instance->GetData(TYPE_LYCEUM) == IN_PROGRESS)
+                instance->SetData(TYPE_LYCEUM, DONE);
+            else
+                instance->SetData(TYPE_LYCEUM, IN_PROGRESS);
+            // If used brazier open linked doors (North or South)
+            if (go->GetGUID() == instance->GetGuidData(DATA_SF_BRAZIER_N))
+                instance->HandleGameObject(instance->GetGuidData(DATA_GOLEM_DOOR_N), true);
+            else if (go->GetGUID() == instance->GetGuidData(DATA_SF_BRAZIER_S))
+                instance->HandleGameObject(instance->GetGuidData(DATA_GOLEM_DOOR_S), true);
         }
+        return false;
+    }
 };
 
 // npc_grimstone
@@ -426,6 +415,98 @@ public:
     };
 };
 
+// npc_kharan_mighthammer
+enum KharamQuests
+{
+    QUEST_4001                          = 4001,
+    QUEST_4342                          = 4342
+};
+
+#define GOSSIP_ITEM_KHARAN_1    "I need to know where the princess are, Kharan!"
+#define GOSSIP_ITEM_KHARAN_2    "All is not lost, Kharan!"
+#define GOSSIP_ITEM_KHARAN_3    "Gor'shak is my friend, you can trust me."
+#define GOSSIP_ITEM_KHARAN_4    "Not enough, you need to tell me more."
+#define GOSSIP_ITEM_KHARAN_5    "So what happened?"
+#define GOSSIP_ITEM_KHARAN_6    "Continue..."
+#define GOSSIP_ITEM_KHARAN_7    "So you suspect that someone on the inside was involved? That they were tipped off?"
+#define GOSSIP_ITEM_KHARAN_8    "Continue with your story please."
+#define GOSSIP_ITEM_KHARAN_9    "Indeed."
+#define GOSSIP_ITEM_KHARAN_10   "The door is open, Kharan. You are a free man."
+
+class npc_kharan_mighthammer : public CreatureScript
+{
+public:
+    npc_kharan_mighthammer() : CreatureScript("npc_kharan_mighthammer") { }
+
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action) override
+    {
+        player->PlayerTalkClass->ClearMenus();
+        switch (action)
+        {
+            case GOSSIP_ACTION_INFO_DEF+1:
+                player->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_ITEM_KHARAN_3, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+2);
+                player->SEND_GOSSIP_MENU(2475, creature->GetGUID());
+                break;
+            case GOSSIP_ACTION_INFO_DEF+2:
+                player->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_ITEM_KHARAN_4, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+3);
+                player->SEND_GOSSIP_MENU(2476, creature->GetGUID());
+                break;
+
+            case GOSSIP_ACTION_INFO_DEF+3:
+                player->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_ITEM_KHARAN_5, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+4);
+                player->SEND_GOSSIP_MENU(2477, creature->GetGUID());
+                break;
+            case GOSSIP_ACTION_INFO_DEF+4:
+                player->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_ITEM_KHARAN_6, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+5);
+                player->SEND_GOSSIP_MENU(2478, creature->GetGUID());
+                break;
+            case GOSSIP_ACTION_INFO_DEF+5:
+                 player->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_ITEM_KHARAN_7, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+6);
+                player->SEND_GOSSIP_MENU(2479, creature->GetGUID());
+                break;
+            case GOSSIP_ACTION_INFO_DEF+6:
+                player->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_ITEM_KHARAN_8, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+7);
+                player->SEND_GOSSIP_MENU(2480, creature->GetGUID());
+                break;
+            case GOSSIP_ACTION_INFO_DEF+7:
+                player->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_ITEM_KHARAN_9, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+8);
+                player->SEND_GOSSIP_MENU(2481, creature->GetGUID());
+                break;
+            case GOSSIP_ACTION_INFO_DEF+8:
+                player->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_ITEM_KHARAN_10, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+9);
+                player->SEND_GOSSIP_MENU(2482, creature->GetGUID());
+                break;
+            case GOSSIP_ACTION_INFO_DEF+9:
+                player->CLOSE_GOSSIP_MENU();
+                if (player->GetTeam() == HORDE)
+                    player->AreaExploredOrEventHappens(QUEST_4001);
+                else
+                    player->AreaExploredOrEventHappens(QUEST_4342);
+                break;
+        }
+        return true;
+    }
+
+    bool OnGossipHello(Player* player, Creature* creature) override
+    {
+        if (creature->IsQuestGiver())
+            player->PrepareQuestMenu(creature->GetGUID());
+
+        if (player->GetQuestStatus(QUEST_4001) == QUEST_STATUS_INCOMPLETE)
+             player->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_ITEM_KHARAN_1, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+1);
+
+        if (player->GetQuestStatus(4342) == QUEST_STATUS_INCOMPLETE)
+            player->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_ITEM_KHARAN_2, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+3);
+
+        if (player->GetTeam() == HORDE)
+            player->SEND_GOSSIP_MENU(2473, creature->GetGUID());
+        else
+            player->SEND_GOSSIP_MENU(2474, creature->GetGUID());
+
+        return true;
+    }
+};
+
 // npc_lokhtos_darkbargainer
 enum Lokhtos
 {
@@ -440,57 +521,45 @@ enum Lokhtos
 
 class npc_lokhtos_darkbargainer : public CreatureScript
 {
-    public:
-        npc_lokhtos_darkbargainer() : CreatureScript("npc_lokhtos_darkbargainer") { }
+public:
+    npc_lokhtos_darkbargainer() : CreatureScript("npc_lokhtos_darkbargainer") { }
 
-        struct npc_lokhtos_darkbargainerAI : public ScriptedAI
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action) override
+    {
+        player->PlayerTalkClass->ClearMenus();
+        if (action == GOSSIP_ACTION_INFO_DEF + 1)
         {
-            npc_lokhtos_darkbargainerAI(Creature* creature) : ScriptedAI(creature) { }
-
-            bool GossipSelect(Player* player, uint32 /*menuId*/, uint32 gossipListId) override
-            {
-                uint32 const action = player->PlayerTalkClass->GetGossipOptionAction(gossipListId);
-
-                ClearGossipMenuFor(player);
-                if (action == GOSSIP_ACTION_INFO_DEF + 1)
-                {
-                    CloseGossipMenuFor(player);
-                    player->CastSpell(player, SPELL_CREATE_THORIUM_BROTHERHOOD_CONTRACT_DND, false);
-                }
-                if (action == GOSSIP_ACTION_TRADE)
-                    player->GetSession()->SendListInventory(me->GetGUID());
-
-                return true;
-            }
-
-            bool GossipHello(Player* player) override
-            {
-                if (me->IsQuestGiver())
-                    player->PrepareQuestMenu(me->GetGUID());
-
-                if (me->IsVendor() && player->GetReputationRank(59) >= REP_FRIENDLY)
-                    AddGossipItemFor(player, GOSSIP_ICON_VENDOR, GOSSIP_ITEM_SHOW_ACCESS, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_TRADE);
-
-                if (!player->GetQuestRewardStatus(QUEST_A_BINDING_CONTRACT) &&
-                    !player->HasItemCount(ITEM_THRORIUM_BROTHERHOOD_CONTRACT, 1, true) &&
-                    player->HasItemCount(ITEM_SULFURON_INGOT))
-                {
-                    AddGossipItemFor(player, GOSSIP_ICON_CHAT, GOSSIP_ITEM_GET_CONTRACT, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF + 1);
-                }
-
-                if (player->GetReputationRank(59) < REP_FRIENDLY)
-                    SendGossipMenuFor(player, 3673, me->GetGUID());
-                else
-                    SendGossipMenuFor(player, 3677, me->GetGUID());
-
-                return true;
-            }
-        };
-
-        CreatureAI* GetAI(Creature* creature) const override
-        {
-            return new npc_lokhtos_darkbargainerAI(creature);
+            player->CLOSE_GOSSIP_MENU();
+            player->CastSpell(player, SPELL_CREATE_THORIUM_BROTHERHOOD_CONTRACT_DND, false);
         }
+        if (action == GOSSIP_ACTION_TRADE)
+            player->GetSession()->SendListInventory(creature->GetGUID());
+
+        return true;
+    }
+
+    bool OnGossipHello(Player* player, Creature* creature) override
+    {
+        if (creature->IsQuestGiver())
+            player->PrepareQuestMenu(creature->GetGUID());
+
+        if (creature->IsVendor() && player->GetReputationRank(59) >= REP_FRIENDLY)
+              player->ADD_GOSSIP_ITEM(GOSSIP_ICON_VENDOR, GOSSIP_ITEM_SHOW_ACCESS, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_TRADE);
+
+        if (player->GetQuestRewardStatus(QUEST_A_BINDING_CONTRACT) != 1 &&
+            !player->HasItemCount(ITEM_THRORIUM_BROTHERHOOD_CONTRACT, 1, true) &&
+            player->HasItemCount(ITEM_SULFURON_INGOT))
+        {
+            player->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_ITEM_GET_CONTRACT, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF + 1);
+        }
+
+        if (player->GetReputationRank(59) < REP_FRIENDLY)
+            player->SEND_GOSSIP_MENU(3673, creature->GetGUID());
+        else
+            player->SEND_GOSSIP_MENU(3677, creature->GetGUID());
+
+        return true;
+    }
 };
 
 // npc_rocknot
@@ -505,6 +574,41 @@ class npc_rocknot : public CreatureScript
 {
 public:
     npc_rocknot() : CreatureScript("npc_rocknot") { }
+
+    bool OnQuestReward(Player* /*player*/, Creature* creature, Quest const* quest, uint32 /*item*/) override
+    {
+        InstanceScript* instance = creature->GetInstanceScript();
+        if (!instance)
+            return true;
+
+        if (instance->GetData(TYPE_BAR) == DONE || instance->GetData(TYPE_BAR) == SPECIAL)
+            return true;
+
+        if (quest->GetQuestId() == QUEST_ALE)
+        {
+            if (instance->GetData(TYPE_BAR) != IN_PROGRESS)
+                instance->SetData(TYPE_BAR, IN_PROGRESS);
+
+            instance->SetData(TYPE_BAR, SPECIAL);
+
+            //keep track of amount in instance script, returns SPECIAL if amount ok and event in progress
+            if (instance->GetData(TYPE_BAR) == SPECIAL)
+            {
+                creature->AI()->Talk(SAY_GOT_BEER);
+                creature->CastSpell(creature, SPELL_DRUNKEN_RAGE, false);
+
+                if (npc_escortAI* escortAI = CAST_AI(npc_rocknot::npc_rocknotAI, creature->AI()))
+                    escortAI->Start(false, false);
+            }
+        }
+
+        return true;
+    }
+
+    CreatureAI* GetAI(Creature* creature) const override
+    {
+        return GetInstanceAI<npc_rocknotAI>(creature);
+    }
 
     struct npc_rocknotAI : public npc_escortAI
     {
@@ -583,7 +687,7 @@ public:
                     //spell by trap has effect61, this indicate the bar go hostile
 
                     if (Unit* tmp = ObjectAccessor::GetUnit(*me, instance->GetGuidData(DATA_PHALANX)))
-                        tmp->SetFaction(14);
+                        tmp->setFaction(14);
 
                     //for later, this event(s) has alot more to it.
                     //optionally, DONE can trigger bar to go hostile.
@@ -595,35 +699,7 @@ public:
 
             npc_escortAI::UpdateAI(diff);
         }
-
-        void QuestReward(Player* /*player*/, Quest const* quest, uint32 /*item*/) override
-        {
-            if (instance->GetData(TYPE_BAR) == DONE || instance->GetData(TYPE_BAR) == SPECIAL)
-                return;
-
-            if (quest->GetQuestId() == QUEST_ALE)
-            {
-                if (instance->GetData(TYPE_BAR) != IN_PROGRESS)
-                    instance->SetData(TYPE_BAR, IN_PROGRESS);
-
-                instance->SetData(TYPE_BAR, SPECIAL);
-
-                //keep track of amount in instance script, returns SPECIAL if amount ok and event in progress
-                if (instance->GetData(TYPE_BAR) == SPECIAL)
-                {
-                    Talk(SAY_GOT_BEER);
-                    DoCastSelf(SPELL_DRUNKEN_RAGE, false);
-
-                    Start(false, false);
-                }
-            }
-        }
     };
-
-    CreatureAI* GetAI(Creature* creature) const override
-    {
-        return GetInstanceAI<npc_rocknotAI>(creature);
-    }
 };
 
 void AddSC_blackrock_depths()
@@ -632,6 +708,7 @@ void AddSC_blackrock_depths()
     new at_ring_of_law();
     new npc_grimstone();
     new npc_phalanx();
+    new npc_kharan_mighthammer();
     new npc_lokhtos_darkbargainer();
     new npc_rocknot();
 }

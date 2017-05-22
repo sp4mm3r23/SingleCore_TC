@@ -7,7 +7,7 @@
 
 #define DataHeader "TCR"
 
-enum TCRDataTypes
+enum DataTypes
 {
     BOSS_BEASTS                 = 0,
     BOSS_JARAXXUS               = 1,
@@ -31,7 +31,7 @@ enum TCRDataTypes
     DECREASE                    = 502,
 };
 
-enum TCRSpellIds
+enum SpellIds
 {
     SPELL_WILFRED_PORTAL        = 68424,
     SPELL_JARAXXUS_CHAINS       = 67924,
@@ -39,7 +39,7 @@ enum TCRSpellIds
     SPELL_DESTROY_FLOOR_KNOCKUP = 68193,
 };
 
-enum TCRMiscData
+enum MiscData
 {
     DESPAWN_TIME                = 1200000
 };
@@ -140,12 +140,12 @@ const Position AnubarakLoc[]=
 
 const Position EndSpawnLoc[]=
 {
-    {648.9167f, 131.0208f, 141.6161f, 0.f}, // 0 - Highlord Tirion Fordring
-    {649.1614f, 142.0399f, 141.3057f, 0.f}, // 1 - Argent Mage
-    {644.6250f, 149.2743f, 140.6015f, 5.f}  // 2 - Portal to Dalaran
+    {648.9167f, 131.0208f, 141.6161f, 0}, // 0 - Highlord Tirion Fordring
+    {649.1614f, 142.0399f, 141.3057f, 0}, // 1 - Argent Mage
+    {644.6250f, 149.2743f, 140.6015f, 0}  // 2 - Portal to Dalaran
 };
 
-enum TCRWorldStateIds
+enum WorldStateIds
 {
     UPDATE_STATE_UI_SHOW            = 4390,
     UPDATE_STATE_UI_COUNT           = 4389
@@ -174,7 +174,7 @@ enum AnnouncerMessages
     MSG_ANUBARAK               = 724006
 };
 
-enum TCRCreatureIds
+enum CreatureIds
 {
     NPC_BARRENT                 = 34816,
     NPC_TIRION                  = 34996,
@@ -238,7 +238,7 @@ enum TCRCreatureIds
     NPC_ANUBARAK                        = 34564
 };
 
-enum TCRGameObjectIds
+enum GameObjectIds
 {
     GO_CRUSADERS_CACHE_10       = 195631,
     GO_CRUSADERS_CACHE_25       = 195632,
@@ -264,7 +264,7 @@ enum TCRGameObjectIds
     GO_PORTAL_TO_DALARAN        = 195682
 };
 
-enum TCRAchievementData
+enum AchievementData
 {
     // Northrend Beasts
     UPPER_BACK_PAIN_10_PLAYER               = 11779,

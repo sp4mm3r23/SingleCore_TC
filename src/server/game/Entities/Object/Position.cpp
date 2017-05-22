@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -20,17 +20,6 @@
 #include "GridDefines.h"
 
 #include <G3D/g3dmath.h>
-#include <G3D/Vector3.h>
-
-Position::Position(G3D::Vector3 const& vect)
-{
-    Relocate(vect.x, vect.y, vect.z, 0.f);
-}
-
-Position::operator G3D::Vector3() const
-{
-    return { m_positionX, m_positionY, m_positionZ };
-}
 
 bool Position::operator==(Position const &a)
 {
@@ -71,12 +60,12 @@ Position Position::GetPositionWithOffset(Position const& offset) const
     return ret;
 }
 
-float Position::GetAngle(Position const* pos) const
+float Position::GetAngle(const Position* obj) const
 {
-    if (!pos)
+    if (!obj)
         return 0;
 
-    return GetAngle(pos->GetPositionX(), pos->GetPositionY());
+    return GetAngle(obj->GetPositionX(), obj->GetPositionY());
 }
 
 // Return angle in range 0..2*pi
@@ -137,12 +126,6 @@ bool Position::IsWithinBox(const Position& center, float xradius, float yradius,
     return true;
 }
 
-bool Position::IsWithinDoubleVerticalCylinder(Position const* center, float radius, float height) const
-{
-    float verticalDelta = GetPositionZ() - center->GetPositionZ();
-    return IsInDist2d(center, radius) && std::abs(verticalDelta) <= height;
-}
-
 bool Position::HasInArc(float arc, const Position* obj, float border) const
 {
     // always have self in arc
@@ -165,12 +148,11 @@ bool Position::HasInArc(float arc, const Position* obj, float border) const
     return ((angle >= lborder) && (angle <= rborder));
 }
 
-bool Position::HasInLine(Position const* pos, float objSize, float width) const
+bool Position::HasInLine(Position const* pos, float width) const
 {
     if (!HasInArc(float(M_PI), pos))
         return false;
 
-    width += objSize;
     float angle = GetRelativeAngle(pos);
     return std::fabs(std::sin(angle)) * GetExactDist2d(pos->GetPositionX(), pos->GetPositionY()) < width;
 }

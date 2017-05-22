@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -23,7 +23,7 @@
 
 uint32 const EncounterCount = 4;
 
-enum HOLDataTypes
+enum DataTypes
 {
     // Encounter States/Boss GUIDs
     DATA_BJARNGRIM          = 0,
@@ -32,7 +32,7 @@ enum HOLDataTypes
     DATA_LOKEN              = 3
 };
 
-enum HOLCreaturesIds
+enum CreaturesIds
 {
     NPC_BJARNGRIM           = 28586,
     NPC_VOLKHAN             = 28587,
@@ -40,7 +40,7 @@ enum HOLCreaturesIds
     NPC_LOKEN               = 28923
 };
 
-enum HOLGameObjectIds
+enum GameObjectIds
 {
     GO_BJARNGRIM_DOOR       = 191416,
     GO_VOLKHAN_DOOR         = 191325,

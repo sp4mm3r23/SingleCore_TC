@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -26,7 +26,6 @@ EndScriptData */
 
 #include "ScriptMgr.h"
 #include "ScriptedCreature.h"
-#include "GameObjectAI.h"
 #include "sunwell_plateau.h"
 #include <math.h>
 #include "Player.h"
@@ -288,7 +287,7 @@ public:
             me->RemoveDynObject(SPELL_RING_OF_BLUE_FLAMES);
             for (uint8 i = 0; i < 4; ++i)
                 if (GameObject* pOrb = GetOrb(i))
-                    pOrb->SetFaction(0);
+                    pOrb->SetUInt32Value(GAMEOBJECT_FACTION, 0);
         }
 
         void EmpowerOrb(bool all)
@@ -305,7 +304,7 @@ public:
                     if (GameObject* pOrb = GetOrb(i))
                     {
                         pOrb->CastSpell(me, SPELL_RING_OF_BLUE_FLAMES);
-                        pOrb->SetFaction(35);
+                        pOrb->SetUInt32Value(GAMEOBJECT_FACTION, 35);
                         pOrb->setActive(true);
                         pOrb->Refresh();
                     }
@@ -317,7 +316,7 @@ public:
                 if (GameObject* pOrb = GetOrb(urand(0, 3)))
                 {
                     pOrb->CastSpell(me, SPELL_RING_OF_BLUE_FLAMES);
-                    pOrb->SetFaction(35);
+                    pOrb->SetUInt32Value(GAMEOBJECT_FACTION, 35);
                     pOrb->setActive(true);
                     pOrb->Refresh();
 
@@ -346,7 +345,7 @@ public:
             {
                 if (GameObject* pOrb = GetOrb(i))
                 {
-                    if (pOrb->GetFaction() == 35)
+                    if (pOrb->GetUInt32Value(GAMEOBJECT_FACTION) == 35)
                     {
                         pOrb->CastSpell(me, SPELL_RING_OF_BLUE_FLAMES);
                         pOrb->setActive(true);
@@ -360,36 +359,25 @@ public:
 
 class go_orb_of_the_blue_flight : public GameObjectScript
 {
-    public:
-        go_orb_of_the_blue_flight() : GameObjectScript("go_orb_of_the_blue_flight") { }
+public:
+    go_orb_of_the_blue_flight() : GameObjectScript("go_orb_of_the_blue_flight") { }
 
-        struct go_orb_of_the_blue_flightAI : public GameObjectAI
+    bool OnGossipHello(Player* player, GameObject* go) override
+    {
+        if (go->GetUInt32Value(GAMEOBJECT_FACTION) == 35)
         {
-            go_orb_of_the_blue_flightAI(GameObject* go) : GameObjectAI(go), instance(go->GetInstanceScript()) { }
+            InstanceScript* instance = go->GetInstanceScript();
+            player->SummonCreature(NPC_POWER_OF_THE_BLUE_DRAGONFLIGHT, player->GetPositionX(), player->GetPositionY(), player->GetPositionZ(), 0.0f, TEMPSUMMON_TIMED_DESPAWN, 121000);
+            player->CastSpell(player, SPELL_VENGEANCE_OF_THE_BLUE_FLIGHT, false);
+            go->SetUInt32Value(GAMEOBJECT_FACTION, 0);
 
-            InstanceScript* instance;
+            if (Creature* pKalec = ObjectAccessor::GetCreature(*player, instance->GetGuidData(DATA_KALECGOS_KJ)))
+                ENSURE_AI(boss_kalecgos_kj::boss_kalecgos_kjAI, pKalec->AI())->SetRingOfBlueFlames();
 
-            bool GossipHello(Player* player, bool /*reportUse*/) override
-            {
-                if (me->GetFaction() == 35)
-                {
-                    player->SummonCreature(NPC_POWER_OF_THE_BLUE_DRAGONFLIGHT, player->GetPositionX(), player->GetPositionY(), player->GetPositionZ(), 0.0f, TEMPSUMMON_TIMED_DESPAWN, 121000);
-                    player->CastSpell(player, SPELL_VENGEANCE_OF_THE_BLUE_FLIGHT, false);
-                    me->SetFaction(0);
-
-                    if (Creature* pKalec = ObjectAccessor::GetCreature(*player, instance->GetGuidData(DATA_KALECGOS_KJ)))
-                        ENSURE_AI(boss_kalecgos_kj::boss_kalecgos_kjAI, pKalec->AI())->SetRingOfBlueFlames();
-
-                    me->Refresh();
-                }
-                return true;
-            }
-        };
-
-        GameObjectAI* GetAI(GameObject* go) const override
-        {
-            return GetSunwellPlateauAI<go_orb_of_the_blue_flightAI>(go);
+            go->Refresh();
         }
+        return true;
+    }
 };
 
 //AI for Kil'jaeden Event Controller
@@ -616,7 +604,7 @@ public:
             else
                 summoned->SetLevel(me->getLevel());
 
-            summoned->SetFaction(me->GetFaction());
+            summoned->setFaction(me->getFaction());
             summons.Summon(summoned);
         }
 
@@ -942,7 +930,7 @@ public:
 
         void JustSummoned(Creature* summoned) override
         {
-            summoned->SetFaction(me->GetFaction());
+            summoned->setFaction(me->getFaction());
             summoned->SetLevel(me->getLevel());
         }
 
@@ -1042,7 +1030,7 @@ public:
 
         void JustSummoned(Creature* summoned) override
         {
-            summoned->SetFaction(me->GetFaction());
+            summoned->setFaction(me->getFaction());
             summoned->SetLevel(me->getLevel());
         }
 
@@ -1180,7 +1168,8 @@ public:
                         uiTimer = 5000;
                         break;
                     case 3:
-                        me->DespawnOrUnsummon();
+                        me->KillSelf();
+                        me->RemoveCorpse();
                         break;
                 }
             } else uiTimer -=diff;
@@ -1372,7 +1361,7 @@ public:
                         DoCastVictim(SPELL_SR_SHOOT, false);
                         uiTimer[2] = urand(4000, 6000);
                     }
-                    if (me->IsWithinMeleeRange(me->GetVictim()))
+                    if (me->IsWithinMeleeRange(me->GetVictim(), 6))
                     {
                         if (uiTimer[0] <= diff)
                         {

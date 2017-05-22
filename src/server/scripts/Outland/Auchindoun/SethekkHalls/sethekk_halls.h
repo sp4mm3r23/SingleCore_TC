@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -23,7 +23,7 @@
 
 uint32 const EncounterCount             = 3;
 
-enum SHDataTypes
+enum DataTypes
 {
     // Encounter States/Boss GUIDs
     DATA_DARKWEAVER_SYTH                = 0,
@@ -34,13 +34,13 @@ enum SHDataTypes
     DATA_TALON_KING_COFFER              = 3
 };
 
-enum SHCreatureIds
+enum CreatureIds
 {
     NPC_ANZU                            = 23035,
     NPC_BROOD_OF_ANZU                   = 23132
 };
 
-enum SHGameObjectIds
+enum GameObjectIds
 {
     GO_IKISS_DOOR                       = 177203,
     GO_TALON_KING_COFFER                = 187372

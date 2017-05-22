@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -26,7 +26,6 @@
 #include "ScriptedCreature.h"
 #include "ScriptedGossip.h"
 #include "ScriptedEscortAI.h"
-#include "GameObjectAI.h"
 #include "Cell.h"
 #include "CellImpl.h"
 #include "GridNotifiers.h"
@@ -463,9 +462,6 @@ class boss_flame_leviathan : public CreatureScript
                             events.CancelEvent(EVENT_FREYA_S_WARD);
                             break;
                     }
-
-                    if (me->HasUnitState(UNIT_STATE_CASTING))
-                        return;
                 }
 
                 DoBatteringRamIfReady();
@@ -608,7 +604,7 @@ class boss_flame_leviathan_seat : public CreatureScript
                     if (Unit* turretPassenger = me->GetVehicleKit()->GetPassenger(SEAT_TURRET))
                         if (Creature* turret = turretPassenger->ToCreature())
                         {
-                            turret->SetFaction(me->GetVehicleBase()->GetFaction());
+                            turret->setFaction(me->GetVehicleBase()->getFaction());
                             turret->SetUInt32Value(UNIT_FIELD_FLAGS, 0); // unselectable
                             turret->AI()->AttackStart(who);
                         }
@@ -637,7 +633,7 @@ class boss_flame_leviathan_seat : public CreatureScript
 
         CreatureAI* GetAI(Creature* creature) const override
         {
-            return GetUlduarAI<boss_flame_leviathan_seatAI>(creature);
+            return GetInstanceAI<boss_flame_leviathan_seatAI>(creature);
         }
 };
 
@@ -693,7 +689,7 @@ class boss_flame_leviathan_defense_cannon : public CreatureScript
 
         CreatureAI* GetAI(Creature* creature) const override
         {
-            return GetUlduarAI<boss_flame_leviathan_defense_cannonAI>(creature);
+            return new boss_flame_leviathan_defense_cannonAI(creature);
         }
 };
 
@@ -722,7 +718,7 @@ class boss_flame_leviathan_defense_turret : public CreatureScript
 
         CreatureAI* GetAI(Creature* creature) const override
         {
-            return GetUlduarAI<boss_flame_leviathan_defense_turretAI>(creature);
+            return new boss_flame_leviathan_defense_turretAI(creature);
         }
 };
 
@@ -759,7 +755,7 @@ class boss_flame_leviathan_overload_device : public CreatureScript
 
         CreatureAI* GetAI(Creature* creature) const override
         {
-            return GetUlduarAI<boss_flame_leviathan_overload_deviceAI>(creature);
+            return new boss_flame_leviathan_overload_deviceAI(creature);
         }
 };
 
@@ -780,7 +776,7 @@ class boss_flame_leviathan_safety_container : public CreatureScript
                 me->GetPosition(x, y, z);
                 z = me->GetMap()->GetHeight(me->GetPhaseMask(), x, y, z);
                 me->GetMotionMaster()->MovePoint(0, x, y, z);
-                me->UpdatePosition(x, y, z, 0);
+                me->SetPosition(x, y, z, 0);
             }
 
             void UpdateAI(uint32 /*diff*/) override
@@ -790,7 +786,7 @@ class boss_flame_leviathan_safety_container : public CreatureScript
 
         CreatureAI* GetAI(Creature* creature) const override
         {
-            return GetUlduarAI<boss_flame_leviathan_safety_containerAI>(creature);
+            return new boss_flame_leviathan_safety_containerAI(creature);
         }
 };
 
@@ -859,7 +855,7 @@ class npc_mechanolift : public CreatureScript
 
         CreatureAI* GetAI(Creature* creature) const override
         {
-            return GetUlduarAI<npc_mechanoliftAI>(creature);
+            return new npc_mechanoliftAI(creature);
         }
 };
 
@@ -893,7 +889,7 @@ class npc_pool_of_tar : public CreatureScript
 
         CreatureAI* GetAI(Creature* creature) const override
         {
-            return GetUlduarAI<npc_pool_of_tarAI>(creature);
+            return new npc_pool_of_tarAI(creature);
         }
 };
 
@@ -928,7 +924,7 @@ class npc_colossus : public CreatureScript
 
         CreatureAI* GetAI(Creature* creature) const override
         {
-            return GetUlduarAI<npc_colossusAI>(creature);
+            return GetInstanceAI<npc_colossusAI>(creature);
         }
 };
 
@@ -966,7 +962,7 @@ class npc_thorims_hammer : public CreatureScript
 
         CreatureAI* GetAI(Creature* creature) const override
         {
-            return GetUlduarAI<npc_thorims_hammerAI>(creature);
+            return new npc_thorims_hammerAI(creature);
         }
 };
 
@@ -974,6 +970,11 @@ class npc_mimirons_inferno : public CreatureScript
 {
 public:
     npc_mimirons_inferno() : CreatureScript("npc_mimirons_inferno") { }
+
+    CreatureAI* GetAI(Creature* creature) const override
+    {
+        return new npc_mimirons_infernoAI(creature);
+    }
 
     struct npc_mimirons_infernoAI : public npc_escortAI
     {
@@ -1027,10 +1028,6 @@ public:
         }
     };
 
-    CreatureAI* GetAI(Creature* creature) const override
-    {
-        return GetUlduarAI<npc_mimirons_infernoAI>(creature);
-    }
 };
 
 class npc_hodirs_fury : public CreatureScript
@@ -1067,7 +1064,7 @@ class npc_hodirs_fury : public CreatureScript
 
         CreatureAI* GetAI(Creature* creature) const override
         {
-            return GetUlduarAI<npc_hodirs_furyAI>(creature);
+            return new npc_hodirs_furyAI(creature);
         }
 };
 
@@ -1116,7 +1113,7 @@ class npc_freyas_ward : public CreatureScript
 
         CreatureAI* GetAI(Creature* creature) const override
         {
-            return GetUlduarAI<npc_freyas_wardAI>(creature);
+            return new npc_freyas_wardAI(creature);
         }
 };
 
@@ -1164,7 +1161,7 @@ class npc_freya_ward_summon : public CreatureScript
 
         CreatureAI* GetAI(Creature* creature) const override
         {
-            return GetUlduarAI<npc_freya_ward_summonAI>(creature);
+            return new npc_freya_ward_summonAI(creature);
         }
 };
 
@@ -1186,7 +1183,7 @@ class npc_brann_bronzebeard_ulduar_intro : public CreatureScript
                 _instance = creature->GetInstanceScript();
             }
 
-            bool GossipSelect(Player* player, uint32 menuId, uint32 gossipListId) override
+            void sGossipSelect(Player* player, uint32 menuId, uint32 gossipListId) override
             {
                 if (menuId == GOSSIP_MENU_BRANN_BRONZEBEARD && gossipListId == GOSSIP_OPTION_BRANN_BRONZEBEARD)
                 {
@@ -1195,7 +1192,6 @@ class npc_brann_bronzebeard_ulduar_intro : public CreatureScript
                     if (Creature* loreKeeper = _instance->GetCreature(DATA_LORE_KEEPER_OF_NORGANNON))
                         loreKeeper->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
                 }
-                return false;
             }
 
         private:
@@ -1240,7 +1236,7 @@ class npc_lorekeeper : public CreatureScript
                 }
             }
 
-            bool GossipSelect(Player* player, uint32 menuId, uint32 gossipListId) override
+            void sGossipSelect(Player* player, uint32 menuId, uint32 gossipListId) override
             {
                 if (menuId == GOSSIP_MENU_LORE_KEEPER && gossipListId == GOSSIP_OPTION_LORE_KEEPER)
                 {
@@ -1248,7 +1244,7 @@ class npc_lorekeeper : public CreatureScript
                     player->PlayerTalkClass->SendCloseGossip();
                     _instance->instance->LoadGrid(364, -16); // make sure leviathan is loaded
 
-                    if (Creature* leviathan = _instance->GetCreature(BOSS_LEVIATHAN))
+                    if (Creature* leviathan = _instance->instance->GetCreature(_instance->GetGuidData(BOSS_LEVIATHAN)))
                     {
                         leviathan->AI()->DoAction(ACTION_START_HARD_MODE);
                         me->SetVisible(false);
@@ -1264,7 +1260,6 @@ class npc_lorekeeper : public CreatureScript
                         }
                     }
                 }
-                return false;
             }
 
         private:
@@ -1273,7 +1268,7 @@ class npc_lorekeeper : public CreatureScript
 
         CreatureAI* GetAI(Creature* creature) const override
         {
-            return GetUlduarAI<npc_lorekeeperAI>(creature);
+            return new npc_lorekeeperAI(creature);
         }
 };
 
@@ -1282,38 +1277,30 @@ class go_ulduar_tower : public GameObjectScript
     public:
         go_ulduar_tower() : GameObjectScript("go_ulduar_tower") { }
 
-        struct go_ulduar_towerAI : public GameObjectAI
+        void OnDestroyed(GameObject* go, Player* /*player*/) override
         {
-            go_ulduar_towerAI(GameObject* go) : GameObjectAI(go), instance(go->GetInstanceScript()) { }
+            InstanceScript* instance = go->GetInstanceScript();
+            if (!instance)
+                return;
 
-            InstanceScript* instance;
-
-            void Destroyed(Player* /*player*/, uint32 /*eventId*/) override
+            switch (go->GetEntry())
             {
-                switch (me->GetEntry())
-                {
-                    case GO_TOWER_OF_STORMS:
-                        instance->ProcessEvent(me, EVENT_TOWER_OF_STORM_DESTROYED);
-                        break;
-                    case GO_TOWER_OF_FLAMES:
-                        instance->ProcessEvent(me, EVENT_TOWER_OF_FLAMES_DESTROYED);
-                        break;
-                    case GO_TOWER_OF_FROST:
-                        instance->ProcessEvent(me, EVENT_TOWER_OF_FROST_DESTROYED);
-                        break;
-                    case GO_TOWER_OF_LIFE:
-                        instance->ProcessEvent(me, EVENT_TOWER_OF_LIFE_DESTROYED);
-                        break;
-                }
-
-                if (Creature* trigger = me->FindNearestCreature(NPC_ULDUAR_GAUNTLET_GENERATOR, 15.0f, true))
-                    trigger->DisappearAndDie();
+                case GO_TOWER_OF_STORMS:
+                    instance->ProcessEvent(go, EVENT_TOWER_OF_STORM_DESTROYED);
+                    break;
+                case GO_TOWER_OF_FLAMES:
+                    instance->ProcessEvent(go, EVENT_TOWER_OF_FLAMES_DESTROYED);
+                    break;
+                case GO_TOWER_OF_FROST:
+                    instance->ProcessEvent(go, EVENT_TOWER_OF_FROST_DESTROYED);
+                    break;
+                case GO_TOWER_OF_LIFE:
+                    instance->ProcessEvent(go, EVENT_TOWER_OF_LIFE_DESTROYED);
+                    break;
             }
-        };
 
-        GameObjectAI* GetAI(GameObject* go) const override
-        {
-            return GetUlduarAI<go_ulduar_towerAI>(go);
+            if (Creature* trigger = go->FindNearestCreature(NPC_ULDUAR_GAUNTLET_GENERATOR, 15.0f, true))
+                trigger->DisappearAndDie();
         }
 };
 

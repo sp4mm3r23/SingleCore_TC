@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -23,7 +23,7 @@
 
 uint32 const EncounterCount = 4;
 
-enum SLDataTypes
+enum DataTypes
 {
     // Encounter States/Boss GUIDs
     DATA_AMBASSADOR_HELLMAW             = 0,
@@ -35,20 +35,20 @@ enum SLDataTypes
     DATA_FEL_OVERSEER                   = 4
 };
 
-enum SLCreatureIds
+enum CreatureIds
 {
     NPC_AMBASSADOR_HELLMAW              = 18731,
     NPC_GRANDMASTER_VORPIL              = 18732,
     NPC_FEL_OVERSEER                    = 18796
 };
 
-enum SLGameObjectIds
+enum GameObjectIds
 {
     GO_REFECTORY_DOOR                   = 183296, // door opened when blackheart the inciter dies
     GO_SCREAMING_HALL_DOOR              = 183295  // door opened when grandmaster vorpil dies
 };
 
-enum SLMisc
+enum Misc
 {
     ACTION_AMBASSADOR_HELLMAW_INTRO     = 1,
     ACTION_AMBASSADOR_HELLMAW_BANISH    = 2,
@@ -61,3 +61,4 @@ AI* GetShadowLabyrinthAI(Creature* creature)
 }
 
 #endif // SHADOW_LABYRINTH_H_
+

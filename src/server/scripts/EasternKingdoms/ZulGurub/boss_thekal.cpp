@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -76,13 +76,6 @@ enum Phases
     PHASE_TWO                 = 2
 };
 
-// AWFUL HACK WARNING
-// To whoever reads this: Zul'Gurub needs your love
-// Need to do this calculation to increase/decrease Thekal's damage by 40% (probably some aura missing)
-// This is only to compile the scripts after the aura calculation revamp
-float const DamageIncrease = 40.0f;
-float const DamageDecrease = 100.f / (1.f + DamageIncrease / 100.f) - 100.f;
-
 class boss_thekal : public CreatureScript
 {
     public:
@@ -107,7 +100,7 @@ class boss_thekal : public CreatureScript
             void Reset() override
             {
                 if (events.IsInPhase(PHASE_TWO))
-                    me->ApplyStatPctModifier(UNIT_MOD_DAMAGE_MAINHAND, TOTAL_PCT, DamageDecrease); // hack
+                    me->HandleStatModifier(UNIT_MOD_DAMAGE_MAINHAND, TOTAL_PCT, 35.0f, false); // hack
                 _Reset();
                 Initialize();
             }
@@ -169,7 +162,7 @@ class boss_thekal : public CreatureScript
                                 me->SetBaseWeaponDamage(BASE_ATTACK, MAXDAMAGE, (cinfo->maxdmg +((cinfo->maxdmg/100) * 40)));
                                 me->UpdateDamagePhysical(BASE_ATTACK);
                                 */
-                                me->ApplyStatPctModifier(UNIT_MOD_DAMAGE_MAINHAND, TOTAL_PCT, DamageIncrease); // hack
+                                me->HandleStatModifier(UNIT_MOD_DAMAGE_MAINHAND, TOTAL_PCT, 40.0f, true); // hack
                                 DoResetThreat();
                                 events.ScheduleEvent(EVENT_FRENZY, 30000, 0, PHASE_TWO);          // Phase 2
                                 events.ScheduleEvent(EVENT_FORCEPUNCH, 4000, 0, PHASE_TWO);       // Phase 2
@@ -190,7 +183,7 @@ class boss_thekal : public CreatureScript
                                     if (Unit* pLorKhan = ObjectAccessor::GetUnit(*me, instance->GetGuidData(DATA_LORKHAN)))
                                     {
                                         pLorKhan->SetUInt32Value(UNIT_FIELD_BYTES_1, 0);
-                                        pLorKhan->SetFaction(14);
+                                        pLorKhan->setFaction(14);
                                         pLorKhan->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
                                         pLorKhan->SetFullHealth();
                                         instance->SetData(DATA_LORKHAN, DONE);
@@ -203,7 +196,7 @@ class boss_thekal : public CreatureScript
                                     if (Unit* pZath = ObjectAccessor::GetUnit(*me, instance->GetGuidData(DATA_ZATH)))
                                     {
                                         pZath->SetUInt32Value(UNIT_FIELD_BYTES_1, 0);
-                                        pZath->SetFaction(14);
+                                        pZath->setFaction(14);
                                         pZath->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
                                         pZath->SetFullHealth();
                                         instance->SetBossState(DATA_ZATH, DONE);
@@ -259,9 +252,6 @@ class boss_thekal : public CreatureScript
                         instance->SetBossState(DATA_THEKAL, SPECIAL);
                         WasDead=true;
                     }
-
-                    if (me->HasUnitState(UNIT_STATE_CASTING))
-                        return;
                 }
                 DoMeleeAttackIfReady();
             }
@@ -381,7 +371,7 @@ class npc_zealot_lorkhan : public CreatureScript
                         {
                             pThekal->SetUInt32Value(UNIT_FIELD_BYTES_1, 0);
                             pThekal->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
-                            pThekal->SetFaction(14);
+                            pThekal->setFaction(14);
                             pThekal->SetFullHealth();
                         }
                     }
@@ -393,7 +383,7 @@ class npc_zealot_lorkhan : public CreatureScript
                         {
                             pZath->SetUInt32Value(UNIT_FIELD_BYTES_1, 0);
                             pZath->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
-                            pZath->SetFaction(14);
+                            pZath->setFaction(14);
                             pZath->SetFullHealth();
                         }
                     }
@@ -408,7 +398,7 @@ class npc_zealot_lorkhan : public CreatureScript
                     me->RemoveAurasByType(SPELL_AURA_PERIODIC_LEECH);
                     me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
                     me->SetStandState(UNIT_STAND_STATE_SLEEP);
-                    me->SetFaction(35);
+                    me->setFaction(35);
                     me->AttackStop();
 
                     instance->SetBossState(DATA_LORKHAN, SPECIAL);
@@ -531,7 +521,7 @@ class npc_zealot_zath : public CreatureScript
                         {
                             pLorKhan->SetUInt32Value(UNIT_FIELD_BYTES_1, 0);
                             pLorKhan->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
-                            pLorKhan->SetFaction(14);
+                            pLorKhan->setFaction(14);
                             pLorKhan->SetFullHealth();
                         }
                     }
@@ -543,7 +533,7 @@ class npc_zealot_zath : public CreatureScript
                         {
                             pThekal->SetUInt32Value(UNIT_FIELD_BYTES_1, 0);
                             pThekal->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
-                            pThekal->SetFaction(14);
+                            pThekal->setFaction(14);
                             pThekal->SetFullHealth();
                         }
                     }
@@ -558,7 +548,7 @@ class npc_zealot_zath : public CreatureScript
                     me->RemoveAurasByType(SPELL_AURA_PERIODIC_LEECH);
                     me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
                     me->SetStandState(UNIT_STAND_STATE_SLEEP);
-                    me->SetFaction(35);
+                    me->setFaction(35);
                     me->AttackStop();
 
                     instance->SetBossState(DATA_ZATH, SPECIAL);

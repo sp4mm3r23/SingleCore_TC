@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -56,16 +56,17 @@ class npc_beaten_corpse : public CreatureScript
 
         struct npc_beaten_corpseAI : public ScriptedAI
         {
-            npc_beaten_corpseAI(Creature* creature) : ScriptedAI(creature) { }
+            npc_beaten_corpseAI(Creature* creature) : ScriptedAI(creature)
+            {
+            }
 
-            bool GossipSelect(Player* player, uint32 menuId, uint32 gossipListId) override
+            void sGossipSelect(Player* player, uint32 menuId, uint32 gossipListId) override
             {
                 if (menuId == GOSSIP_MENU_OPTION_INSPECT_BODY && gossipListId == GOSSIP_OPTION_ID_BEATEN_CORPSE)
                 {
-                    CloseGossipMenuFor(player);
+                    player->CLOSE_GOSSIP_MENU();
                     player->TalkedToCreature(me->GetEntry(), me->GetGUID());
                 }
-                return false;
             }
         };
 
@@ -99,6 +100,26 @@ class npc_gilthares : public CreatureScript
 {
 public:
     npc_gilthares() : CreatureScript("npc_gilthares") { }
+
+    bool OnQuestAccept(Player* player, Creature* creature, const Quest* quest) override
+    {
+        if (quest->GetQuestId() == QUEST_FREE_FROM_HOLD)
+        {
+            creature->setFaction(FACTION_ESCORTEE);
+            creature->SetStandState(UNIT_STAND_STATE_STAND);
+
+            creature->AI()->Talk(SAY_GIL_START, player);
+
+            if (npc_giltharesAI* pEscortAI = CAST_AI(npc_gilthares::npc_giltharesAI, creature->AI()))
+                pEscortAI->Start(false, false, player->GetGUID(), quest);
+        }
+        return true;
+    }
+
+    CreatureAI* GetAI(Creature* creature) const override
+    {
+        return new npc_giltharesAI(creature);
+    }
 
     struct npc_giltharesAI : public npc_escortAI
     {
@@ -149,24 +170,8 @@ public:
                 Talk(SAY_GIL_AGGRO, who);
             }
         }
-
-        void QuestAccept(Player* player, Quest const* quest) override
-        {
-            if (quest->GetQuestId() == QUEST_FREE_FROM_HOLD)
-            {
-                me->SetFaction(FACTION_ESCORTEE);
-                me->SetStandState(UNIT_STAND_STATE_STAND);
-
-                Talk(SAY_GIL_START, player);
-                Start(false, false, player->GetGUID(), quest);
-            }
-        }
     };
 
-    CreatureAI* GetAI(Creature* creature) const override
-    {
-        return new npc_giltharesAI(creature);
-    }
 };
 
 /*######
@@ -195,7 +200,7 @@ public:
         npc_taskmaster_fizzuleAI(Creature* creature) : ScriptedAI(creature)
         {
             Initialize();
-            factionNorm = creature->GetFaction();
+            factionNorm = creature->getFaction();
         }
 
         void Initialize()
@@ -213,7 +218,7 @@ public:
         void Reset() override
         {
             Initialize();
-            me->SetFaction(factionNorm);
+            me->setFaction(factionNorm);
         }
 
         void DoFriend()
@@ -225,7 +230,7 @@ public:
             me->StopMoving();
             me->GetMotionMaster()->MoveIdle();
 
-            me->SetFaction(FACTION_FRIENDLY_F);
+            me->setFaction(FACTION_FRIENDLY_F);
             me->HandleEmoteCommand(EMOTE_ONESHOT_SALUTE);
         }
 
@@ -265,7 +270,7 @@ public:
             {
                 if (FlareCount >= 2)
                 {
-                    if (me->GetFaction() == FACTION_FRIENDLY_F)
+                    if (me->getFaction() == FACTION_FRIENDLY_F)
                         return;
 
                     DoFriend();
@@ -418,7 +423,7 @@ public:
                             Creature* creature = me->SummonCreature(NPC_AFFRAY_CHALLENGER, AffrayChallengerLoc[i], TEMPSUMMON_TIMED_OR_DEAD_DESPAWN, 600000);
                             if (!creature)
                                 continue;
-                            creature->SetFaction(35);
+                            creature->setFaction(35);
                             creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
                             creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
                             creature->HandleEmoteCommand(EMOTE_ONESHOT_ROAR);
@@ -459,7 +464,7 @@ public:
                                 creature->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
                                 creature->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
                                 creature->HandleEmoteCommand(EMOTE_ONESHOT_ROAR);
-                                creature->SetFaction(14);
+                                creature->setFaction(14);
                                 creature->AI()->AttackStart(warrior);
                                 ++Wave;
                                 WaveTimer = 20000;
@@ -491,7 +496,7 @@ public:
                                 creature->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
                                 creature->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
                                 creature->HandleEmoteCommand(EMOTE_ONESHOT_ROAR);
-                                creature->SetFaction(14);
+                                creature->setFaction(14);
                                 creature->AI()->AttackStart(warrior);
                             }
                         }
@@ -646,17 +651,19 @@ public:
 
             DoMeleeAttackIfReady();
         }
-
-        void QuestAccept(Player* player, Quest const* quest) override
-        {
-            if (quest->GetQuestId() == QUEST_ESCAPE)
-            {
-                me->SetFaction(FACTION_RATCHET);
-                Talk(SAY_START);
-                Start(true, false, player->GetGUID());
-            }
-        }
     };
+
+    bool OnQuestAccept(Player* player, Creature* creature, Quest const* quest) override
+    {
+        if (quest->GetQuestId() == QUEST_ESCAPE)
+        {
+            creature->setFaction(FACTION_RATCHET);
+            creature->AI()->Talk(SAY_START);
+            if (npc_escortAI* pEscortAI = CAST_AI(npc_wizzlecrank_shredder::npc_wizzlecrank_shredderAI, creature->AI()))
+                pEscortAI->Start(true, false, player->GetGUID());
+        }
+        return true;
+    }
 
     CreatureAI* GetAI(Creature* creature) const override
     {

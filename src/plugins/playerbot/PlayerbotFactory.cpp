@@ -2,7 +2,7 @@
 #include "playerbot.h"
 #include "PlayerbotFactory.h"
 #include "../../server/game/Guilds/GuildMgr.h"
-#include "../Entities/Item/ItemTemplate.h"
+#include "../ItemPrototype.h"
 #include "PlayerbotAIConfig.h"
 #include "../../shared/DataStores/DBCStore.h"
 #include "../Miscellaneous/SharedDefines.h"
@@ -92,9 +92,7 @@ void PlayerbotFactory::Randomize(bool incremental)
     bot->SaveToDB();
 
     sLog->outMessage("playerbot", LOG_LEVEL_INFO, "Initializing quests...");
-/*  Disabled, causing Worldserver to crash.
-    InitQuests();
-*/ 
+    //InitQuests();
     // quest rewards boost bot level, so reduce back
     bot->SetLevel(level);
     ClearInventory();
@@ -212,8 +210,8 @@ void PlayerbotFactory::InitPet()
                 continue;
             }
 
-            pet->UpdatePosition(bot->GetPositionX(), bot->GetPositionY(), bot->GetPositionZ(), bot->GetOrientation());
-            pet->SetFaction(bot->GetFaction());
+            pet->SetPosition(bot->GetPositionX(), bot->GetPositionY(), bot->GetPositionZ(), bot->GetOrientation());
+            pet->setFaction(bot->getFaction());
             pet->SetLevel(bot->getLevel());
             bot->SetPetGUID(pet->GetGUID());
             bot->GetMap()->AddToMap(pet->ToCreature());
@@ -1089,18 +1087,18 @@ void PlayerbotFactory::InitAvailableSpells()
             if (!tSpell)
                 continue;
 
-            if (!tSpell->ReqAbility[0] && !bot->IsSpellFitByClassAndRace(tSpell->ReqAbility[0]))
+            if (!tSpell->learnedSpell[0] && !bot->IsSpellFitByClassAndRace(tSpell->learnedSpell[0]))
                 continue;
 
             TrainerSpellState state = bot->GetTrainerSpellState(tSpell);
             if (state != TRAINER_SPELL_GREEN)
                 continue;
 
-            if (tSpell->ReqAbility)
-                bot->LearnSpell(tSpell->ReqAbility[0], false);
+            if (tSpell->learnedSpell)
+                bot->LearnSpell(tSpell->learnedSpell[0], false);
             else
-			bot->LearnSpell(tSpell->SpellID, false);
-		}
+                ai->CastSpell(tSpell->spell, bot);
+        }
     }
 }
 
@@ -1111,25 +1109,6 @@ void PlayerbotFactory::InitSpecialSpells()
         uint32 spellId = *i;
         bot->LearnSpell(spellId, false);
     }
-	//Mounts
-	if (bot->getLevel() > 20 && bot->GetTeamId()==TeamId::TEAM_ALLIANCE)
-	{
-		bot->LearnSpell(6899, false);
-	}
-	if (bot->getLevel() > 20 && bot->GetTeamId() == TeamId::TEAM_HORDE)
-	{
-		bot->LearnSpell(8395, false);
-
-	}
-	if (bot->getLevel() > 40 && bot->GetTeamId() == TeamId::TEAM_ALLIANCE)
-	{
-		bot->LearnSpell(23240, false);
-
-	}
-	if (bot->getLevel() > 40 && bot->GetTeamId() == TeamId::TEAM_HORDE)
-	{
-		bot->LearnSpell(23242, false);
-	}	
 }
 
 void PlayerbotFactory::InitTalents(uint32 specNo)
@@ -1212,7 +1191,7 @@ ObjectGuid PlayerbotFactory::GetRandomBot()
         {
             Field* fields = result->Fetch();
             ObjectGuid guid = ObjectGuid(HighGuid::Player, fields[0].GetUInt32());
-            if (!ObjectAccessor::FindPlayerByLowGUID(guid))
+            if (!sObjectMgr->GetPlayerByLowGUID(guid))
                 guids.push_back(guid);
         } while (result->NextRow());
     }
@@ -1223,13 +1202,13 @@ ObjectGuid PlayerbotFactory::GetRandomBot()
     int index = urand(0, guids.size() - 1);
     return guids[index];
 }
-/*
+
 void AddPrevQuests(uint32 questId, list<uint32>& questIds)
 {
     Quest const *quest = sObjectMgr->GetQuestTemplate(questId);
     for (Quest::PrevQuests::const_iterator iter = quest->prevQuests.begin(); iter != quest->prevQuests.end(); ++iter)
     {
-        uint32 prevId = std::abs(*iter);
+        uint32 prevId = abs(*iter);
         AddPrevQuests(prevId, questIds);
         questIds.push_back(prevId);
     }
@@ -1270,7 +1249,7 @@ void PlayerbotFactory::InitQuests()
         ClearInventory();
     }
 }
-*/
+
 void PlayerbotFactory::ClearInventory()
 {
     DestroyItemsVisitor visitor(bot);
@@ -1745,7 +1724,6 @@ void PlayerbotFactory::InitGuild()
     }
 
     int index = urand(0, guilds.size() - 1);
-	SQLTransaction trans(nullptr);
     uint32 guildId = guilds[index];
     Guild* guild = sGuildMgr->GetGuildById(guildId);
     if (!guild)
@@ -1755,5 +1733,5 @@ void PlayerbotFactory::InitGuild()
     }
 
     if (guild->GetMemberCount() < 20)
-        guild->AddMember(trans, bot->GetGUID(), urand(GR_OFFICER, GR_INITIATE));
+        guild->AddMember(bot->GetGUID(), urand(GR_OFFICER, GR_INITIATE));
 }

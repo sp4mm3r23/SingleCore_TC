@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -70,11 +70,12 @@ class boss_halazzi : public CreatureScript
     public:
         boss_halazzi() : CreatureScript("boss_halazzi") { }
 
-        struct boss_halazziAI : public BossAI
+        struct boss_halazziAI : public ScriptedAI
         {
-            boss_halazziAI(Creature* creature) : BossAI(creature, BOSS_HALAZZI)
+            boss_halazziAI(Creature* creature) : ScriptedAI(creature), summons(me)
             {
                 Initialize();
+                instance = creature->GetInstanceScript();
                 Phase = PHASE_NONE;
                 FrenzyTimer = 0;
                 SaberlashTimer = 0;
@@ -90,6 +91,8 @@ class boss_halazzi : public CreatureScript
                 CheckTimer = 1000;
             }
 
+            InstanceScript* instance;
+            SummonList summons;
             PhaseHalazzi Phase;
 
             uint32 FrenzyTimer;
@@ -104,7 +107,9 @@ class boss_halazzi : public CreatureScript
 
             void Reset() override
             {
-                _Reset();
+                instance->SetData(DATA_HALAZZIEVENT, NOT_STARTED);
+                summons.DespawnAll();
+
                 Initialize();
 
                 DoCast(me, SPELL_DUAL_WIELD, true);
@@ -115,7 +120,7 @@ class boss_halazzi : public CreatureScript
 
             void EnterCombat(Unit* /*who*/) override
             {
-                _EnterCombat();
+                instance->SetData(DATA_HALAZZIEVENT, IN_PROGRESS);
                 Talk(SAY_AGGRO);
                 EnterPhase(PHASE_LYNX);
             }
@@ -150,49 +155,49 @@ class boss_halazzi : public CreatureScript
             {
                 switch (NextPhase)
                 {
-                    case PHASE_LYNX:
-                    case PHASE_ENRAGE:
-                        if (Phase == PHASE_MERGE)
-                        {
-                            DoCast(me, SPELL_TRANSFORM_MERGE, true);
-                            me->Attack(me->GetVictim(), true);
-                            me->GetMotionMaster()->MoveChase(me->GetVictim());
-                        }
-                        if (Creature* Lynx = ObjectAccessor::GetCreature(*me, LynxGUID))
-                            Lynx->DisappearAndDie();
-                        me->SetMaxHealth(600000);
-                        me->SetHealth(600000 - 150000 * TransformCount);
-                        FrenzyTimer = 16000;
-                        SaberlashTimer = 20000;
-                        ShockTimer = 10000;
-                        TotemTimer = 12000;
-                        break;
-                    case PHASE_SPLIT:
-                        Talk(SAY_SPLIT);
-                        DoCast(me, SPELL_TRANSFORM_SPLIT, true);
-                        break;
-                    case PHASE_HUMAN:
-                        //DoCast(me, SPELL_SUMMON_LYNX, true);
-                        DoSpawnCreature(NPC_SPIRIT_LYNX, 5, 5, 0, 0, TEMPSUMMON_CORPSE_DESPAWN, 0);
-                        me->SetMaxHealth(400000);
-                        me->SetHealth(400000);
-                        ShockTimer = 10000;
-                        TotemTimer = 12000;
-                        break;
-                    case PHASE_MERGE:
-                        if (Unit* pLynx = ObjectAccessor::GetUnit(*me, LynxGUID))
-                        {
-                            Talk(SAY_MERGE);
-                            pLynx->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
-                            pLynx->GetMotionMaster()->Clear();
-                            pLynx->GetMotionMaster()->MoveFollow(me, 0, 0);
-                            me->GetMotionMaster()->Clear();
-                            me->GetMotionMaster()->MoveFollow(pLynx, 0, 0);
-                            ++TransformCount;
-                        }
-                        break;
-                    default:
-                        break;
+                case PHASE_LYNX:
+                case PHASE_ENRAGE:
+                    if (Phase == PHASE_MERGE)
+                    {
+                        DoCast(me, SPELL_TRANSFORM_MERGE, true);
+                        me->Attack(me->GetVictim(), true);
+                        me->GetMotionMaster()->MoveChase(me->GetVictim());
+                    }
+                    if (Creature* Lynx = ObjectAccessor::GetCreature(*me, LynxGUID))
+                        Lynx->DisappearAndDie();
+                    me->SetMaxHealth(600000);
+                    me->SetHealth(600000 - 150000 * TransformCount);
+                    FrenzyTimer = 16000;
+                    SaberlashTimer = 20000;
+                    ShockTimer = 10000;
+                    TotemTimer = 12000;
+                    break;
+                case PHASE_SPLIT:
+                    Talk(SAY_SPLIT);
+                    DoCast(me, SPELL_TRANSFORM_SPLIT, true);
+                    break;
+                case PHASE_HUMAN:
+                    //DoCast(me, SPELL_SUMMON_LYNX, true);
+                    DoSpawnCreature(NPC_SPIRIT_LYNX, 5, 5, 0, 0, TEMPSUMMON_CORPSE_DESPAWN, 0);
+                    me->SetMaxHealth(400000);
+                    me->SetHealth(400000);
+                    ShockTimer = 10000;
+                    TotemTimer = 12000;
+                    break;
+                case PHASE_MERGE:
+                    if (Unit* pLynx = ObjectAccessor::GetUnit(*me, LynxGUID))
+                    {
+                        Talk(SAY_MERGE);
+                        pLynx->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+                        pLynx->GetMotionMaster()->Clear();
+                        pLynx->GetMotionMaster()->MoveFollow(me, 0, 0);
+                        me->GetMotionMaster()->Clear();
+                        me->GetMotionMaster()->MoveFollow(pLynx, 0, 0);
+                        ++TransformCount;
+                    }
+                    break;
+                default:
+                    break;
                 }
                 Phase = NextPhase;
             }
@@ -207,9 +212,7 @@ class boss_halazzi : public CreatureScript
                     Talk(SAY_BERSERK);
                     DoCast(me, SPELL_BERSERK, true);
                     BerserkTimer = 60000;
-                }
-                else
-                    BerserkTimer -= diff;
+                } else BerserkTimer -= diff;
 
                 if (Phase == PHASE_LYNX || Phase == PHASE_ENRAGE)
                 {
@@ -220,17 +223,13 @@ class boss_halazzi : public CreatureScript
                         DoCastVictim(SPELL_SABER_LASH, true);
                         //me->RemoveAurasDueToSpell(41296);
                         SaberlashTimer = 30000;
-                    }
-                    else
-                        SaberlashTimer -= diff;
+                    } else SaberlashTimer -= diff;
 
                     if (FrenzyTimer <= diff)
                     {
                         DoCast(me, SPELL_FRENZY);
                         FrenzyTimer = urand(10000, 15000);
-                    }
-                    else
-                        FrenzyTimer -= diff;
+                    } else FrenzyTimer -= diff;
 
                     if (Phase == PHASE_LYNX)
                     {
@@ -239,9 +238,7 @@ class boss_halazzi : public CreatureScript
                             if (HealthBelowPct(25 * (3 - TransformCount)))
                                 EnterPhase(PHASE_SPLIT);
                             CheckTimer = 1000;
-                        }
-                        else
-                            CheckTimer -= diff;
+                        } else CheckTimer -= diff;
                     }
                 }
 
@@ -251,9 +248,7 @@ class boss_halazzi : public CreatureScript
                     {
                         DoCast(me, SPELL_SUMMON_TOTEM);
                         TotemTimer = 20000;
-                    }
-                    else
-                        TotemTimer -= diff;
+                    } else TotemTimer -= diff;
 
                     if (ShockTimer <= diff)
                     {
@@ -265,9 +260,7 @@ class boss_halazzi : public CreatureScript
                                 DoCast(target, SPELL_FLAMESHOCK);
                             ShockTimer = urand(10000, 15000);
                         }
-                    }
-                    else
-                        ShockTimer -= diff;
+                    } else ShockTimer -= diff;
 
                     if (Phase == PHASE_HUMAN)
                     {
@@ -282,9 +275,7 @@ class boss_halazzi : public CreatureScript
                                     EnterPhase(PHASE_MERGE);
                             }
                             CheckTimer = 1000;
-                        }
-                        else
-                            CheckTimer -= diff;
+                        } else CheckTimer -= diff;
                     }
                 }
 
@@ -306,9 +297,7 @@ class boss_halazzi : public CreatureScript
                             }
                         }
                         CheckTimer = 1000;
-                    }
-                    else
-                        CheckTimer -= diff;
+                    } else CheckTimer -= diff;
                 }
 
                 DoMeleeAttackIfReady();
@@ -324,14 +313,14 @@ class boss_halazzi : public CreatureScript
 
             void JustDied(Unit* /*killer*/) override
             {
-                _JustDied();
+                instance->SetData(DATA_HALAZZIEVENT, DONE);
                 Talk(SAY_DEATH);
             }
         };
 
         CreatureAI* GetAI(Creature* creature) const override
         {
-            return GetZulAmanAI<boss_halazziAI>(creature);
+            return GetInstanceAI<boss_halazziAI>(creature);
         }
 };
 
@@ -400,7 +389,7 @@ class npc_halazzi_lynx : public CreatureScript
 
         CreatureAI* GetAI(Creature* creature) const override
         {
-            return GetZulAmanAI<npc_halazzi_lynxAI>(creature);
+            return new npc_halazzi_lynxAI(creature);
         }
 };
 

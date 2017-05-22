@@ -10,7 +10,6 @@
 #include "../../game/Entities/Player/Player.h"
 #include "../playerbot/PlayerbotAIConfig.h"
 #include "../playerbot/playerbot.h"
-#include "GameTime.h"
 
 using namespace ahbot;
 
@@ -113,7 +112,7 @@ void AhBot::ForceUpdate()
     if (updating)
         return;
 
-    sLog->outMessage("ahbot", LOG_LEVEL_INFO, "AhBot is now checking auctions in background");
+    sLog->outMessage("ahbot", LOG_LEVEL_INFO, "AhBot is now checking auctions");
     updating = true;
 
     if (!allBidders.size())
@@ -121,7 +120,7 @@ void AhBot::ForceUpdate()
 
     if (!allBidders.size())
     {
-        sLog->outMessage("ahbot", LOG_LEVEL_ERROR, "Ahbot is enabled but there are no bidders available");
+        sLog->outMessage("ahbot", LOG_LEVEL_ERROR, "Ahbot is disabled but there is no bidders available");
         return;
     }
 
@@ -497,7 +496,7 @@ int AhBot::AddAuction(int auction, Category* category, ItemTemplate const* proto
     }
 
 
-    Player* player = ObjectAccessor::FindPlayerByLowGUID(owner);
+    Player* player = sObjectMgr->GetPlayerByLowGUID(owner);
     if (!player)
         return 0;
 
@@ -657,7 +656,7 @@ void AhBot::Expire(int auction)
     {
         if (IsBotAuction(itr->second->owner))
         {
-            itr->second->expire_time = GameTime::GetGameTime();
+            itr->second->expire_time = sWorld->GetGameTime();
             count++;
         }
 
@@ -863,7 +862,7 @@ uint32 AhBot::GetRandomBidder(uint32 auctionHouse)
     for (vector<uint32>::iterator i = guids.begin(); i != guids.end(); ++i)
     {
         uint32 guid = *i;
-        Player* player = ObjectAccessor::FindPlayerByLowGUID(guid);
+        Player* player = sObjectMgr->GetPlayerByLowGUID(guid);
         if (!player)
             continue;
 

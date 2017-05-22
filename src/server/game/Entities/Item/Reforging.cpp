@@ -4,7 +4,7 @@
 #include "Player.h"
 #include "WorldSession.h"
 #include "Item.h"
-#include "ItemTemplate.h"
+#include "ItemPrototype.h"
 #include "ObjectGuid.h"
 #include "WorldPacket.h"
 #include "Opcodes.h"
@@ -98,11 +98,14 @@ void SendReforgePacket(Player* player, uint32 entry, uint32 lowguid, const Refor
     // HandleItemQuerySingleOpcode copy paste
     std::string Name = pProto->Name1;
     std::string Description = pProto->Description;
-    LocaleConstant loc_idx = player->GetSession()->GetSessionDbLocaleIndex();
-    if (ItemLocale const* il = sObjectMgr->GetItemLocale(pProto->ItemId))
+    int loc_idx = player->GetSession()->GetSessionDbLocaleIndex();
+    if (loc_idx >= 0)
     {
-        ObjectMgr::GetLocaleString(il->Name, loc_idx, Name);
-        ObjectMgr::GetLocaleString(il->Description, loc_idx, Description);
+        if (ItemLocale const* il = sObjectMgr->GetItemLocale(pProto->ItemId))
+        {
+            ObjectMgr::GetLocaleString(il->Name, loc_idx, Name);
+            ObjectMgr::GetLocaleString(il->Description, loc_idx, Description);
+        }
     }
     WorldPacket data(SMSG_ITEM_QUERY_SINGLE_RESPONSE, 600);
     data << pProto->ItemId;

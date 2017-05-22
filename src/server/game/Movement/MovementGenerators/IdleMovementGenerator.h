@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -20,15 +20,15 @@
 #define TRINITY_IDLEMOVEMENTGENERATOR_H
 
 #include "MovementGenerator.h"
-#include "Timer.h"
 
 class IdleMovementGenerator : public MovementGenerator
 {
     public:
-		void Initialize(WorldObject*) override;
-		void Finalize(WorldObject*) override {  }
-		void Reset(WorldObject*) override;
-		bool Update(WorldObject*, uint32) override { return true; }
+
+        void Initialize(Unit*) override;
+        void Finalize(Unit*) override {  }
+        void Reset(Unit*) override;
+        bool Update(Unit*, uint32) override { return true; }
         MovementGeneratorType GetMovementGeneratorType() const override { return IDLE_MOTION_TYPE; }
 };
 
@@ -37,41 +37,42 @@ TC_GAME_API extern IdleMovementGenerator si_idleMovement;
 class RotateMovementGenerator : public MovementGenerator
 {
     public:
-        explicit RotateMovementGenerator(uint32 time, RotateDirection direction) : _duration(time), _maxDuration(time), _direction(direction) { }
+        explicit RotateMovementGenerator(uint32 time, RotateDirection direction) : m_duration(time), m_maxDuration(time), m_direction(direction) { }
 
-		void Initialize(WorldObject*) override;
-		void Finalize(WorldObject*) override;
-		void Reset(WorldObject* owner) override { Initialize(owner); }
-		bool Update(WorldObject*, uint32) override;
+        void Initialize(Unit*) override;
+        void Finalize(Unit*) override;
+        void Reset(Unit* owner) override { Initialize(owner); }
+        bool Update(Unit*, uint32) override;
         MovementGeneratorType GetMovementGeneratorType() const override { return ROTATE_MOTION_TYPE; }
 
     private:
-        uint32 _duration, _maxDuration;
-        RotateDirection _direction;
+        uint32 m_duration, m_maxDuration;
+        RotateDirection m_direction;
 };
 
 class DistractMovementGenerator : public MovementGenerator
 {
     public:
-        explicit DistractMovementGenerator(uint32 timer) : _timer(timer) { }
+        explicit DistractMovementGenerator(uint32 timer) : m_timer(timer) { }
 
-		void Initialize(WorldObject*) override;
-		void Finalize(WorldObject*) override;
-		void Reset(WorldObject* owner) override { Initialize(owner); }
-		bool Update(WorldObject*, uint32) override;
+        void Initialize(Unit*) override;
+        void Finalize(Unit*) override;
+        void Reset(Unit* owner) override { Initialize(owner); }
+        bool Update(Unit*, uint32) override;
         MovementGeneratorType GetMovementGeneratorType() const override { return DISTRACT_MOTION_TYPE; }
 
     private:
-        uint32 _timer;
+        uint32 m_timer;
 };
 
 class AssistanceDistractMovementGenerator : public DistractMovementGenerator
 {
     public:
-        explicit AssistanceDistractMovementGenerator(uint32 timer) : DistractMovementGenerator(timer) { }
+        AssistanceDistractMovementGenerator(uint32 timer) :
+            DistractMovementGenerator(timer) { }
 
         MovementGeneratorType GetMovementGeneratorType() const override { return ASSISTANCE_DISTRACT_MOTION_TYPE; }
-		void Finalize(WorldObject*) override;
+        void Finalize(Unit*) override;
 };
 
 #endif

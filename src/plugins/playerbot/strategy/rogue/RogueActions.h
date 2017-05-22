@@ -24,13 +24,7 @@ namespace ai
 	public:
 		CastKickAction(PlayerbotAI* ai) : CastSpellAction(ai, "kick") {}
 	};
-	
-	class CastStealthAction : public CastSpellAction
-	{
-	public:
-		CastStealthAction(PlayerbotAI* ai) : CastSpellAction(ai, "stealth") {}
-	};
-	
+
 	class CastFeintAction : public CastBuffSpellAction
 	{
 	public:

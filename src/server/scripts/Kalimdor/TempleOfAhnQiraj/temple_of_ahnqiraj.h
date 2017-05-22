@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -21,7 +21,7 @@
 
 #define DataHeader "AQT"
 
-enum AQTDataTypes
+enum DataTypes
 {
     DATA_SKERAM             = 1,
     DATA_KRI                = 2,
@@ -39,7 +39,7 @@ enum AQTDataTypes
     DATA_VISCIDUS           = 21
 };
 
-enum AQTCreatures
+enum Creatures
 {
     BOSS_EYE_OF_CTHUN       = 15589,
     NPC_CTHUN_PORTAL        = 15896,
@@ -61,5 +61,5 @@ enum AQTCreatures
     NPC_VEKLOR              = 15276,
     NPC_VEKNILASH           = 15275
 };
-
 #endif
+

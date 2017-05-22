@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -20,7 +20,7 @@
 
 #define DataHeader "EOE"
 
-enum EOEInstanceData
+enum InstanceData
 {
     DATA_MALYGOS_EVENT,
     MAX_ENCOUNTER,
@@ -30,7 +30,7 @@ enum EOEInstanceData
     DATA_RESPAWN_IRIS
 };
 
-enum EOEInstanceData64
+enum InstanceData64
 {
     DATA_TRIGGER,
     DATA_MALYGOS,
@@ -41,7 +41,7 @@ enum EOEInstanceData64
     DATA_GIFT_BOX_BUNNY_GUID
 };
 
-enum EOEInstanceNpcs
+enum InstanceNpcs
 {
     NPC_MALYGOS             = 28859,
     NPC_VORTEX_TRIGGER      = 30090,
@@ -57,7 +57,7 @@ enum EOEInstanceNpcs
     NPC_SURGE_OF_POWER      = 30334
 };
 
-enum EOEInstanceGameObjects
+enum InstanceGameObjects
 {
     GO_NEXUS_RAID_PLATFORM      = 193070,
     GO_EXIT_PORTAL              = 193908,
@@ -69,12 +69,12 @@ enum EOEInstanceGameObjects
     GO_HEART_OF_MAGIC_25        = 194159
 };
 
-enum EOEInstanceEvents
+enum InstanceEvents
 {
     EVENT_FOCUSING_IRIS = 20711
 };
 
-enum EOEInstanceSpells
+enum InstanceSpells
 {
     SPELL_VORTEX_4                        = 55853, // damage | used to enter to the vehicle
     SPELL_VORTEX_5                        = 56263, // damage | used to enter to the vehicle

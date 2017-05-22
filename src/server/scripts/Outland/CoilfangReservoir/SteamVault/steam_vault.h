@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -23,7 +23,7 @@
 
 uint32 const EncounterCount = 3;
 
-enum SVDataTypes
+enum DataTypes
 {
     DATA_HYDROMANCER_THESPIA        = 0,
     DATA_MEKGINEER_STEAMRIGGER      = 1,
@@ -35,24 +35,24 @@ enum SVDataTypes
     DATA_ACCESS_PANEL_MEK           = 5
 };
 
-enum SVCreatureIds
+enum CreatureIds
 {
     NPC_HYDROMANCER_THESPIA         = 17797,
     NPC_MEKGINEER_STEAMRIGGER       = 17796,
     NPC_WARLORD_KALITHRESH          = 17798
 };
 
-enum SVGameObjectIds
+enum GameObjectIds
 {
     GO_MAIN_CHAMBERS_DOOR           = 183049,
     GO_ACCESS_PANEL_HYDRO           = 184125,
     GO_ACCESS_PANEL_MEK             = 184126
 };
 
-template<class AI, class T>
-AI* GetSteamVaultAI(T* obj)
+template<class AI>
+AI* GetSteamVaultAI(Creature* creature)
 {
-    return GetInstanceAI<AI>(obj, SteamVaultScriptName);
+    return GetInstanceAI<AI>(creature, SteamVaultScriptName);
 }
 
 #endif

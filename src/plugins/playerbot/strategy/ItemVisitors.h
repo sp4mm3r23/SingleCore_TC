@@ -186,16 +186,16 @@ namespace ai
         string name;
     };
 
-    class FindNamedItemVisitor : public FindItemVisitor {
+    class FindUsableNamedItemVisitor : public FindUsableItemVisitor {
     public:
-        FindNamedItemVisitor(Player* bot, string name) : FindItemVisitor()
+        FindUsableNamedItemVisitor(Player* bot, string name) : FindUsableItemVisitor(bot)
         {
             this->name = name;
         }
 
         virtual bool Accept(const ItemTemplate* proto)
         {
-            return proto && proto->Name1.empty() && strstri(proto->Name1.c_str(), name.c_str());
+            return proto && !proto->Name1.empty() && strstri(proto->Name1.c_str(), name.c_str());
         }
 
     private:

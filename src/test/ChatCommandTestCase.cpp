@@ -68,7 +68,6 @@ class ChatCommandTestCase : public MockedAiObjectContextTestCase
       CPPUNIT_TEST( max_dps );
       CPPUNIT_TEST( tell_attackers );
       CPPUNIT_TEST( formation );
-      CPPUNIT_TEST( sendmail );
   CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -448,13 +447,6 @@ protected:
         trigger("formation");
         tick();
         assertActions(">S:formation");
-    }
-
-    void sendmail()
-    {
-        trigger("sendmail");
-        tick();
-        assertActions(">S:sendmail");
     }
 
 };

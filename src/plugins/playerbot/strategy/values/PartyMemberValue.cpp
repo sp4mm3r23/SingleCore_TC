@@ -33,14 +33,15 @@ Unit* PartyMemberValue::FindPartyMember(list<Player*>* party, FindPlayerPredicat
 Unit* PartyMemberValue::FindPartyMember(FindPlayerPredicate &predicate)
 {
     Player* master = GetMaster();
-	list<ObjectGuid> nearestPlayers = AI_VALUE(list<ObjectGuid>, "nearest friendly players");
+    Group* group = bot->GetGroup();
+    if (!group)
+        return NULL;
 
     list<Player*> healers, tanks, others, masters;
-	if (master) masters.push_back(master);
-	for (list<ObjectGuid>::iterator i = nearestPlayers.begin(); i != nearestPlayers.end(); ++i)
+    masters.push_back(master);
+    for (GroupReference *gref = group->GetFirstMember(); gref; gref = gref->next())
     {
-		Player* player = dynamic_cast<Player*>(ai->GetUnit(*i));
-		if (!player || player == bot) continue;
+        Player* player = gref->GetSource();
 
         if (ai->IsHeal(player))
             healers.push_back(player);
@@ -78,15 +79,15 @@ bool PartyMemberValue::Check(Unit* player)
 
 bool PartyMemberValue::IsTargetOfSpellCast(Player* target, SpellEntryPredicate &predicate)
 {
-	list<ObjectGuid> nearestPlayers = AI_VALUE(list<ObjectGuid>, "nearest friendly players");
 
+    Group* group = bot->GetGroup();
     ObjectGuid targetGuid = target ? target->GetGUID() : bot->GetGUID();
     ObjectGuid corpseGuid = target && target->GetCorpse() ? target->GetCorpse()->GetGUID() : ObjectGuid();
 
-	for (list<ObjectGuid>::iterator i = nearestPlayers.begin(); i != nearestPlayers.end(); ++i)
+    for (GroupReference *gref = group->GetFirstMember(); gref; gref = gref->next())
     {
-		Player* player = dynamic_cast<Player*>(ai->GetUnit(*i));
-		if (!player || player == bot)
+        Player* player = gref->GetSource();
+        if (player == bot)
             continue;
 
         if (player->IsNonMeleeSpellCast(true))

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -155,7 +155,7 @@ void InstanceSaveManager::RemoveInstanceSave(uint32 InstanceId)
         {
             PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_UPD_INSTANCE_RESETTIME);
 
-            stmt->setUInt64(0, uint64(resettime));
+            stmt->setUInt32(0, uint32(resettime));
             stmt->setUInt32(1, InstanceId);
 
             CharacterDatabase.Execute(stmt);
@@ -209,7 +209,7 @@ void InstanceSave::SaveToDB()
     PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_INS_INSTANCE_SAVE);
     stmt->setUInt32(0, m_instanceid);
     stmt->setUInt16(1, GetMapId());
-    stmt->setUInt64(2, uint64(GetResetTimeForDB()));
+    stmt->setUInt32(2, uint32(GetResetTimeForDB()));
     stmt->setUInt8(3, uint8(GetDifficulty()));
     stmt->setUInt32(4, completedEncounters);
     stmt->setString(5, data);
@@ -315,7 +315,8 @@ void InstanceSaveManager::LoadResetTimes()
     typedef std::pair<ResetTimeMapDiffInstances::const_iterator, ResetTimeMapDiffInstances::const_iterator> ResetTimeMapDiffInstancesBounds;
     ResetTimeMapDiffInstances mapDiffResetInstances;
 
-    if (QueryResult result = CharacterDatabase.Query("SELECT id, map, difficulty, resettime FROM instance ORDER BY id ASC"))
+    QueryResult result = CharacterDatabase.Query("SELECT id, map, difficulty, resettime FROM instance ORDER BY id ASC");
+    if (result)
     {
         do
         {
@@ -331,7 +332,7 @@ void InstanceSaveManager::LoadResetTimes()
             // Mark instance id as being used
             sMapMgr->RegisterInstanceId(instanceId);
 
-            if (time_t resettime = time_t(fields[3].GetUInt64()))
+            if (time_t resettime = time_t(fields[3].GetUInt32()))
             {
                 uint32 mapid = fields[1].GetUInt16();
                 uint32 difficulty = fields[2].GetUInt8();
@@ -342,6 +343,24 @@ void InstanceSaveManager::LoadResetTimes()
         }
         while (result->NextRow());
 
+        // update reset time for normal instances with the max creature respawn time + X hours
+        if (PreparedQueryResult result2 = CharacterDatabase.Query(CharacterDatabase.GetPreparedStatement(CHAR_SEL_MAX_CREATURE_RESPAWNS)))
+        {
+            do
+            {
+                Field* fields = result2->Fetch();
+                uint32 instance = fields[1].GetUInt32();
+                time_t resettime = time_t(fields[0].GetUInt32() + 2 * HOUR);
+                InstResetTimeMapDiffType::iterator itr = instResetTime.find(instance);
+                if (itr != instResetTime.end() && itr->second.second != resettime)
+                {
+                    CharacterDatabase.DirectPExecute("UPDATE instance SET resettime = '" UI64FMTD "' WHERE id = '%u'", uint64(resettime), instance);
+                    itr->second.second = resettime;
+                }
+            }
+            while (result->NextRow());
+        }
+
         // schedule the reset times
         for (InstResetTimeMapDiffType::iterator itr = instResetTime.begin(); itr != instResetTime.end(); ++itr)
             if (itr->second.second > now)
@@ -350,37 +369,28 @@ void InstanceSaveManager::LoadResetTimes()
 
     // load the global respawn times for raid/heroic instances
     uint32 diff = sWorld->getIntConfig(CONFIG_INSTANCE_RESET_TIME_HOUR) * HOUR;
-    if (QueryResult result = CharacterDatabase.Query("SELECT mapid, difficulty, resettime FROM instance_reset"))
+    result = CharacterDatabase.Query("SELECT mapid, difficulty, resettime FROM instance_reset");
+    if (result)
     {
         do
         {
             Field* fields = result->Fetch();
             uint32 mapid = fields[0].GetUInt16();
             Difficulty difficulty = Difficulty(fields[1].GetUInt8());
-            uint64 oldresettime = fields[2].GetUInt64();
+            uint64 oldresettime = fields[2].GetUInt32();
 
             MapDifficulty const* mapDiff = GetMapDifficultyData(mapid, difficulty);
             if (!mapDiff)
             {
                 TC_LOG_ERROR("misc", "InstanceSaveManager::LoadResetTimes: invalid mapid(%u)/difficulty(%u) pair in instance_reset!", mapid, difficulty);
-
-                PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_GLOBAL_INSTANCE_RESETTIME);
-                stmt->setUInt16(0, uint16(mapid));
-                stmt->setUInt8(1, uint8(difficulty));
-                CharacterDatabase.DirectExecute(stmt);
+                CharacterDatabase.DirectPExecute("DELETE FROM instance_reset WHERE mapid = '%u' AND difficulty = '%u'", mapid, difficulty);
                 continue;
             }
 
             // update the reset time if the hour in the configs changes
             uint64 newresettime = (oldresettime / DAY) * DAY + diff;
             if (oldresettime != newresettime)
-            {
-                PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_UPD_GLOBAL_INSTANCE_RESETTIME);
-                stmt->setUInt64(0, uint64(newresettime));
-                stmt->setUInt16(1, uint16(mapid));
-                stmt->setUInt8(2, uint8(difficulty));
-                CharacterDatabase.DirectExecute(stmt);
-            }
+                CharacterDatabase.DirectPExecute("UPDATE instance_reset SET resettime = '%u' WHERE mapid = '%u' AND difficulty = '%u'", uint32(newresettime), mapid, difficulty);
 
             InitializeResetTimeFor(mapid, difficulty, newresettime);
         } while (result->NextRow());
@@ -407,12 +417,7 @@ void InstanceSaveManager::LoadResetTimes()
         {
             // initialize the reset time
             t = today + period + diff;
-
-            PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_INS_GLOBAL_INSTANCE_RESETTIME);
-            stmt->setUInt16(0, uint16(mapid));
-            stmt->setUInt8(1, uint8(difficulty));
-            stmt->setUInt64(2, uint64(t));
-            CharacterDatabase.DirectExecute(stmt);
+            CharacterDatabase.DirectPExecute("INSERT INTO instance_reset VALUES ('%u', '%u', '%u')", mapid, difficulty, (uint32)t);
         }
 
         if (t < now)
@@ -421,12 +426,7 @@ void InstanceSaveManager::LoadResetTimes()
             // calculate the next reset time
             t = (t / DAY) * DAY;
             t += ((today - t) / period + 1) * period + diff;
-
-            PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_UPD_GLOBAL_INSTANCE_RESETTIME);
-            stmt->setUInt64(0, uint64(t));
-            stmt->setUInt16(1, uint16(mapid));
-            stmt->setUInt8(2, uint8(difficulty));
-            CharacterDatabase.DirectExecute(stmt);
+            CharacterDatabase.DirectPExecute("UPDATE instance_reset SET resettime = '" UI64FMTD "' WHERE mapid = '%u' AND difficulty= '%u'", (uint64)t, mapid, difficulty);
         }
 
         InitializeResetTimeFor(mapid, difficulty, t);
@@ -678,7 +678,7 @@ void InstanceSaveManager::_ResetOrWarnAll(uint32 mapid, Difficulty difficulty, b
         // Update it in the DB
         stmt = CharacterDatabase.GetPreparedStatement(CHAR_UPD_GLOBAL_INSTANCE_RESETTIME);
 
-        stmt->setUInt64(0, uint64(next_reset));
+        stmt->setUInt32(0, next_reset);
         stmt->setUInt16(1, uint16(mapid));
         stmt->setUInt8(2, uint8(difficulty));
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -25,7 +25,6 @@ EndScriptData */
 
 #include "ScriptMgr.h"
 #include "ScriptedCreature.h"
-#include "GameObjectAI.h"
 #include "SpellMgr.h"
 #include "scarlet_monastery.h"
 #include "LFGMgr.h"
@@ -577,7 +576,7 @@ public:
             {
                 if (Group* group = players.begin()->GetSource()->GetGroup())
                     if (group->isLFGGroup())
-                        sLFGMgr->FinishDungeon(group->GetGUID(), 285, me->GetMap());
+                        sLFGMgr->FinishDungeon(group->GetGUID(), 285);
             }
         }
 
@@ -801,7 +800,7 @@ public:
         {
             float x, y, z;
             me->GetPosition(x, y, z);   //this visual aura some under ground
-            me->UpdatePosition(x, y, z + 0.35f, 0.0f);
+            me->SetPosition(x, y, z + 0.35f, 0.0f);
             debuffGUID.Clear();
             Despawn();
             Creature* debuff = DoSpawnCreature(HELPER, 0, 0, 0, 0, TEMPSUMMON_TIMED_OR_CORPSE_DESPAWN, 14500);
@@ -877,41 +876,32 @@ enum LooselyTurnedSoil
 
 class go_loosely_turned_soil : public GameObjectScript
 {
-    public:
-        go_loosely_turned_soil() : GameObjectScript("go_loosely_turned_soil") { }
+public:
+    go_loosely_turned_soil() : GameObjectScript("go_loosely_turned_soil") { }
 
-        struct go_loosely_turned_soilAI : public GameObjectAI
-        {
-            go_loosely_turned_soilAI(GameObject* go) : GameObjectAI(go), instance(go->GetInstanceScript()) { }
+    bool OnGossipHello(Player* player, GameObject* /*go*/) override
+    {
+        if (InstanceScript* instance = player->GetInstanceScript())
+            if (instance->GetBossState(DATA_HORSEMAN_EVENT) == IN_PROGRESS || player->GetQuestStatus(QUEST_CALL_THE_HEADLESS_HORSEMAN) != QUEST_STATUS_COMPLETE)
+                return true;
 
-            InstanceScript* instance;
+        return false;
+    }
 
-            bool GossipHello(Player* player, bool /*reportUse*/) override
-            {
-                if (instance->GetBossState(DATA_HORSEMAN_EVENT) == IN_PROGRESS || player->GetQuestStatus(QUEST_CALL_THE_HEADLESS_HORSEMAN) != QUEST_STATUS_COMPLETE)
-                    return true;
-
+    bool OnQuestReward(Player* player, GameObject* go, Quest const* /*quest*/, uint32 /*opt*/) override
+    {
+        if (InstanceScript* instance = go->GetInstanceScript())
+            if (instance->GetBossState(DATA_HORSEMAN_EVENT) == IN_PROGRESS)
                 return false;
-            }
 
-            void QuestReward(Player* player, Quest const* /*quest*/, uint32 /*opt*/) override
-            {
-                if (instance->GetBossState(DATA_HORSEMAN_EVENT) == IN_PROGRESS)
-                    return;
-
-                player->AreaExploredOrEventHappens(11405);
-                if (Creature* horseman = me->SummonCreature(HH_MOUNTED, FlightPoint[20].x, FlightPoint[20].y, FlightPoint[20].z, 0, TEMPSUMMON_MANUAL_DESPAWN, 0))
-                {
-                    ENSURE_AI(boss_headless_horseman::boss_headless_horsemanAI, horseman->AI())->PlayerGUID = player->GetGUID();
-                    ENSURE_AI(boss_headless_horseman::boss_headless_horsemanAI, horseman->AI())->FlyMode();
-                }
-            }
-        };
-
-        GameObjectAI* GetAI(GameObject* go) const override
+        player->AreaExploredOrEventHappens(11405);
+        if (Creature* horseman = go->SummonCreature(HH_MOUNTED, FlightPoint[20].x, FlightPoint[20].y, FlightPoint[20].z, 0, TEMPSUMMON_MANUAL_DESPAWN, 0))
         {
-            return GetScarletMonasteryAI<go_loosely_turned_soilAI>(go);
+            ENSURE_AI(boss_headless_horseman::boss_headless_horsemanAI, horseman->AI())->PlayerGUID = player->GetGUID();
+            ENSURE_AI(boss_headless_horseman::boss_headless_horsemanAI, horseman->AI())->FlyMode();
         }
+        return true;
+    }
 };
 
 void npc_head::npc_headAI::Disappear()

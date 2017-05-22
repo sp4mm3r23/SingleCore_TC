@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -43,7 +43,7 @@ struct EnumName
 #define CREATE_NAMED_ENUM(VALUE) { VALUE, STRINGIZE(VALUE) }
 
 #define NPCFLAG_COUNT   24
-#define FLAGS_EXTRA_COUNT 20
+#define FLAGS_EXTRA_COUNT 19
 
 EnumName<NPCFlags, int32> const npcFlagTexts[NPCFLAG_COUNT] =
 {
@@ -156,7 +156,6 @@ EnumName<CreatureFlagsExtra> const flagsExtra[FLAGS_EXTRA_COUNT] =
     CREATE_NAMED_ENUM(CREATURE_FLAG_EXTRA_NO_XP_AT_KILL),
     CREATE_NAMED_ENUM(CREATURE_FLAG_EXTRA_TRIGGER),
     CREATE_NAMED_ENUM(CREATURE_FLAG_EXTRA_NO_TAUNT),
-    CREATE_NAMED_ENUM(CREATURE_FLAG_EXTRA_NO_MOVE_FLAGS_UPDATE),
     CREATE_NAMED_ENUM(CREATURE_FLAG_EXTRA_WORLDEVENT),
     CREATE_NAMED_ENUM(CREATURE_FLAG_EXTRA_GUARD),
     CREATE_NAMED_ENUM(CREATURE_FLAG_EXTRA_NO_CRIT),
@@ -244,7 +243,7 @@ public:
         if (!charID)
             return false;
 
-        uint32 id  = atoul(charID);
+        uint32 id  = atoi(charID);
         if (!sObjectMgr->GetCreatureTemplate(id))
             return false;
 
@@ -365,7 +364,7 @@ public:
         char* guidStr = strtok((char*)args, " ");
         char* waitStr = strtok((char*)nullptr, " ");
 
-        ObjectGuid::LowType lowGuid = atoul(guidStr);
+        ObjectGuid::LowType lowGuid = atoi((char*)guidStr);
 
         // attempt check creature existence by DB data
         CreatureData const* data = sObjectMgr->GetCreatureData(lowGuid);
@@ -414,7 +413,7 @@ public:
         if (!*args)
             return false;
 
-        uint32 newEntryNum = atoul(args);
+        uint32 newEntryNum = atoi(args);
         if (!newEntryNum)
             return false;
 
@@ -439,7 +438,7 @@ public:
         if (!*args)
             return false;
 
-        uint8 lvl = (uint8) atoi(args);
+        uint8 lvl = (uint8) atoi((char*)args);
         if (lvl < 1 || lvl > sWorld->getIntConfig(CONFIG_MAX_PLAYER_LEVEL) + 3)
         {
             handler->SendSysMessage(LANG_BAD_VALUE);
@@ -474,10 +473,12 @@ public:
             if (!cId)
                 return false;
 
-            ObjectGuid::LowType lowguid = atoul(cId);
+            ObjectGuid::LowType lowguid = atoi(cId);
             if (!lowguid)
                 return false;
-            unit = handler->GetCreatureFromPlayerMapByDbGuid(lowguid);
+
+            if (CreatureData const* cr_data = sObjectMgr->GetCreatureData(lowguid))
+                unit = handler->GetSession()->GetPlayer()->GetMap()->GetCreature(ObjectGuid(HighGuid::Unit, cr_data->id, lowguid));
         }
         else
             unit = handler->getSelectedCreature();
@@ -541,7 +542,7 @@ public:
         if (!*args)
             return false;
 
-        uint32 factionId = atoul(args);
+        uint32 factionId = (uint32) atoi((char*)args);
 
         if (!sFactionTemplateStore.LookupEntry(factionId))
         {
@@ -559,7 +560,7 @@ public:
             return false;
         }
 
-        creature->SetFaction(factionId);
+        creature->setFaction(factionId);
 
         // Faction is set in creature_template - not inside creature
 
@@ -584,7 +585,7 @@ public:
         if (!*args)
             return false;
 
-        uint32 npcFlags = (uint32) atoi(args);
+        uint32 npcFlags = (uint32) atoi((char*)args);
 
         Creature* creature = handler->getSelectedCreature();
 
@@ -675,7 +676,7 @@ public:
 
         CreatureTemplate const* cInfo = target->GetCreatureTemplate();
 
-        uint32 faction = target->GetFaction();
+        uint32 faction = target->getFaction();
         uint32 npcflags = target->GetUInt32Value(UNIT_NPC_FLAGS);
         uint32 mechanicImmuneMask = cInfo->MechanicImmuneMask;
         uint32 displayid = target->GetDisplayId();
@@ -699,7 +700,7 @@ public:
             if (target->GetUInt32Value(UNIT_FIELD_FLAGS) & unitFlags[i].Value)
                 handler->PSendSysMessage("%s (0x%X)", unitFlags[i].Name, unitFlags[i].Value);
 
-        handler->PSendSysMessage(LANG_NPCINFO_FLAGS, target->GetUInt32Value(UNIT_FIELD_FLAGS_2), target->GetUInt32Value(UNIT_DYNAMIC_FLAGS), target->GetFaction());
+        handler->PSendSysMessage(LANG_NPCINFO_FLAGS, target->GetUInt32Value(UNIT_FIELD_FLAGS_2), target->GetUInt32Value(UNIT_DYNAMIC_FLAGS), target->getFaction());
         handler->PSendSysMessage(LANG_COMMAND_RAWPAWNTIMES, defRespawnDelayStr.c_str(), curRespawnDelayStr.c_str());
         handler->PSendSysMessage(LANG_NPCINFO_LOOT,  cInfo->lootid, cInfo->pickpocketLootId, cInfo->SkinLootId);
         handler->PSendSysMessage(LANG_NPCINFO_DUNGEON_ID, target->GetInstanceId());
@@ -784,7 +785,7 @@ public:
             if (!cId)
                 return false;
 
-            lowguid = atoul(cId);
+            lowguid = atoi(cId);
 
             // Attempting creature load from DB data
             CreatureData const* data = sObjectMgr->GetCreatureData(lowguid);
@@ -823,7 +824,7 @@ public:
                 const_cast<CreatureData*>(data)->posZ = z;
                 const_cast<CreatureData*>(data)->orientation = o;
             }
-            creature->UpdatePosition(x, y, z, o);
+            creature->SetPosition(x, y, z, o);
             creature->GetMotionMaster()->Initialize();
             if (creature->IsAlive())                            // dead creature will reset movement generator at respawn
             {
@@ -870,7 +871,7 @@ public:
         if (!*args)
             return false;
 
-        uint32 displayId = atoul(args);
+        uint32 displayId = (uint32) atoi((char*)args);
 
         Creature* creature = handler->getSelectedCreature();
 
@@ -964,10 +965,12 @@ public:
         }
         else                                                    // case .setmovetype #creature_guid $move_type (with selected creature)
         {
-            lowguid = atoul(guid_str);
+            lowguid = atoi((char*)guid_str);
 
+            /* impossible without entry
             if (lowguid)
-                creature = handler->GetCreatureFromPlayerMapByDbGuid(lowguid);
+                creature = ObjectAccessor::GetCreature(*handler->GetSession()->GetPlayer(), MAKE_GUID(lowguid, HighGuid::Unit));
+            */
 
             // attempt check creature existence by DB data
             if (!creature)
@@ -1040,7 +1043,7 @@ public:
         if (!*args)
             return false;
 
-        uint32 phasemask = atoul(args);
+        uint32 phasemask = (uint32) atoi((char*)args);
         if (phasemask == 0)
         {
             handler->SendSysMessage(LANG_BAD_VALUE);
@@ -1121,7 +1124,7 @@ public:
         if (!stime)
             return false;
 
-        int spawnTime = atoi(stime);
+        int spawnTime = atoi((char*)stime);
 
         if (spawnTime < 0)
         {
@@ -1320,7 +1323,7 @@ public:
 
         Player* chr = handler->GetSession()->GetPlayer();
 
-        uint32 id = atoul(charID);
+        uint32 id = atoi(charID);
         if (!id)
             return false;
 
@@ -1372,7 +1375,7 @@ public:
 
         // place pet before player
         float x, y, z;
-        player->GetClosePoint (x, y, z, creatureTarget->GetCombatReach(), CONTACT_DISTANCE);
+        player->GetClosePoint (x, y, z, creatureTarget->GetObjectSize(), CONTACT_DISTANCE);
         pet->Relocate(x, y, z, float(M_PI) - player->GetOrientation());
 
         // set pet to defensive mode by default (some classes can't control controlled pets in fact).
@@ -1431,7 +1434,7 @@ public:
                 why = CreatureAI::EVADE_REASON_SEQUENCE_BREAK;
             else if (stricmp(type_str, "FORCE") == 0)
                 force = true;
-
+            
             if (!force && force_str)
                 if (stricmp(force_str, "FORCE") == 0)
                     force = true;
@@ -1449,7 +1452,7 @@ public:
         if (!*args)
             return false;
 
-        ObjectGuid::LowType leaderGUID = atoul(args);
+        ObjectGuid::LowType leaderGUID = (uint32) atoi((char*)args);
         Creature* creature = handler->getSelectedCreature();
 
         if (!creature || !creature->GetSpawnId())
@@ -1501,7 +1504,7 @@ public:
         if (!*args)
             return false;
 
-        ObjectGuid::LowType linkguid = atoul(args);
+        ObjectGuid::LowType linkguid = (uint32) atoi((char*)args);
 
         Creature* creature = handler->getSelectedCreature();
 

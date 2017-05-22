@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -17,7 +17,6 @@
 
 #include "ScriptMgr.h"
 #include "ScriptedCreature.h"
-#include "GameObjectAI.h"
 #include "SpellScript.h"
 #include "Player.h"
 #include "ahnkahet.h"
@@ -199,9 +198,6 @@ class boss_prince_taldaram : public CreatureScript
                         default:
                             break;
                     }
-
-                    if (me->HasUnitState(UNIT_STATE_CASTING))
-                        return;
                 }
 
                 DoMeleeAttackIfReady();
@@ -381,41 +377,33 @@ class go_prince_taldaram_sphere : public GameObjectScript
     public:
         go_prince_taldaram_sphere() : GameObjectScript("go_prince_taldaram_sphere") { }
 
-        struct go_prince_taldaram_sphereAI : public GameObjectAI
+        bool OnGossipHello(Player* /*player*/, GameObject* go) override
         {
-            go_prince_taldaram_sphereAI(GameObject* go) : GameObjectAI(go), instance(go->GetInstanceScript()) { }
+            InstanceScript* instance = go->GetInstanceScript();
+            if (!instance)
+                return false;
 
-            InstanceScript* instance;
-
-            bool GossipHello(Player* /*player*/, bool /*reportUse*/) override
+            Creature* PrinceTaldaram = ObjectAccessor::GetCreature(*go, instance->GetGuidData(DATA_PRINCE_TALDARAM));
+            if (PrinceTaldaram && PrinceTaldaram->IsAlive())
             {
-                Creature* princeTaldaram = ObjectAccessor::GetCreature(*me, instance->GetGuidData(DATA_PRINCE_TALDARAM));
-                if (princeTaldaram && princeTaldaram->IsAlive())
+                go->SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_NOT_SELECTABLE);
+                go->SetGoState(GO_STATE_ACTIVE);
+
+                switch (go->GetEntry())
                 {
-                    me->SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_NOT_SELECTABLE);
-                    me->SetGoState(GO_STATE_ACTIVE);
-
-                    switch (me->GetEntry())
-                    {
-                        case GO_SPHERE_1:
-                            instance->SetData(DATA_SPHERE_1, IN_PROGRESS);
-                            princeTaldaram->AI()->Talk(SAY_1);
-                            break;
-                        case GO_SPHERE_2:
-                            instance->SetData(DATA_SPHERE_2, IN_PROGRESS);
-                            princeTaldaram->AI()->Talk(SAY_1);
-                            break;
-                    }
-
-                    ENSURE_AI(boss_prince_taldaram::boss_prince_taldaramAI, princeTaldaram->AI())->CheckSpheres();
+                    case GO_SPHERE_1:
+                        instance->SetData(DATA_SPHERE_1, IN_PROGRESS);
+                        PrinceTaldaram->AI()->Talk(SAY_1);
+                        break;
+                    case GO_SPHERE_2:
+                        instance->SetData(DATA_SPHERE_2, IN_PROGRESS);
+                        PrinceTaldaram->AI()->Talk(SAY_1);
+                        break;
                 }
-                return true;
-            }
-        };
 
-        GameObjectAI* GetAI(GameObject* go) const override
-        {
-            return GetAhnKahetAI<go_prince_taldaram_sphereAI>(go);
+                ENSURE_AI(boss_prince_taldaram::boss_prince_taldaramAI, PrinceTaldaram->AI())->CheckSpheres();
+            }
+            return true;
         }
 };
 

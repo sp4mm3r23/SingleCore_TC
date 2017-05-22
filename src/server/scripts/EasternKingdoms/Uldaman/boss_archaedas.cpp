@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2006-2007 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -28,7 +28,6 @@ EndScriptData */
 
 #include "ScriptMgr.h"
 #include "ScriptedCreature.h"
-#include "GameObjectAI.h"
 #include "uldaman.h"
 #include "Player.h"
 
@@ -97,9 +96,9 @@ class boss_archaedas : public CreatureScript
                 Initialize();
 
                 instance->SetData(0, 5);    // respawn any dead minions
-                me->SetFaction(35);
+                me->setFaction(35);
                 me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
-                me->SetControlled(true, UNIT_STATE_ROOT);
+                me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_REMOVE_CLIENT_CONTROL);
                 me->AddAura(SPELL_FREEZE_ANIM, me);
             }
 
@@ -112,17 +111,17 @@ class boss_archaedas : public CreatureScript
                     DoCast(minion, SPELL_AWAKEN_VAULT_WALKER, flag);
                     minion->CastSpell(minion, SPELL_ARCHAEDAS_AWAKEN, true);
                     minion->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
-                    minion->SetControlled(false, UNIT_STATE_ROOT);
-                    minion->SetFaction(14);
+                    minion->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_REMOVE_CLIENT_CONTROL);
+                    minion->setFaction(14);
                     minion->RemoveAura(SPELL_MINION_FREEZE_ANIM);
                 }
             }
 
             void EnterCombat(Unit* /*who*/) override
             {
-                me->SetFaction(14);
+                me->setFaction(14);
                 me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
-                me->SetControlled(false, UNIT_STATE_ROOT);
+                me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_REMOVE_CLIENT_CONTROL);
             }
 
             void SpellHit(Unit* /*caster*/, const SpellInfo* spell) override
@@ -260,19 +259,19 @@ class npc_archaedas_minions : public CreatureScript
             {
                 Initialize();
 
-                me->SetFaction(35);
+                me->setFaction(35);
                 me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
-                me->SetControlled(true, UNIT_STATE_ROOT);
+                me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_REMOVE_CLIENT_CONTROL);
                 me->RemoveAllAuras();
                 me->AddAura(SPELL_MINION_FREEZE_ANIM, me);
             }
 
             void EnterCombat(Unit* /*who*/) override
             {
-                me->SetFaction (14);
+                me->setFaction (14);
                 me->RemoveAllAuras();
-                me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
-                me->SetControlled(false, UNIT_STATE_ROOT);
+                me->RemoveFlag (UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+                me->RemoveFlag (UNIT_FIELD_FLAGS, UNIT_FLAG_REMOVE_CLIENT_CONTROL);
                 bAmIAwake = true;
             }
 
@@ -349,18 +348,18 @@ class npc_stonekeepers : public CreatureScript
 
             void Reset() override
             {
-                me->SetFaction(35);
+                me->setFaction(35);
                 me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
-                me->SetControlled(true, UNIT_STATE_ROOT);
+                me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_REMOVE_CLIENT_CONTROL);
                 me->RemoveAllAuras();
                 me->AddAura(SPELL_MINION_FREEZE_ANIM, me);
             }
 
             void EnterCombat(Unit* /*who*/) override
             {
-                me->SetFaction(14);
+                me->setFaction(14);
                 me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
-                me->SetControlled(false, UNIT_STATE_ROOT);
+                me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_REMOVE_CLIENT_CONTROL);
             }
 
             void UpdateAI(uint32 /*diff*/) override
@@ -395,26 +394,22 @@ EndScriptData */
 class go_altar_of_archaedas : public GameObjectScript
 {
     public:
-        go_altar_of_archaedas() : GameObjectScript("go_altar_of_archaedas") { }
 
-        struct go_altar_of_archaedasAI : public GameObjectAI
+        go_altar_of_archaedas()
+            : GameObjectScript("go_altar_of_archaedas")
         {
-            go_altar_of_archaedasAI(GameObject* go) : GameObjectAI(go), instance(go->GetInstanceScript()) { }
+        }
 
-            InstanceScript* instance;
-
-            bool GossipHello(Player* player, bool /*reportUse*/) override
-            {
-                player->CastSpell(player, SPELL_BOSS_OBJECT_VISUAL, false);
-
-                instance->SetGuidData(0, player->GetGUID());     // activate archaedas
+        bool OnGossipHello(Player* player, GameObject* /*go*/) override
+        {
+            InstanceScript* instance = player->GetInstanceScript();
+            if (!instance)
                 return false;
-            }
-        };
 
-        GameObjectAI* GetAI(GameObject* go) const override
-        {
-            return GetInstanceAI<go_altar_of_archaedasAI>(go);
+            player->CastSpell (player, SPELL_BOSS_OBJECT_VISUAL, false);
+
+            instance->SetGuidData(0, player->GetGUID());     // activate archaedas
+            return false;
         }
 };
 

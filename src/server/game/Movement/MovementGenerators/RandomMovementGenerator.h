@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -20,30 +20,23 @@
 #define TRINITY_RANDOMMOTIONGENERATOR_H
 
 #include "MovementGenerator.h"
-#include "Timer.h"
 
 template<class T>
 class RandomMovementGenerator : public MovementGeneratorMedium< T, RandomMovementGenerator<T> >
 {
     public:
-        explicit RandomMovementGenerator(float distance = 0.0f) : _path(nullptr), _timer(0), _reference(0.f, 0.f, 0.f), _wanderDistance(distance), _interrupt(false) { }
-        ~RandomMovementGenerator();
+        RandomMovementGenerator(float spawn_dist = 0.0f) : i_nextMoveTime(0), wander_distance(spawn_dist) { }
 
-        MovementGeneratorType GetMovementGeneratorType() const override { return RANDOM_MOTION_TYPE; }
-
+        void _setRandomLocation(T*);
         void DoInitialize(T*);
         void DoFinalize(T*);
         void DoReset(T*);
-        bool DoUpdate(T*, uint32);
-
+        bool DoUpdate(T*, const uint32);
+        bool GetResetPos(T*, float& x, float& y, float& z);
+        MovementGeneratorType GetMovementGeneratorType() const override { return RANDOM_MOTION_TYPE; }
     private:
-        void SetRandomLocation(T*);
+        TimeTrackerSmall i_nextMoveTime;
 
-        PathGenerator* _path;
-        TimeTracker _timer;
-        G3D::Vector3 _reference;
-        float _wanderDistance;
-        bool _interrupt;
+        float wander_distance;
 };
-
 #endif

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -20,7 +20,7 @@
 
 #define DataHeader "AQR"
 
-enum AQRDataTypes
+enum DataTypes
 {
     DATA_KURINNAXX          = 0,
     DATA_RAJAXX             = 1,
@@ -33,7 +33,7 @@ enum AQRDataTypes
     DATA_PARALYZED          = 7
 };
 
-enum AQRCreatures
+enum Creatures
 {
     NPC_KURINAXX                = 15348,
     NPC_RAJAXX                  = 15341,
@@ -52,7 +52,7 @@ enum AQRCreatures
     NPC_HORNET                  = 15934
 };
 
-enum AQRGameObjectIds
+enum GameObjects
 {
     GO_OSSIRIAN_CRYSTAL         = 180619
 };

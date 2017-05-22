@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -29,7 +29,6 @@ EndContentData */
 
 #include "ScriptMgr.h"
 #include "ScriptedCreature.h"
-#include "GameObjectAI.h"
 #include "ScriptedGossip.h"
 #include "razorfen_downs.h"
 #include "Player.h"
@@ -130,14 +129,14 @@ public:
             me->DespawnOrUnsummon(5000);
         }
 
-        void QuestAccept(Player* /*player*/, Quest const* quest) override
+        void sQuestAccept(Player* /*player*/, Quest const* quest) override
         {
             if (quest->GetQuestId() == QUEST_EXTINGUISHING_THE_IDOL)
             {
                 eventInProgress = true;
                 Talk(SAY_QUEST_ACCEPTED);
                 me->RemoveFlag(UNIT_NPC_FLAGS, GOSSIP_OPTION_QUESTGIVER);
-                me->SetFaction(FACTION_ESCORT);
+                me->setFaction(FACTION_ESCORT);
                 me->GetMotionMaster()->MovePath(PATH_ESCORT, false);
             }
         }
@@ -205,7 +204,7 @@ public:
                     case EVENT_COMPLETE:
                     {
                         DoCast(me, SPELL_IDOM_ROOM_CAMERA_SHAKE);
-                        me->SummonGameObject(GO_BELNISTRASZS_BRAZIER, 2577.196f, 947.0781f, 53.16757f, 2.356195f, G3D::Quat(0.f, 0.f, 0.9238796f, 0.3826832f), 3600);
+                        me->SummonGameObject(GO_BELNISTRASZS_BRAZIER, 2577.196f, 947.0781f, 53.16757f, 2.356195f, 0, 0, 0.9238796f, 0.3826832f, 3600);
                         std::list<WorldObject*> ClusterList;
                         Trinity::AllWorldObjectsInRange objects(me, 50.0f);
                         Trinity::WorldObjectListSearcher<Trinity::AllWorldObjectsInRange> searcher(me, ClusterList, objects);
@@ -377,24 +376,19 @@ class go_gong : public GameObjectScript
 public:
     go_gong() : GameObjectScript("go_gong") { }
 
-    struct go_gongAI : public GameObjectAI
+    bool OnGossipHello(Player* /*player*/, GameObject* go) override
     {
-        go_gongAI(GameObject* go) : GameObjectAI(go), instance(go->GetInstanceScript()) { }
+        InstanceScript* instance = go->GetInstanceScript();
 
-        InstanceScript* instance;
-
-        bool GossipHello(Player* /*player*/, bool /*reportUse*/) override
+        if (instance)
         {
-            me->SendCustomAnim(0);
+            go->SendCustomAnim(0);
             instance->SetData(DATA_WAVE, IN_PROGRESS);
             return true;
         }
-    };
-
-    GameObjectAI* GetAI(GameObject* go) const override
-    {
-        return GetRazorfenDownsAI<go_gongAI>(go);
+        return false;
     }
+
 };
 
 void AddSC_razorfen_downs()

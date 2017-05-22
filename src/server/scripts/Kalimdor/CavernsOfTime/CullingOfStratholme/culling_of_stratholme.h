@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -22,7 +22,7 @@
 #define CoSScriptName "instance_culling_of_stratholme"
 uint32 const EncounterCount = 5;
 
-enum CSDataTypes
+enum DataTypes
 {
     DATA_ARTHAS,
     DATA_MEATHOOK,
@@ -39,7 +39,7 @@ enum CSDataTypes
     DATA_INFINITE_COUNTER
 };
 
-enum CSCreatureIds
+enum CreatureIds
 {
     NPC_MEATHOOK         = 26529,
     NPC_SALRAMM          = 26530,
@@ -58,7 +58,7 @@ enum CSCreatureIds
     NPC_GUARDIAN_OF_TIME = 32281
 };
 
-enum CSGameObjectIds
+enum GameObjectIds
 {
     GO_SHKAF_GATE       = 188686,
     GO_MALGANIS_GATE_1  = 187711,
@@ -70,7 +70,7 @@ enum CSGameObjectIds
     GO_PLAGUED_CRATE    = 190095
 };
 
-enum CSWorldStatesCoT
+enum WorldStatesCoT
 {
     WORLDSTATE_SHOW_CRATES          = 3479,
     WORLDSTATE_CRATES_REVEALED      = 3480,
@@ -79,12 +79,12 @@ enum CSWorldStatesCoT
     WORLDSTATE_TIME_GUARDIAN_SHOW   = 3932
 };
 
-enum CSCrateSpells
+enum CrateSpells
 {
     SPELL_CRATES_CREDIT     = 58109
 };
 
-enum CSTexts
+enum Texts
 {
     SAY_CRATES_COMPLETED    = 0,
     // Chromie
@@ -95,7 +95,7 @@ enum CSTexts
     SAY_FAIL_EVENT          = 2 // On Infinite Corruptor event fail
 };
 
-enum CSInstanceEvents
+enum InstanceEvents
 {
     EVENT_INFINITE_TIMER    = 1
 };

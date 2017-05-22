@@ -33,7 +33,7 @@ void AttackersValue::AddAttackersOf(Group* group, set<Unit*>& targets)
     Group::MemberSlotList const& groupSlot = group->GetMemberSlots();
     for (Group::member_citerator itr = groupSlot.begin(); itr != groupSlot.end(); itr++)
     {
-        Player *member = ObjectAccessor::FindPlayerByLowGUID(itr->guid);
+        Player *member = sObjectMgr->GetPlayerByLowGUID(itr->guid);
         if (!member || !member->IsAlive() || member == bot)
             continue;
 

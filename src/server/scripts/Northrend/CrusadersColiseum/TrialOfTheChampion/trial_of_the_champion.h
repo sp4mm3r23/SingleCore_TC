@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -21,7 +21,7 @@
 
 #define DataHeader "TC"
 
-enum TCData
+enum Data
 {
     BOSS_GRAND_CHAMPIONS,
     BOSS_ARGENT_CHALLENGE_E,
@@ -34,7 +34,7 @@ enum TCData
     DATA_ARGENT_SOLDIER_DEFEATED
 };
 
-enum TCData64
+enum Data64
 {
     DATA_ANNOUNCER,
     DATA_MAIN_GATE,
@@ -48,7 +48,7 @@ enum TCData64
     DATA_GRAND_CHAMPION_3
 };
 
-enum TCCreatureIds
+enum CreatureIds
 {
     // Horde Champions
     NPC_MOKRA                   = 35572,
@@ -80,7 +80,7 @@ enum TCCreatureIds
     NPC_ARELAS                  = 35005
 };
 
-enum TCGameObjects
+enum GameObjects
 {
     GO_MAIN_GATE                = 195647,
 
@@ -94,7 +94,7 @@ enum TCGameObjects
     GO_PALETRESS_LOOT_H            = 195324
 };
 
-enum TCVehicles
+enum Vehicles
 {
     //Grand Champions Alliance Vehicles
     VEHICLE_MARSHAL_JACOB_ALERIUS_MOUNT             = 35637,

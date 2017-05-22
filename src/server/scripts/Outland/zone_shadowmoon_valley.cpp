@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -40,7 +40,6 @@ EndContentData */
 #include "ScriptedCreature.h"
 #include "ScriptedGossip.h"
 #include "ScriptedEscortAI.h"
-#include "GameObjectAI.h"
 #include "Group.h"
 #include "SpellScript.h"
 #include "Player.h"
@@ -376,10 +375,11 @@ public:
         void Reset() override
         {
             if (!Tapped)
-                me->SetFaction(FACTION_DEFAULT);
+                me->setFaction(FACTION_DEFAULT);
 
             FlyTimer = 10000;
             me->SetDisableGravity(false);
+            me->SetVisible(true);
         }
 
         void SpellHit(Unit* caster, const SpellInfo* spell) override
@@ -392,7 +392,7 @@ public:
                 Tapped = true;
                 PlayerGUID = caster->GetGUID();
 
-                me->SetFaction(FACTION_FRIENDLY);
+                me->setFaction(FACTION_FRIENDLY);
                 DoCast(caster, SPELL_FORCE_OF_NELTHARAKU, true);
 
                 Unit* Dragonmaw = me->FindNearestCreature(NPC_DRAGONMAW_SUBJUGATOR, 50);
@@ -423,8 +423,10 @@ public:
 
                     PlayerGUID.Clear();
                 }
-
-                me->DespawnOrUnsummon(1);
+                me->SetVisible(false);
+                me->SetDisableGravity(false);
+                me->DealDamage(me, me->GetHealth(), NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NORMAL, NULL, false);
+                me->RemoveCorpse();
             }
         }
 
@@ -522,7 +524,7 @@ public:
 
                 Tapped = true;
                 float x, y, z;
-                caster->GetClosePoint(x, y, z, me->GetCombatReach());
+                caster->GetClosePoint(x, y, z, me->GetObjectSize());
 
                 me->SetWalk(false);
                 me->GetMotionMaster()->MovePoint(1, x, y, z);
@@ -593,6 +595,24 @@ class npc_earthmender_wilda : public CreatureScript
 {
 public:
     npc_earthmender_wilda() : CreatureScript("npc_earthmender_wilda") { }
+
+    bool OnQuestAccept(Player* player, Creature* creature, const Quest* quest) override
+    {
+        if (quest->GetQuestId() == QUEST_ESCAPE_COILSCAR)
+        {
+            creature->AI()->Talk(SAY_WIL_START, player);
+            creature->setFaction(FACTION_EARTHEN);
+
+            if (npc_earthmender_wildaAI* pEscortAI = CAST_AI(npc_earthmender_wilda::npc_earthmender_wildaAI, creature->AI()))
+                pEscortAI->Start(false, false, player->GetGUID(), quest);
+        }
+        return true;
+    }
+
+    CreatureAI* GetAI(Creature* creature) const override
+    {
+        return new npc_earthmender_wildaAI(creature);
+    }
 
     struct npc_earthmender_wildaAI : public npc_escortAI
     {
@@ -723,24 +743,7 @@ public:
                     m_uiHealingTimer -= uiDiff;
             }
         }
-
-        void QuestAccept(Player* player, Quest const* quest) override
-        {
-            if (quest->GetQuestId() == QUEST_ESCAPE_COILSCAR)
-            {
-                Talk(SAY_WIL_START, player);
-                me->SetFaction(FACTION_EARTHEN);
-
-                Start(false, false, player->GetGUID(), quest);
-            }
-        }
     };
-
-    CreatureAI* GetAI(Creature* creature) const override
-    {
-        return new npc_earthmender_wildaAI(creature);
-    }
-
 };
 
 /*#####
@@ -900,10 +903,10 @@ public:
             switch (AnimationCount)
             {
             case 0:
-                me->SetStandState(UNIT_STAND_STATE_KNEEL);
+                me->SetUInt32Value(UNIT_FIELD_BYTES_1, 8);
                 break;
             case 3:
-                me->SetStandState(UNIT_STAND_STATE_STAND);
+                me->RemoveFlag(UNIT_FIELD_BYTES_1, 8);
                 break;
             case 5:
                 if (Player* AggroTarget = ObjectAccessor::GetPlayer(*me, AggroTargetGUID))
@@ -1189,7 +1192,7 @@ public:
 
         void JustDied(Unit* /*killer*/) override
         {
-            me->DespawnOrUnsummon();
+            me->RemoveCorpse();
             if (Creature* LordIllidan = (ObjectAccessor::GetCreature(*me, LordIllidanGUID)))
                 if (LordIllidan)
                     ENSURE_AI(npc_lord_illidan_stormrage::npc_lord_illidan_stormrageAI, LordIllidan->AI())->LiveCounter();
@@ -1347,28 +1350,20 @@ class go_crystal_prison : public GameObjectScript
 public:
     go_crystal_prison() : GameObjectScript("go_crystal_prison") { }
 
-    struct go_crystal_prisonAI : GameObjectAI
+    bool OnQuestAccept(Player* player, GameObject* /*go*/, Quest const* quest) override
     {
-        go_crystal_prisonAI(GameObject* go) : GameObjectAI(go) { }
-
-        void QuestAccept(Player* player, Quest const* quest) override
+        if (quest->GetQuestId() == QUEST_BATTLE_OF_THE_CRIMSON_WATCH)
         {
-            if (quest->GetQuestId() == QUEST_BATTLE_OF_THE_CRIMSON_WATCH)
+            Creature* Illidan = player->FindNearestCreature(22083, 50);
+
+            if (Illidan && !ENSURE_AI(npc_lord_illidan_stormrage::npc_lord_illidan_stormrageAI, Illidan->AI())->EventStarted)
             {
-                Creature* illidan = player->FindNearestCreature(22083, 50);
-                if (illidan && !ENSURE_AI(npc_lord_illidan_stormrage::npc_lord_illidan_stormrageAI, illidan->AI())->EventStarted)
-                {
-                    ENSURE_AI(npc_lord_illidan_stormrage::npc_lord_illidan_stormrageAI, illidan->AI())->PlayerGUID = player->GetGUID();
-                    ENSURE_AI(npc_lord_illidan_stormrage::npc_lord_illidan_stormrageAI, illidan->AI())->LiveCount = 0;
-                    ENSURE_AI(npc_lord_illidan_stormrage::npc_lord_illidan_stormrageAI, illidan->AI())->EventStarted = true;
-                }
+                ENSURE_AI(npc_lord_illidan_stormrage::npc_lord_illidan_stormrageAI, Illidan->AI())->PlayerGUID = player->GetGUID();
+                ENSURE_AI(npc_lord_illidan_stormrage::npc_lord_illidan_stormrageAI, Illidan->AI())->LiveCount = 0;
+                ENSURE_AI(npc_lord_illidan_stormrage::npc_lord_illidan_stormrageAI, Illidan->AI())->EventStarted = true;
             }
         }
-    };
-
-    GameObjectAI* GetAI(GameObject* go) const override
-    {
-        return new go_crystal_prisonAI(go);
+     return true;
     }
 };
 
@@ -1484,7 +1479,7 @@ public:
                  totemOspirits = me->FindNearestCreature(ENTRY_TOTEM_OF_SPIRITS, RADIUS_TOTEM_OF_SPIRITS);
                  if (totemOspirits)
                  {
-                     Summoned->SetFaction(FACTION_ENRAGED_SOUL_FRIENDLY);
+                     Summoned->setFaction(FACTION_ENRAGED_SOUL_FRIENDLY);
                      Summoned->GetMotionMaster()->MovePoint(0, totemOspirits->GetPositionX(), totemOspirits->GetPositionY(), Summoned->GetPositionZ());
 
                      if (Unit* owner = totemOspirits->GetOwner())

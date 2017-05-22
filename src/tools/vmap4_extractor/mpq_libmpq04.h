@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2011 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -34,7 +34,7 @@ public:
     mpq_archive_s *mpq_a;
 
     MPQArchive(const char* filename);
-    ~MPQArchive() { if (isOpened()) close(); }
+    ~MPQArchive() { close(); }
 
     void GetFileListTo(std::vector<std::string>& filelist) {
         uint32_t filenum;
@@ -66,7 +66,6 @@ public:
 
 private:
     void close();
-    bool isOpened() const;
 };
 typedef std::deque<MPQArchive*> ArchiveSet;
 
@@ -96,8 +95,13 @@ public:
 
 inline void flipcc(char *fcc)
 {
-    std::swap(fcc[0], fcc[3]);
-    std::swap(fcc[1], fcc[2]);
+    char t;
+    t=fcc[0];
+    fcc[0]=fcc[3];
+    fcc[3]=t;
+    t=fcc[1];
+    fcc[1]=fcc[2];
+    fcc[2]=t;
 }
 
 #endif

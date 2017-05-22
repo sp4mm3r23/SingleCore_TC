@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -22,32 +22,32 @@
 
 uint32 const EncounterCount     = 1;
 
-enum OLDataTypes
+enum DataTypes
 {
     DATA_ONYXIA                 = 0,
 };
 
-enum OLData32
+enum Data32
 {
     DATA_ONYXIA_PHASE           = 0,
     DATA_SHE_DEEP_BREATH_MORE   = 1,
     DATA_MANY_WHELPS_COUNT      = 2
 };
 
-enum OLData64
+enum Data64
 {
     DATA_ONYXIA_GUID            = 0,
     DATA_FLOOR_ERUPTION_GUID    = 1
 };
 
-enum OLOnyxiaPhases
+enum OnyxiaPhases
 {
     PHASE_START                 = 1,
     PHASE_BREATH                = 2,
     PHASE_END                   = 3
 };
 
-enum OLCreatureIds
+enum CreatureIds
 {
     NPC_WHELP                   = 11262,
     NPC_LAIRGUARD               = 36561,
@@ -55,13 +55,13 @@ enum OLCreatureIds
     NPC_TRIGGER                 = 14495
 };
 
-enum OLGameObjectIds
+enum GameObjectIds
 {
     GO_WHELP_SPAWNER            = 176510,
     GO_WHELP_EGG                = 176511
 };
 
-enum OLAchievementData
+enum AchievementData
 {
     ACHIEV_CRITERIA_MANY_WHELPS_10_PLAYER                   = 12565, // Criteria for achievement 4403: Many Whelps! Handle It! (10 player) Hatch 50 eggs in 10s
     ACHIEV_CRITERIA_MANY_WHELPS_25_PLAYER                   = 12568, // Criteria for achievement 4406: Many Whelps! Handle It! (25 player) Hatch 50 eggs in 10s

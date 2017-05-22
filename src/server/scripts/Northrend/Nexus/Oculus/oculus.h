@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -23,7 +23,7 @@
 
 uint32 const EncounterCount = 4;
 
-enum OCDataTypes
+enum DataTypes
 {
     // Encounter States/Boss GUIDs
     DATA_DRAKOS                 = 0,
@@ -34,7 +34,7 @@ enum OCDataTypes
     DATA_CONSTRUCTS             = 4
 };
 
-enum OCCreatureIds
+enum CreatureIds
 {
     NPC_DRAKOS                  = 27654,
     NPC_VAROS                   = 27447,
@@ -52,55 +52,55 @@ enum OCCreatureIds
     NPC_GREATER_WHELP           = 28276
 };
 
-enum OCGameObjectIds
+enum GameObjectIds
 {
     GO_DRAGON_CAGE_DOOR         = 193995,
     GO_EREGOS_CACHE_N           = 191349,
     GO_EREGOS_CACHE_H           = 193603
 };
 
-enum OCSpellEvents
+enum SpellEvents
 {
     EVENT_CALL_DRAGON           = 12229
 };
 
-enum OCCreatureActions
+enum CreatureActions
 {
     ACTION_CALL_DRAGON_EVENT    = 1
 };
 
-enum OCOculusWorldStates
+enum OculusWorldStates
 {
     WORLD_STATE_CENTRIFUGE_CONSTRUCT_SHOW   = 3524,
     WORLD_STATE_CENTRIFUGE_CONSTRUCT_AMOUNT = 3486
 };
 
-enum OCOculusSpells
+enum OculusSpells
 {
     SPELL_CENTRIFUGE_SHIELD     = 50053,
     SPELL_DEATH_SPELL           = 50415
 };
 
-enum OCInstanceTexts
+enum InstanceTexts
 {
     SAY_EREGOS_INTRO_TEXT = 0,
     SAY_VAROS_INTRO_TEXT  = 4
 };
 
-enum OCInstanceEvents
+enum InstanceEvents
 {
     EVENT_VAROS_INTRO = 1,
     EVENT_EREGOS_INTRO
 };
 
-enum OCConstructKillState
+enum ConstructKillState
 {
     KILL_NO_CONSTRUCT           = 0,
     KILL_ONE_CONSTRUCT          = 1,
     KILL_MORE_CONSTRUCT         = 2
 };
 
-enum OCMisc
+enum Misc
 {
     POINT_MOVE_OUT              = 1
 };

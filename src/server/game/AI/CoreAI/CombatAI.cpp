@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -302,27 +302,24 @@ void VehicleAI::LoadConditions()
 
 void VehicleAI::CheckConditions(uint32 diff)
 {
-    if (!m_HasConditions)
-        return;
-
-    if (m_ConditionsTimer <= diff)
+    if (m_ConditionsTimer < diff)
     {
-        if (Vehicle* vehicleKit = me->GetVehicleKit())
+        if (m_HasConditions)
         {
-            for (SeatMap::iterator itr = vehicleKit->Seats.begin(); itr != vehicleKit->Seats.end(); ++itr)
-                if (Unit* passenger = ObjectAccessor::GetUnit(*me, itr->second.Passenger.Guid))
-                {
-                    if (Player* player = passenger->ToPlayer())
+            if (Vehicle* vehicleKit = me->GetVehicleKit())
+                for (SeatMap::iterator itr = vehicleKit->Seats.begin(); itr != vehicleKit->Seats.end(); ++itr)
+                    if (Unit* passenger = ObjectAccessor::GetUnit(*me, itr->second.Passenger.Guid))
                     {
-                        if (!sConditionMgr->IsObjectMeetingNotGroupedConditions(CONDITION_SOURCE_TYPE_CREATURE_TEMPLATE_VEHICLE, me->GetEntry(), player, me))
+                        if (Player* player = passenger->ToPlayer())
                         {
-                            player->ExitVehicle();
-                            return; // check other pessanger in next tick
+                            if (!sConditionMgr->IsObjectMeetingNotGroupedConditions(CONDITION_SOURCE_TYPE_CREATURE_TEMPLATE_VEHICLE, me->GetEntry(), player, me))
+                            {
+                                player->ExitVehicle();
+                                return; // check other pessanger in next tick
+                            }
                         }
                     }
-                }
         }
-
         m_ConditionsTimer = VEHICLE_CONDITION_CHECK_TIME;
     }
     else

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -163,14 +163,9 @@ uint32 BigNumber::AsDword()
     return (uint32)BN_get_word(_bn);
 }
 
-bool BigNumber::IsZero() const
+bool BigNumber::isZero() const
 {
     return BN_is_zero(_bn);
-}
-
-bool BigNumber::IsNegative() const
-{
-    return BN_is_negative(_bn);
 }
 
 std::unique_ptr<uint8[]> BigNumber::AsByteArray(int32 minSize, bool littleEndian)
@@ -194,19 +189,13 @@ std::unique_ptr<uint8[]> BigNumber::AsByteArray(int32 minSize, bool littleEndian
     return ret;
 }
 
-std::string BigNumber::AsHexStr() const
+char * BigNumber::AsHexStr() const
 {
-    char* ch = BN_bn2hex(_bn);
-    std::string ret = ch;
-    OPENSSL_free(ch);
-    return ret;
+    return BN_bn2hex(_bn);
 }
 
-std::string BigNumber::AsDecStr() const
+char * BigNumber::AsDecStr() const
 {
-    char* ch = BN_bn2dec(_bn);
-    std::string ret = ch;
-    OPENSSL_free(ch);
-    return ret;
+    return BN_bn2dec(_bn);
 }
 

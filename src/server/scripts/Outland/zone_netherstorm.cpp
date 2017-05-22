@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -34,7 +34,6 @@ EndContentData */
 #include "ScriptedCreature.h"
 #include "ScriptedGossip.h"
 #include "ScriptedEscortAI.h"
-#include "GameObjectAI.h"
 #include "Player.h"
 
 /*######
@@ -493,6 +492,22 @@ class npc_bessy : public CreatureScript
 public:
     npc_bessy() : CreatureScript("npc_bessy") { }
 
+    bool OnQuestAccept(Player* player, Creature* creature, Quest const* quest) override
+    {
+        if (quest->GetQuestId() == Q_ALMABTRIEB)
+        {
+            creature->setFaction(113);
+            creature->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+            ENSURE_AI(npc_escortAI, (creature->AI()))->Start(true, false, player->GetGUID());
+        }
+        return true;
+    }
+
+    CreatureAI* GetAI(Creature* creature) const override
+    {
+        return new npc_bessyAI(creature);
+    }
+
     struct npc_bessyAI : public npc_escortAI
     {
         npc_bessyAI(Creature* creature) : npc_escortAI(creature) { }
@@ -541,22 +556,7 @@ public:
         {
             me->RestoreFaction();
         }
-
-        void QuestAccept(Player* player, Quest const* quest) override
-        {
-            if (quest->GetQuestId() == Q_ALMABTRIEB)
-            {
-                me->SetFaction(113);
-                me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
-                Start(true, false, player->GetGUID());
-            }
-        }
     };
-
-    CreatureAI* GetAI(Creature* creature) const override
-    {
-        return new npc_bessyAI(creature);
-    }
 };
 
 /*######
@@ -573,6 +573,11 @@ class npc_maxx_a_million_escort : public CreatureScript
 {
 public:
     npc_maxx_a_million_escort() : CreatureScript("npc_maxx_a_million_escort") { }
+
+    CreatureAI* GetAI(Creature* creature) const override
+    {
+        return new npc_maxx_a_million_escortAI(creature);
+    }
 
     struct npc_maxx_a_million_escortAI : public npc_escortAI
     {
@@ -649,20 +654,19 @@ public:
             }
             DoMeleeAttackIfReady();
         }
-
-        void QuestAccept(Player* player, Quest const* quest) override
-        {
-            if (quest->GetQuestId() == QUEST_MARK_V_IS_ALIVE)
-            {
-                me->SetFaction(113);
-                Start(false, false, player->GetGUID());
-            }
-        }
     };
 
-    CreatureAI* GetAI(Creature* creature) const override
+    bool OnQuestAccept(Player* player, Creature* creature, const Quest* quest) override
     {
-        return new npc_maxx_a_million_escortAI(creature);
+        if (quest->GetQuestId() == QUEST_MARK_V_IS_ALIVE)
+        {
+            if (npc_maxx_a_million_escortAI* pEscortAI = CAST_AI(npc_maxx_a_million_escort::npc_maxx_a_million_escortAI, creature->AI()))
+            {
+                creature->setFaction(113);
+                pEscortAI->Start(false, false, player->GetGUID());
+            }
+        }
+        return true;
     }
 };
 
@@ -681,26 +685,16 @@ class go_captain_tyralius_prison : public GameObjectScript
     public:
         go_captain_tyralius_prison() : GameObjectScript("go_captain_tyralius_prison") { }
 
-        struct go_captain_tyralius_prisonAI : public GameObjectAI
+        bool OnGossipHello(Player* player, GameObject* go) override
         {
-            go_captain_tyralius_prisonAI(GameObject* go) : GameObjectAI(go) { }
-
-            bool GossipHello(Player* player, bool /*reportUse*/) override
+            go->UseDoorOrButton();
+            if (Creature* tyralius = go->FindNearestCreature(NPC_CAPTAIN_TYRALIUS, 1.0f))
             {
-                me->UseDoorOrButton();
-                if (Creature* tyralius = me->FindNearestCreature(NPC_CAPTAIN_TYRALIUS, 1.0f))
-                {
-                    player->KilledMonsterCredit(NPC_CAPTAIN_TYRALIUS);
-                    tyralius->AI()->Talk(SAY_FREE);
-                    tyralius->DespawnOrUnsummon(8000);
-                }
-                return true;
+                player->KilledMonsterCredit(NPC_CAPTAIN_TYRALIUS);
+                tyralius->AI()->Talk(SAY_FREE);
+                tyralius->DespawnOrUnsummon(8000);
             }
-        };
-
-        GameObjectAI* GetAI(GameObject* go) const override
-        {
-            return new go_captain_tyralius_prisonAI(go);
+            return true;
         }
 };
 

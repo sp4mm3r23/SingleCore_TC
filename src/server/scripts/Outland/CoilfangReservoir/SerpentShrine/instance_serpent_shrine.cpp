@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -28,7 +28,6 @@ EndScriptData */
 #include "serpent_shrine.h"
 #include "Player.h"
 #include "TemporarySummon.h"
-#include "GameObjectAI.h"
 
 #define MAX_ENCOUNTER 6
 
@@ -65,23 +64,17 @@ class go_bridge_console : public GameObjectScript
     public:
         go_bridge_console() : GameObjectScript("go_bridge_console") { }
 
-        struct go_bridge_consoleAI : public GameObjectAI
+        bool OnGossipHello(Player* /*player*/, GameObject* go) override
         {
-            go_bridge_consoleAI(GameObject* go) : GameObjectAI(go), instance(go->GetInstanceScript()) { }
+            InstanceScript* instance = go->GetInstanceScript();
 
-            InstanceScript* instance;
+            if (!instance)
+                return false;
 
-            bool GossipHello(Player* /*player*/, bool /*reportUse*/) override
-            {
-                if (instance)
-                    instance->SetData(DATA_CONTROL_CONSOLE, DONE);
-                return true;
-            }
-        };
+            if (instance)
+                instance->SetData(DATA_CONTROL_CONSOLE, DONE);
 
-        GameObjectAI* GetAI(GameObject* go) const override
-        {
-            return GetInstanceAI<go_bridge_consoleAI>(go);
+            return true;
         }
 };
 

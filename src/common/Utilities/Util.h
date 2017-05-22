@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -52,7 +52,7 @@ public:
     typedef StorageType::const_reference const_reference;
 
 public:
-    Tokenizer(const std::string &src, char const sep, uint32 vectorReserve = 0, bool keepEmptyStrings = true);
+    Tokenizer(const std::string &src, char const sep, uint32 vectorReserve = 0);
     ~Tokenizer() { delete[] m_str; }
 
     const_iterator begin() const { return m_storage.begin(); }
@@ -77,6 +77,13 @@ TC_COMMON_API struct tm* localtime_r(const time_t* time, struct tm *result);
 TC_COMMON_API std::string secsToTimeString(uint64 timeInSecs, bool shortText = false, bool hoursOnly = false);
 TC_COMMON_API uint32 TimeStringToSecs(const std::string& timestring);
 TC_COMMON_API std::string TimeToTimestampStr(time_t t);
+
+inline void ApplyPercentModFloatVar(float& var, float val, bool apply)
+{
+    if (val == -100.0f)     // prevent set var to zero
+        val = -99.99f;
+    var *= (apply ? (100.0f + val) / 100.0f : 100.0f / (100.0f + val));
+}
 
 // Percentage calculation
 template <class T, class U>
@@ -105,10 +112,8 @@ inline T RoundToInterval(T& num, T floor, T ceil)
 
 // UTF8 handling
 TC_COMMON_API bool Utf8toWStr(const std::string& utf8str, std::wstring& wstr);
-
 // in wsize==max size of buffer, out wsize==real string size
 TC_COMMON_API bool Utf8toWStr(char const* utf8str, size_t csize, wchar_t* wstr, size_t& wsize);
-
 inline bool Utf8toWStr(const std::string& utf8str, wchar_t* wstr, size_t& wsize)
 {
     return Utf8toWStr(utf8str.c_str(), utf8str.size(), wstr, wsize);
@@ -118,8 +123,7 @@ TC_COMMON_API bool WStrToUtf8(std::wstring const& wstr, std::string& utf8str);
 // size==real string size
 TC_COMMON_API bool WStrToUtf8(wchar_t* wstr, size_t size, std::string& utf8str);
 
-// set string to "" if invalid utf8 sequence
-TC_COMMON_API size_t utf8length(std::string& utf8str);
+TC_COMMON_API size_t utf8length(std::string& utf8str);                    // set string to "" if invalid utf8 sequence
 TC_COMMON_API void utf8truncate(std::string& utf8str, size_t len);
 
 inline bool isBasicLatinCharacter(wchar_t wchar)
@@ -320,39 +324,37 @@ TC_COMMON_API bool StringToBool(std::string const& str);
 
 // simple class for not-modifyable list
 template <typename T>
-class HookList final
+class HookList
 {
+    typedef typename std::list<T>::iterator ListIterator;
     private:
-        typedef std::vector<T> ContainerType;
-
-        ContainerType _container;
-
+        typename std::list<T> m_list;
     public:
-        typedef typename ContainerType::iterator iterator;
-
-        HookList<T>& operator+=(T&& t)
+        HookList<T> & operator+=(T t)
         {
-            _container.push_back(std::move(t));
+            m_list.push_back(t);
             return *this;
         }
-
-        size_t size() const
+        HookList<T> & operator-=(T t)
         {
-            return _container.size();
+            m_list.remove(t);
+            return *this;
         }
-
-        iterator begin()
+        size_t size()
         {
-            return _container.begin();
+            return m_list.size();
         }
-
-        iterator end()
+        ListIterator begin()
         {
-            return _container.end();
+            return m_list.begin();
+        }
+        ListIterator end()
+        {
+            return m_list.end();
         }
 };
 
-class TC_COMMON_API flag96
+class flag96
 {
 private:
     uint32 part[3];

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -168,7 +168,10 @@ public:
             for (uint8 i = 0; i < 2; ++i)
             {
                 if (Creature* mob = ObjectAccessor::GetCreature(*me, beams[i]))
-                    mob->DespawnOrUnsummon();
+                {
+                    mob->setDeathState(DEAD);
+                    mob->RemoveCorpse();
+                }
             }
         }
         void EnterCombat(Unit* /*who*/) override

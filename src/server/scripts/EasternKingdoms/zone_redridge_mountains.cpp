@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -63,12 +63,12 @@ public:
             Initialize();
         }
 
-        void QuestAccept(Player* player, Quest const* quest) override
+        void sQuestAccept(Player* player, Quest const* quest) override
         {
             if (quest->GetQuestId() == QUEST_MISSING_IN_ACTION)
             {
                 Talk(SAY_CORPORAL_1, player);
-                me->SetFaction(250);
+                me->setFaction(250);
                 npc_escortAI::Start(true, false, player->GetGUID(), quest);
             }
         }

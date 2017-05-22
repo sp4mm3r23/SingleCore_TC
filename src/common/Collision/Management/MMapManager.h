@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -22,6 +22,7 @@
 #include "Define.h"
 #include "DetourNavMesh.h"
 #include "DetourNavMeshQuery.h"
+
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -33,7 +34,7 @@ namespace MMAP
     typedef std::unordered_map<uint32, dtNavMeshQuery*> NavMeshQuerySet;
 
     // dummy struct to hold map's mmap data
-    struct TC_COMMON_API MMapData
+    struct MMapData
     {
         MMapData(dtNavMesh* mesh) : navMesh(mesh) { }
         ~MMapData()
@@ -45,11 +46,11 @@ namespace MMAP
                 dtFreeNavMesh(navMesh);
         }
 
+        dtNavMesh* navMesh;
+
         // we have to use single dtNavMeshQuery for every instance, since those are not thread safe
         NavMeshQuerySet navMeshQueries;     // instanceId to query
-
-        dtNavMesh* navMesh;
-        MMapTileSet loadedTileRefs;        // maps [map grid coords] to [dtTile]
+        MMapTileSet mmapLoadedTiles;        // maps [map grid coords] to [dtTile]
     };
 
 

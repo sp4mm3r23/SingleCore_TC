@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -82,7 +82,7 @@ void CreatureAI::DoZoneInCombat(Creature* creature /*= nullptr*/, float maxRange
     // If it can't find a suitable attack target then we should error out.
     if (!creature->HasReactState(REACT_PASSIVE) && !creature->GetVictim())
     {
-        TC_LOG_ERROR("misc.dozoneincombat", "DoZoneInCombat called for creature that has empty threat list (creature entry = %u)", creature->GetEntry());
+        TC_LOG_ERROR("misc", "DoZoneInCombat called for creature that has empty threat list (creature entry = %u)", creature->GetEntry());
         return;
     }
 
@@ -162,9 +162,9 @@ void CreatureAI::TriggerAlert(Unit const* who) const
     me->SendAIReaction(AI_REACTION_ALERT);
 
     // Face the unit (stealthed player) and set distracted state for 5 seconds
-    me->GetMotionMaster()->MoveDistract(5 * IN_MILLISECONDS);
+    me->SetFacingTo(me->GetAngle(who->GetPositionX(), who->GetPositionY()));
     me->StopMoving();
-    me->SetFacingTo(me->GetAngle(who));
+    me->GetMotionMaster()->MoveDistract(5 * IN_MILLISECONDS);
 }
 
 void CreatureAI::EnterEvadeMode(EvadeReason why)
@@ -206,7 +206,7 @@ void CreatureAI::SetGazeOn(Unit* target)
 {
     if (me->IsValidAttackTarget(target))
     {
-        if (!me->IsFocusing(nullptr, true) && target != me->GetVictim())
+        if (!me->IsFocusing(nullptr, true))
             AttackStart(target);
         me->SetReactState(REACT_PASSIVE);
     }
@@ -226,7 +226,7 @@ bool CreatureAI::UpdateVictimWithGaze()
     }
 
     if (Unit* victim = me->SelectVictim())
-        if (!me->IsFocusing(nullptr, true) && victim != me->GetVictim())
+        if (!me->IsFocusing(nullptr, true))
             AttackStart(victim);
 
     return me->GetVictim() != nullptr;
@@ -240,7 +240,7 @@ bool CreatureAI::UpdateVictim()
     if (!me->HasReactState(REACT_PASSIVE))
     {
         if (Unit* victim = me->SelectVictim())
-            if (!me->IsFocusing(nullptr, true) && victim != me->GetVictim())
+            if (!me->IsFocusing(nullptr, true))
                 AttackStart(victim);
 
         return me->GetVictim() != nullptr;
@@ -269,7 +269,6 @@ bool CreatureAI::_EnterEvadeMode(EvadeReason /*why*/)
     me->ResetPlayerDamageReq();
     me->SetLastDamagedTime(0);
     me->SetCannotReachTarget(false);
-    me->DoNotReacquireTarget();
 
     if (me->IsInEvadeMode())
         return false;
@@ -354,20 +353,13 @@ int32 CreatureAI::VisualizeBoundary(uint32 duration, Unit* owner, bool fill) con
 
 bool CreatureAI::CheckBoundary(Position const* who) const
 {
-    if (!_boundary)
-        return true;
-
     if (!who)
         who = me;
 
-    return (CreatureAI::IsInBounds(*_boundary, who) != _negateBoundary);
-}
-
-bool CreatureAI::IsInBounds(CreatureBoundary const& boundary, Position const* pos)
-{
-    for (AreaBoundary const* areaBoundary : boundary)
-        if (!areaBoundary->IsWithinBoundary(pos))
-            return false;
+    if (_boundary)
+        for (CreatureBoundary::const_iterator it = _boundary->begin(); it != _boundary->end(); ++it)
+            if (!(*it)->IsWithinBoundary(who))
+                return false;
 
     return true;
 }
@@ -381,13 +373,6 @@ bool CreatureAI::CheckInRoom()
         EnterEvadeMode(EVADE_REASON_BOUNDARY);
         return false;
     }
-}
-
-void CreatureAI::SetBoundary(CreatureBoundary const* boundary, bool negateBoundaries /*= false*/)
-{
-    _boundary = boundary;
-    _negateBoundary = negateBoundaries;
-    me->DoImmediateBoundaryCheck();
 }
 
 Creature* CreatureAI::DoSummon(uint32 entry, const Position& pos, uint32 despawnTime, TempSummonType summonType)
