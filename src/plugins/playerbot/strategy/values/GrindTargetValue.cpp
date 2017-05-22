@@ -53,16 +53,16 @@ Unit* GrindTargetValue::FindTargetForGrinding(int assistCount)
         if (!unit)
             continue;
 
-        if (abs(bot->GetPositionZ() - unit->GetPositionZ()) > sPlayerbotAIConfig.spellDistance)
+        if (!bot->InBattleground() && abs(bot->GetPositionZ() - unit->GetPositionZ()) > sPlayerbotAIConfig.spellDistance)
             continue;
 
-        if (GetTargetingPlayerCount(unit) > assistCount)
+		if (!bot->InBattleground() && GetTargetingPlayerCount(unit) > assistCount)
             continue;
 
-		if (master && master->GetDistance(unit) >= sPlayerbotAIConfig.grindDistance && !sRandomPlayerbotMgr.IsRandomBot(bot))
+		if (!bot->InBattleground() && master && master->GetDistance(unit) >= sPlayerbotAIConfig.grindDistance && !sRandomPlayerbotMgr.IsRandomBot(bot))
             continue;
 
-		if ((int)unit->getLevel() - (int)bot->getLevel() > 4 && !unit->GetGUID().IsPlayer())
+		if (!bot->InBattleground() && (int)unit->getLevel() - (int)bot->getLevel() > 4 && !unit->GetGUID().IsPlayer())
 		    continue;
 
 		Creature* creature = dynamic_cast<Creature*>(unit);
@@ -74,7 +74,7 @@ Unit* GrindTargetValue::FindTargetForGrinding(int assistCount)
             Group::MemberSlotList const& groupSlot = group->GetMemberSlots();
             for (Group::member_citerator itr = groupSlot.begin(); itr != groupSlot.end(); itr++)
             {
-                Player *member = sObjectMgr->GetPlayerByLowGUID(itr->guid);
+                Player *member = ObjectAccessor::FindPlayerByLowGUID(itr->guid);
                 if( !member || !member->IsAlive())
                     continue;
 
@@ -111,7 +111,7 @@ int GrindTargetValue::GetTargetingPlayerCount( Unit* unit )
     Group::MemberSlotList const& groupSlot = group->GetMemberSlots();
     for (Group::member_citerator itr = groupSlot.begin(); itr != groupSlot.end(); itr++)
     {
-        Player *member = sObjectMgr->GetPlayerByLowGUID(itr->guid);
+        Player *member = ObjectAccessor::FindPlayerByLowGUID(itr->guid);
         if( !member || !member->IsAlive() || member == bot)
             continue;
 

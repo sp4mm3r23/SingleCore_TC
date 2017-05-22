@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -25,76 +25,74 @@ EndScriptData */
 
 #include "ScriptMgr.h"
 #include "ScriptedCreature.h"
+#include "GameObjectAI.h"
 #include "sunwell_plateau.h"
 #include "Player.h"
 #include "WorldSession.h"
 
 enum Yells
 {
-    SAY_SATH_AGGRO                              = 0,
-    SAY_SATH_SLAY                               = 1,
-    SAY_SATH_DEATH                              = 2,
-    SAY_SATH_SPELL1                             = 3,
-    SAY_SATH_SPELL2                             = 4,
+    SAY_SATH_AGGRO                  = 0,
+    SAY_SATH_SLAY                   = 1,
+    SAY_SATH_DEATH                  = 2,
+    SAY_SATH_SPELL1                 = 3,
+    SAY_SATH_SPELL2                 = 4,
 
-    SAY_EVIL_AGGRO                              = 0,
-    SAY_EVIL_SLAY                               = 1,
-    SAY_GOOD_PLRWIN                             = 2,
-    SAY_EVIL_ENRAGE                             = 3,
+    SAY_EVIL_AGGRO                  = 0,
+    SAY_EVIL_SLAY                   = 1,
+    SAY_GOOD_PLRWIN                 = 2,
+    SAY_EVIL_ENRAGE                 = 3,
 
-    SAY_GOOD_AGGRO                              = 0,
-    SAY_GOOD_NEAR_DEATH                         = 1,
-    SAY_GOOD_NEAR_DEATH2                        = 2
+    SAY_GOOD_AGGRO                  = 0,
+    SAY_GOOD_NEAR_DEATH             = 1,
+    SAY_GOOD_NEAR_DEATH2            = 2
 };
 
 enum Spells
 {
-    AURA_SUNWELL_RADIANCE                       = 45769,
-    AURA_SPECTRAL_EXHAUSTION                    = 44867,
-    AURA_SPECTRAL_REALM                         = 46021,
-    AURA_SPECTRAL_INVISIBILITY                  = 44801,
-    AURA_DEMONIC_VISUAL                         = 44800,
+    AURA_SUNWELL_RADIANCE           = 45769,
+    AURA_SPECTRAL_EXHAUSTION        = 44867,
+    AURA_SPECTRAL_REALM             = 46021,
+    AURA_SPECTRAL_INVISIBILITY      = 44801,
+    AURA_DEMONIC_VISUAL             = 44800,
 
-    SPELL_SPECTRAL_BLAST                        = 44869,
-    SPELL_TELEPORT_SPECTRAL                     = 46019,
-    SPELL_ARCANE_BUFFET                         = 45018,
-    SPELL_FROST_BREATH                          = 44799,
-    SPELL_TAIL_LASH                             = 45122,
+    SPELL_SPECTRAL_BLAST            = 44869,
+    SPELL_TELEPORT_SPECTRAL         = 46019,
+    SPELL_ARCANE_BUFFET             = 45018,
+    SPELL_FROST_BREATH              = 44799,
+    SPELL_TAIL_LASH                 = 45122,
 
-    SPELL_BANISH                                = 44836,
-    SPELL_TRANSFORM_KALEC                       = 44670,
-    SPELL_ENRAGE                                = 44807,
+    SPELL_BANISH                    = 44836,
+    SPELL_TRANSFORM_KALEC           = 44670,
+    SPELL_ENRAGE                    = 44807,
 
-    SPELL_CORRUPTION_STRIKE                     = 45029,
-    SPELL_AGONY_CURSE                           = 45032,
-    SPELL_SHADOW_BOLT                           = 45031,
+    SPELL_CORRUPTION_STRIKE         = 45029,
+    SPELL_AGONY_CURSE               = 45032,
+    SPELL_SHADOW_BOLT               = 45031,
 
-    SPELL_HEROIC_STRIKE                         = 45026,
-    SPELL_REVITALIZE                            = 45027
+    SPELL_HEROIC_STRIKE             = 45026,
+    SPELL_REVITALIZE                = 45027
 };
 
 enum SWPActions
 {
-    DO_ENRAGE                                   =  1,
-    DO_BANISH                                   =  2
+    DO_ENRAGE                       =  1,
+    DO_BANISH                       =  2
 };
 
-#define GO_FAILED   "You are unable to use this currently."
-
-#define EMOTE_UNABLE_TO_FIND    "is unable to find Kalecgos"
-
-#define FLY_X           1679
-#define FLY_Y           900
-#define FLY_Z           82
-
-#define CENTER_X        1705
-#define CENTER_Y        930
-#define RADIUS          30
+enum Misc
+{
+    FLY_X                           = 1679,
+    FLY_Y                           = 900,
+    FLY_Z                           = 82,
+    CENTER_X                        = 1705,
+    CENTER_Y                        = 930,
+    RADIUS                          = 30,
+    MAX_PLAYERS_IN_SPECTRAL_REALM   = 0 // over this, teleport object won't work, 0 disables check
+};
 
 #define DRAGON_REALM_Z  53.079f
 #define DEMON_REALM_Z   -74.558f
-
-#define MAX_PLAYERS_IN_SPECTRAL_REALM 0 //over this, teleport object won't work, 0 disables check
 
 uint32 WildMagic[] = { 44978, 45001, 45002, 45004, 45006, 45010 };
 
@@ -158,7 +156,7 @@ public:
             if (Creature* Sath = ObjectAccessor::GetCreature(*me, SathGUID))
                 Sath->AI()->EnterEvadeMode();
 
-            me->setFaction(14);
+            me->SetFaction(14);
             if (!bJustReset) //first reset at create
             {
                 me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE + UNIT_FLAG_NOT_SELECTABLE);
@@ -368,17 +366,7 @@ public:
             if (isFriendly)
             {
                 me->setDeathState(JUST_DIED);
-
-                Map::PlayerList const& players = me->GetMap()->GetPlayers();
-                if (!players.isEmpty())
-                {
-                    for (Map::PlayerList::const_iterator itr = players.begin(); itr != players.end(); ++itr)
-                    {
-                        Player* player = itr->GetSource();
-                        if (player)
-                            me->GetMap()->ToInstanceMap()->PermBindAllPlayers(player);
-                    }
-                }
+                me->GetMap()->ToInstanceMap()->PermBindAllPlayers();
             }
             else
             {
@@ -392,7 +380,7 @@ public:
             switch (TalkSequence)
             {
                 case 1:
-                    me->setFaction(35);
+                    me->SetFaction(35);
                     TalkTimer = 1000;
                     break;
                 case 2:
@@ -549,28 +537,35 @@ class kalecgos_teleporter : public GameObjectScript
 public:
     kalecgos_teleporter() : GameObjectScript("kalecgos_teleporter") { }
 
-    bool OnGossipHello(Player* player, GameObject* go) override
+    struct kalecgos_teleporterAI : public GameObjectAI
     {
-#if MAX_PLAYERS_IN_SPECTRAL_REALM > 0
-        uint8 SpectralPlayers = 0;
-        Map::PlayerList const &PlayerList = go->GetMap()->GetPlayers();
-        for (Map::PlayerList::const_iterator i = PlayerList.begin(); i != PlayerList.end(); ++i)
-        {
-            if (i->GetSource() && i->GetSource()->GetPositionZ() < DEMON_REALM_Z + 5)
-                ++SpectralPlayers;
-        }
+        kalecgos_teleporterAI(GameObject* go) : GameObjectAI(go) { }
 
-        if (player->HasAura(AURA_SPECTRAL_EXHAUSTION) || SpectralPlayers >= MAX_PLAYERS_IN_SPECTRAL_REALM)
+        bool GossipHello(Player* player, bool /*reportUse*/) override
         {
-            player->GetSession()->SendNotification(GO_FAILED);
-            return true;
-        }
-#else
-        (void)go;
+#if MAX_PLAYERS_IN_SPECTRAL_REALM > 0
+            uint8 SpectralPlayers = 0;
+            Map::PlayerList const &PlayerList = go->GetMap()->GetPlayers();
+            for (Map::PlayerList::const_iterator i = PlayerList.begin(); i != PlayerList.end(); ++i)
+            {
+                if (i->GetSource() && i->GetSource()->GetPositionZ() < DEMON_REALM_Z + 5)
+                    ++SpectralPlayers;
+            }
+
+            if (player->HasAura(AURA_SPECTRAL_EXHAUSTION) || SpectralPlayers >= MAX_PLAYERS_IN_SPECTRAL_REALM)
+            {
+                return true;
+            }
 #endif
 
-        player->CastSpell(player, SPELL_TELEPORT_SPECTRAL, true);
-        return true;
+            player->CastSpell(player, SPELL_TELEPORT_SPECTRAL, true);
+            return true;
+        }
+    };
+
+    GameObjectAI* GetAI(GameObject* go) const override
+    {
+        return GetSunwellPlateauAI<kalecgos_teleporterAI>(go);
     }
 };
 
@@ -673,7 +668,7 @@ public:
         void JustDied(Unit* /*killer*/) override
         {
             Talk(SAY_SATH_DEATH);
-            me->SetPosition(me->GetPositionX(), me->GetPositionY(), DRAGON_REALM_Z, me->GetOrientation());
+            me->UpdatePosition(me->GetPositionX(), me->GetPositionY(), DRAGON_REALM_Z, me->GetOrientation());
             TeleportAllPlayersBack();
             if (Creature* Kalecgos = ObjectAccessor::GetCreature(*me, KalecgosGUID))
             {
@@ -760,7 +755,6 @@ public:
                     }
                     else
                     {
-                        me->TextEmote(EMOTE_UNABLE_TO_FIND);
                         EnterEvadeMode();
                         return;
                     }

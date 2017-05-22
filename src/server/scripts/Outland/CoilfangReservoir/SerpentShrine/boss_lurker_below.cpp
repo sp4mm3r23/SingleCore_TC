@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -25,6 +25,7 @@ EndScriptData */
 
 #include "ScriptMgr.h"
 #include "ScriptedCreature.h"
+#include "GameObjectAI.h"
 #include "serpent_shrine.h"
 #include "Spell.h"
 #include "Player.h"
@@ -50,15 +51,17 @@ enum Spells
     SPELL_HAMSTRING         = 26211
 };
 
+enum Misc
+{
+    EMOTE_SPOUT             = 0,     // "The Lurker Below takes a deep breath."
+    SPOUT_DIST              = 100
+};
+
 enum Creatures
 {
     NPC_COILFANG_GUARDIAN   = 21873,
     NPC_COILFANG_AMBUSHER   = 21865
 };
-
-#define EMOTE_SPOUT "The Lurker Below takes a deep breath."
-
-#define SPOUT_DIST  100
 
 float AddPos[9][3] =
 {
@@ -240,7 +243,7 @@ public:
 
                 if (SpoutTimer <= diff)
                 {
-                    me->TextEmote(EMOTE_SPOUT, nullptr, true);
+                    Talk(EMOTE_SPOUT);
                     me->SetReactState(REACT_PASSIVE);
                     me->GetMotionMaster()->MoveRotate(20000, urand(0, 1) ? ROTATE_DIRECTION_LEFT : ROTATE_DIRECTION_RIGHT);
                     SpoutTimer = 45000;
@@ -432,21 +435,32 @@ class go_strange_pool : public GameObjectScript
     public:
         go_strange_pool() : GameObjectScript("go_strange_pool") { }
 
-        bool OnGossipHello(Player* player, GameObject* go) override
+        struct go_strange_poolAI : public GameObjectAI
         {
-            // 25%
-            if (InstanceScript* instanceScript = go->GetInstanceScript())
+            go_strange_poolAI(GameObject* go) : GameObjectAI(go), instance(go->GetInstanceScript()) { }
+
+            InstanceScript* instance;
+
+            bool GossipHello(Player* player, bool /*reportUse*/) override
+            {
+                // 25%
                 if (!urand(0, 3))
                 {
-                    if (instanceScript->GetData(DATA_STRANGE_POOL) == NOT_STARTED)
+                    if (instance->GetData(DATA_STRANGE_POOL) == NOT_STARTED)
                     {
-                        go->CastSpell(player, 54587);
-                        instanceScript->SetData(DATA_STRANGE_POOL, IN_PROGRESS);
+                        me->CastSpell(player, 54587);
+                        instance->SetData(DATA_STRANGE_POOL, IN_PROGRESS);
                     }
                     return true;
                 }
 
-            return false;
+                return false;
+            }
+        };
+
+        GameObjectAI* GetAI(GameObject* go) const override
+        {
+            return GetInstanceAI<go_strange_poolAI>(go);
         }
 };
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -56,6 +56,7 @@ enum PreparedStatementValueType
     TYPE_FLOAT,
     TYPE_DOUBLE,
     TYPE_STRING,
+    TYPE_BINARY,
     TYPE_NULL
 };
 
@@ -63,7 +64,7 @@ struct PreparedStatementData
 {
     PreparedStatementDataUnion data;
     PreparedStatementValueType type;
-    std::string str;
+    std::vector<uint8> binary;
 };
 
 //- Forward declare
@@ -77,7 +78,7 @@ class TC_DATABASE_API PreparedStatement
     friend class MySQLConnection;
 
     public:
-        explicit PreparedStatement(uint32 index);
+        PreparedStatement(uint32 index, uint8 capacity);
         ~PreparedStatement();
 
         void setBool(const uint8 index, const bool value);
@@ -92,15 +93,18 @@ class TC_DATABASE_API PreparedStatement
         void setFloat(const uint8 index, const float value);
         void setDouble(const uint8 index, const double value);
         void setString(const uint8 index, const std::string& value);
+        void setBinary(const uint8 index, const std::vector<uint8>& value);
         void setNull(const uint8 index);
 
     protected:
-        void BindParameters();
+        void BindParameters(MySQLPreparedStatement* stmt);
 
     protected:
         MySQLPreparedStatement* m_stmt;
         uint32 m_index;
-        std::vector<PreparedStatementData> statement_data;    //- Buffer of parameters, not tied to MySQL in any way yet
+
+        //- Buffer of parameters, not tied to MySQL in any way yet
+        std::vector<PreparedStatementData> statement_data;
 
         PreparedStatement(PreparedStatement const& right) = delete;
         PreparedStatement& operator=(PreparedStatement const& right) = delete;
@@ -115,7 +119,7 @@ class TC_DATABASE_API MySQLPreparedStatement
     friend class PreparedStatement;
 
     public:
-        MySQLPreparedStatement(MYSQL_STMT* stmt);
+        MySQLPreparedStatement(MYSQL_STMT* stmt, std::string queryString);
         ~MySQLPreparedStatement();
 
         void setBool(const uint8 index, const bool value);
@@ -129,16 +133,18 @@ class TC_DATABASE_API MySQLPreparedStatement
         void setInt64(const uint8 index, const int64 value);
         void setFloat(const uint8 index, const float value);
         void setDouble(const uint8 index, const double value);
-        void setString(const uint8 index, const char* value);
+        void setBinary(const uint8 index, const std::vector<uint8>& value, bool isString);
         void setNull(const uint8 index);
+
+        uint32 GetParameterCount() const { return m_paramCount; }
 
     protected:
         MYSQL_STMT* GetSTMT() { return m_Mstmt; }
         MYSQL_BIND* GetBind() { return m_bind; }
         PreparedStatement* m_stmt;
         void ClearParameters();
-        bool CheckValidIndex(uint8 index);
-        std::string getQueryString(std::string const& sqlPattern) const;
+        void AssertValidIndex(uint8 index);
+        std::string getQueryString() const;
 
     private:
         void setValue(MYSQL_BIND* param, enum_field_types type, const void* value, uint32 len, bool isUnsigned);
@@ -148,6 +154,7 @@ class TC_DATABASE_API MySQLPreparedStatement
         uint32 m_paramCount;
         std::vector<bool> m_paramsSet;
         MYSQL_BIND* m_bind;
+        std::string const m_queryString;
 
         MySQLPreparedStatement(MySQLPreparedStatement const& right) = delete;
         MySQLPreparedStatement& operator=(MySQLPreparedStatement const& right) = delete;

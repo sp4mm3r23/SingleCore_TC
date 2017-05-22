@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -30,6 +30,9 @@ EndScriptData */
 #include "ScriptMgr.h"
 #include "GitRevision.h"
 #include "Util.h"
+#include "ServerMotd.h"
+#include "GameTime.h"
+#include "UpdateTime.h"
 
 class server_commandscript : public CommandScript
 {
@@ -108,8 +111,8 @@ public:
         uint32 queuedClientsNum     = sWorld->GetQueuedSessionCount();
         uint32 maxActiveClientsNum  = sWorld->GetMaxActiveSessionCount();
         uint32 maxQueuedClientsNum  = sWorld->GetMaxQueuedSessionCount();
-        std::string uptime          = secsToTimeString(sWorld->GetUptime());
-        uint32 updateTime           = sWorld->GetUpdateTime();
+        std::string uptime          = secsToTimeString(GameTime::GetUptime());
+        uint32 updateTime           = sWorldUpdateTime.GetLastUpdateTime();
 
         handler->SendSysMessage(GitRevision::GetFullVersion());
         handler->PSendSysMessage(LANG_CONNECTED_PLAYERS, playersNum, maxPlayersNum);
@@ -125,7 +128,7 @@ public:
     // Display the 'Message of the day' for the realm
     static bool HandleServerMotdCommand(ChatHandler* handler, char const* /*args*/)
     {
-        handler->PSendSysMessage(LANG_MOTD_CURRENT, sWorld->GetMotd());
+        handler->PSendSysMessage(LANG_MOTD_CURRENT, Motd::GetMotd());
         return true;
     }
 
@@ -188,14 +191,15 @@ public:
         return true;
     }
 
-    static bool HandleServerShutDownCancelCommand(ChatHandler* /*handler*/, char const* /*args*/)
+    static bool HandleServerShutDownCancelCommand(ChatHandler* handler, char const* /*args*/)
     {
-        sWorld->ShutdownCancel();
+        if (uint32 timer = sWorld->ShutdownCancel())
+            handler->PSendSysMessage(LANG_SHUTDOWN_CANCELLED, timer);
 
         return true;
     }
 
-    static inline bool IsOnlyUser(WorldSession* mySession)
+    static bool IsOnlyUser(WorldSession* mySession)
     {
         // check if there is any session connected from a different address
         std::string myAddr = mySession ? mySession->GetRemoteAddress() : "";
@@ -207,32 +211,32 @@ public:
     }
     static bool HandleServerShutDownCommand(ChatHandler* handler, char const* args)
     {
-        return ShutdownServer(args, IsOnlyUser(handler->GetSession()) ? SHUTDOWN_MASK_FORCE : 0, SHUTDOWN_EXIT_CODE);
+        return ShutdownServer(handler, args, 0, SHUTDOWN_EXIT_CODE);
     }
 
     static bool HandleServerRestartCommand(ChatHandler* handler, char const* args)
     {
-        return ShutdownServer(args, IsOnlyUser(handler->GetSession()) ? (SHUTDOWN_MASK_FORCE | SHUTDOWN_MASK_RESTART) : SHUTDOWN_MASK_RESTART, RESTART_EXIT_CODE);
+        return ShutdownServer(handler, args, SHUTDOWN_MASK_RESTART, RESTART_EXIT_CODE);
     }
 
-    static bool HandleServerForceShutDownCommand(ChatHandler* /*handler*/, char const* args)
+    static bool HandleServerForceShutDownCommand(ChatHandler* handler, char const* args)
     {
-        return ShutdownServer(args, SHUTDOWN_MASK_FORCE, SHUTDOWN_EXIT_CODE);
+        return ShutdownServer(handler, args, SHUTDOWN_MASK_FORCE, SHUTDOWN_EXIT_CODE);
     }
 
-    static bool HandleServerForceRestartCommand(ChatHandler* /*handler*/, char const* args)
+    static bool HandleServerForceRestartCommand(ChatHandler* handler, char const* args)
     {
-        return ShutdownServer(args, SHUTDOWN_MASK_FORCE | SHUTDOWN_MASK_RESTART, RESTART_EXIT_CODE);
+        return ShutdownServer(handler, args, SHUTDOWN_MASK_FORCE | SHUTDOWN_MASK_RESTART, RESTART_EXIT_CODE);
     }
 
-    static bool HandleServerIdleShutDownCommand(ChatHandler* /*handler*/, char const* args)
+    static bool HandleServerIdleShutDownCommand(ChatHandler* handler, char const* args)
     {
-        return ShutdownServer(args, SHUTDOWN_MASK_IDLE, SHUTDOWN_EXIT_CODE);
+        return ShutdownServer(handler, args, SHUTDOWN_MASK_IDLE, SHUTDOWN_EXIT_CODE);
     }
 
-    static bool HandleServerIdleRestartCommand(ChatHandler* /*handler*/, char const* args)
+    static bool HandleServerIdleRestartCommand(ChatHandler* handler, char const* args)
     {
-        return ShutdownServer(args, SHUTDOWN_MASK_RESTART | SHUTDOWN_MASK_IDLE, RESTART_EXIT_CODE);
+        return ShutdownServer(handler, args, SHUTDOWN_MASK_RESTART | SHUTDOWN_MASK_IDLE, RESTART_EXIT_CODE);
     }
 
     // Exit the realm
@@ -246,7 +250,7 @@ public:
     // Define the 'Message of the day' for the realm
     static bool HandleServerSetMotdCommand(ChatHandler* handler, char const* args)
     {
-        sWorld->SetMotd(args);
+        Motd::SetMotd(args);
         handler->PSendSysMessage(LANG_MOTD_NEW, args);
         return true;
     }
@@ -303,7 +307,7 @@ public:
         if (newTime < 0)
             return false;
 
-        sWorld->SetRecordDiffInterval(newTime);
+        sWorldUpdateTime.SetRecordUpdateTimeInterval(newTime);
         printf("Record diff every %i ms\n", newTime);
 
         return true;
@@ -327,7 +331,7 @@ private:
         return true;
     }
 
-    static bool ShutdownServer(char const* args, uint32 shutdownMask, int32 defaultExitCode)
+    static bool ShutdownServer(ChatHandler* handler, char const* args, uint32 shutdownMask, int32 defaultExitCode)
     {
         if (!*args)
             return false;
@@ -381,8 +385,12 @@ private:
             if (!ParseExitCode(exitCodeStr, exitCode))
                 return false;
 
-        if (delay < (int32)sWorld->getIntConfig(CONFIG_FORCE_SHUTDOWN_THRESHOLD) && !(shutdownMask & SHUTDOWN_MASK_FORCE))
-            return false;
+        // Override parameter "delay" with the configuration value if there are still players connected and "force" parameter was not specified
+        if (delay < (int32)sWorld->getIntConfig(CONFIG_FORCE_SHUTDOWN_THRESHOLD) && !(shutdownMask & SHUTDOWN_MASK_FORCE) && !IsOnlyUser(handler->GetSession()))
+        {
+            delay = (int32)sWorld->getIntConfig(CONFIG_FORCE_SHUTDOWN_THRESHOLD);
+            handler->PSendSysMessage(LANG_SHUTDOWN_DELAYED, delay);
+        }
 
         sWorld->ShutdownServ(delay, shutdownMask, static_cast<uint8>(exitCode), std::string(reason));
 
