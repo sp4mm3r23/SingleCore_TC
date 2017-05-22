@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -367,7 +367,7 @@ class CreatureGameObjectScriptRegistrySwapHooks
     };
 
     // Hook which is called before a creature is swapped
-    static void UnloadStage1(Creature* creature)
+    static void UnloadResetScript(Creature* creature)
     {
         // Remove deletable events only,
         // otherwise it causes crashes with non-deletable spell events.
@@ -379,10 +379,11 @@ class CreatureGameObjectScriptRegistrySwapHooks
         ASSERT(!creature->IsCharmed(),
                "There is a disabled AI which is still loaded.");
 
-        creature->AI()->EnterEvadeMode();
+        if (creature->IsAlive())
+            creature->AI()->EnterEvadeMode();
     }
 
-    static void UnloadStage2(Creature* creature)
+    static void UnloadDestroyScript(Creature* creature)
     {
         bool const destroyed = creature->AIM_Destroy();
         ASSERT(destroyed,
@@ -394,12 +395,12 @@ class CreatureGameObjectScriptRegistrySwapHooks
     }
 
     // Hook which is called before a gameobject is swapped
-    static void UnloadStage1(GameObject* gameobject)
+    static void UnloadResetScript(GameObject* gameobject)
     {
         gameobject->AI()->Reset();
     }
 
-    static void UnloadStage2(GameObject* gameobject)
+    static void UnloadDestroyScript(GameObject* gameobject)
     {
         gameobject->AIM_Destroy();
 
@@ -408,7 +409,7 @@ class CreatureGameObjectScriptRegistrySwapHooks
     }
 
     // Hook which is called after a creature was swapped
-    static void LoadStage1(Creature* creature)
+    static void LoadInitializeScript(Creature* creature)
     {
         ASSERT(!creature->AI(),
                "The AI should be null here!");
@@ -422,7 +423,7 @@ class CreatureGameObjectScriptRegistrySwapHooks
         (void)created;
     }
 
-    static void LoadStage2(Creature* creature)
+    static void LoadResetScript(Creature* creature)
     {
         if (!creature->IsAlive())
             return;
@@ -436,7 +437,7 @@ class CreatureGameObjectScriptRegistrySwapHooks
     }
 
     // Hook which is called after a gameobject was swapped
-    static void LoadStage1(GameObject* gameobject)
+    static void LoadInitializeScript(GameObject* gameobject)
     {
         ASSERT(!gameobject->AI(),
                "The AI should be null here!");
@@ -444,51 +445,108 @@ class CreatureGameObjectScriptRegistrySwapHooks
         gameobject->AIM_Initialize();
     }
 
-    static void LoadStage2(GameObject* gameobject)
+    static void LoadResetScript(GameObject* gameobject)
     {
         gameobject->AI()->Reset();
     }
 
+    static Creature* GetEntityFromMap(std::common_type<Creature>, Map* map, ObjectGuid const& guid)
+    {
+        return map->GetCreature(guid);
+    }
+
+    static GameObject* GetEntityFromMap(std::common_type<GameObject>, Map* map, ObjectGuid const& guid)
+    {
+        return map->GetGameObject(guid);
+    }
+
     template<typename T>
-    void RunOverAllEntities(T fn)
+    static void VisitObjectsToSwapOnMap(Map* map, std::unordered_set<uint32> const& idsToRemove, T visitor)
     {
         auto evaluator = [&](std::unordered_map<ObjectGuid, ObjectType*>& objects)
         {
             for (auto object : objects)
-                fn(object.second);
+            {
+                // When the script Id of the script isn't removed in this
+                // context change, do nothing.
+                if (idsToRemove.find(object.second->GetScriptId()) != idsToRemove.end())
+                    visitor(object.second);
+            }
         };
 
         AIFunctionMapWorker<typename std::decay<decltype(evaluator)>::type> worker(std::move(evaluator));
-        TypeContainerVisitor<decltype(worker), MapStoredObjectTypesContainer> visitor(worker);
+        TypeContainerVisitor<decltype(worker), MapStoredObjectTypesContainer> containerVisitor(worker);
 
+        containerVisitor.Visit(map->GetObjectsStore());
+    }
+
+    static void DestroyScriptIdsFromSet(std::unordered_set<uint32> const& idsToRemove)
+    {
+        // First reset all swapped scripts safe by guid
+        // Skip creatures and gameobjects with an empty guid
+        // (that were not added to the world as of now)
         sMapMgr->DoForAllMaps([&](Map* map)
         {
-            // Run the worker over all maps
-            visitor.Visit(map->GetObjectsStore());
+            std::vector<ObjectGuid> guidsToReset;
+
+            VisitObjectsToSwapOnMap(map, idsToRemove, [&](ObjectType* object)
+            {
+                if (object->AI() && !object->GetGUID().IsEmpty())
+                    guidsToReset.push_back(object->GetGUID());
+            });
+
+            for (ObjectGuid const& guid : guidsToReset)
+            {
+                if (auto entity = GetEntityFromMap(std::common_type<ObjectType>{}, map, guid))
+                    UnloadResetScript(entity);
+            }
+
+            VisitObjectsToSwapOnMap(map, idsToRemove, [&](ObjectType* object)
+            {
+                // Destroy the scripts instantly
+                UnloadDestroyScript(object);
+            });
+        });
+    }
+
+    static void InitializeScriptIdsFromSet(std::unordered_set<uint32> const& idsToRemove)
+    {
+        sMapMgr->DoForAllMaps([&](Map* map)
+        {
+            std::vector<ObjectGuid> guidsToReset;
+
+            VisitObjectsToSwapOnMap(map, idsToRemove, [&](ObjectType* object)
+            {
+                if (!object->AI() && !object->GetGUID().IsEmpty())
+                {
+                    // Initialize the script
+                    LoadInitializeScript(object);
+                    guidsToReset.push_back(object->GetGUID());
+                }
+            });
+
+            for (ObjectGuid const& guid : guidsToReset)
+            {
+                // Reset the script
+                if (auto entity = GetEntityFromMap(std::common_type<ObjectType>{}, map, guid))
+                {
+                    if (!entity->AI())
+                        LoadInitializeScript(entity);
+
+                    LoadResetScript(entity);
+                }
+            }
         });
     }
 
 public:
     void BeforeReleaseContext(std::string const& context) final override
     {
-        auto ids_to_remove = static_cast<Base*>(this)->GetScriptIDsToRemove(context);
-
-        std::vector<ObjectType*> stage2;
-
-        RunOverAllEntities([&](ObjectType* object)
-        {
-            if (ids_to_remove.find(object->GetScriptId()) != ids_to_remove.end())
-            {
-                UnloadStage1(object);
-                stage2.push_back(object);
-            }
-        });
-
-        for (auto object : stage2)
-            UnloadStage2(object);
+        auto idsToRemove = static_cast<Base*>(this)->GetScriptIDsToRemove(context);
+        DestroyScriptIdsFromSet(idsToRemove);
 
         // Add the new ids which are removed to the global ids to remove set
-        ids_removed_.insert(ids_to_remove.begin(), ids_to_remove.end());
+        ids_removed_.insert(idsToRemove.begin(), idsToRemove.end());
     }
 
     void BeforeSwapContext(bool initialize) override
@@ -502,32 +560,8 @@ public:
         ids_removed_.insert(static_cast<Base*>(this)->GetRecentlyAddedScriptIDs().begin(),
                             static_cast<Base*>(this)->GetRecentlyAddedScriptIDs().end());
 
-        std::vector<ObjectType*> remove;
-        std::vector<ObjectType*> stage2;
-
-        RunOverAllEntities([&](ObjectType* object)
-        {
-            if (ids_removed_.find(object->GetScriptId()) != ids_removed_.end())
-            {
-                if (object->AI())
-                {
-                    // Overwrite existing (default) AI's which are replaced by a new script
-                    UnloadStage1(object);
-                    remove.push_back(object);
-                }
-
-                stage2.push_back(object);
-            }
-        });
-
-        for (auto object : remove)
-            UnloadStage2(object);
-
-        for (auto object : stage2)
-            LoadStage1(object);
-
-        for (auto object : stage2)
-            LoadStage2(object);
+        DestroyScriptIdsFromSet(ids_removed_);
+        InitializeScriptIdsFromSet(ids_removed_);
 
         ids_removed_.clear();
     }
@@ -988,7 +1022,7 @@ void ScriptMgr::Initialize()
     FillSpellSummary();
 
     // Load core scripts
-    SetScriptContext("___static___");
+    SetScriptContext(GetNameOfStaticContext());
 
     // SmartAI
     AddSC_SmartScripts();
@@ -1043,6 +1077,12 @@ void ScriptMgr::SwapScriptContext(bool initialize)
     _currentContext.clear();
 }
 
+std::string const& ScriptMgr::GetNameOfStaticContext()
+{
+    static std::string const name = "___static___";
+    return name;
+}
+
 void ScriptMgr::ReleaseScriptContext(std::string const& context)
 {
     sScriptRegistryCompositum->ReleaseContext(context);
@@ -1074,6 +1114,7 @@ void ScriptMgr::Unload()
 void ScriptMgr::LoadDatabase()
 {
     sScriptSystemMgr->LoadScriptWaypoints();
+    sScriptSystemMgr->LoadScriptSplineChains();
 }
 
 void ScriptMgr::FillSpellSummary()
@@ -1163,12 +1204,11 @@ void ScriptMgr::FillSpellSummary()
     }
 }
 
-template<typename T, typename F>
-void CreateSpellOrAuraScripts(uint32 spellId, std::list<T*>& scriptVector, F&& extractor)
+template<typename T, typename F, typename O>
+void CreateSpellOrAuraScripts(uint32 spellId, std::vector<T*>& scriptVector, F&& extractor, O* objectInvoker)
 {
     SpellScriptsBounds bounds = sObjectMgr->GetSpellScriptsBounds(spellId);
-
-    for (SpellScriptsContainer::iterator itr = bounds.first; itr != bounds.second; ++itr)
+    for (auto itr = bounds.first; itr != bounds.second; ++itr)
     {
         // When the script is disabled continue with the next one
         if (!itr->second.second)
@@ -1179,24 +1219,28 @@ void CreateSpellOrAuraScripts(uint32 spellId, std::list<T*>& scriptVector, F&& e
             continue;
 
         T* script = (*tmpscript.*extractor)();
-
         if (!script)
             continue;
 
         script->_Init(&tmpscript->GetName(), spellId);
+        if (!script->_Load(objectInvoker))
+        {
+            delete script;
+            continue;
+        }
 
         scriptVector.push_back(script);
     }
 }
 
-void ScriptMgr::CreateSpellScripts(uint32 spellId, std::list<SpellScript*>& scriptVector)
+void ScriptMgr::CreateSpellScripts(uint32 spellId, std::vector<SpellScript*>& scriptVector, Spell* invoker) const
 {
-    CreateSpellOrAuraScripts(spellId, scriptVector, &SpellScriptLoader::GetSpellScript);
+    CreateSpellOrAuraScripts(spellId, scriptVector, &SpellScriptLoader::GetSpellScript, invoker);
 }
 
-void ScriptMgr::CreateAuraScripts(uint32 spellId, std::list<AuraScript*>& scriptVector)
+void ScriptMgr::CreateAuraScripts(uint32 spellId, std::vector<AuraScript*>& scriptVector, Aura* invoker) const
 {
-    CreateSpellOrAuraScripts(spellId, scriptVector, &SpellScriptLoader::GetAuraScript);
+    CreateSpellOrAuraScripts(spellId, scriptVector, &SpellScriptLoader::GetAuraScript, invoker);
 }
 
 SpellScriptLoader* ScriptMgr::GetSpellScriptLoader(uint32 scriptId)
@@ -1473,15 +1517,6 @@ InstanceScript* ScriptMgr::CreateInstanceData(InstanceMap* map)
     return tmpscript->GetInstanceScript(map);
 }
 
-bool ScriptMgr::OnDummyEffect(Unit* caster, uint32 spellId, SpellEffIndex effIndex, Item* target)
-{
-    ASSERT(caster);
-    ASSERT(target);
-
-    GET_SCRIPT_RET(ItemScript, target->GetScriptId(), tmpscript, false);
-    return tmpscript->OnDummyEffect(caster, spellId, effIndex, target);
-}
-
 bool ScriptMgr::OnQuestAccept(Player* player, Item* item, Quest const* quest)
 {
     ASSERT(player);
@@ -1520,103 +1555,26 @@ bool ScriptMgr::OnItemRemove(Player* player, Item* item)
     return tmpscript->OnRemove(player, item);
 }
 
-void ScriptMgr::OnGossipSelect(Player* player, Item* item, uint32 sender, uint32 action)
+bool ScriptMgr::OnCastItemCombatSpell(Player* player, Unit* victim, SpellInfo const* spellInfo, Item* item)
 {
     ASSERT(player);
+    ASSERT(victim);
+    ASSERT(spellInfo);
     ASSERT(item);
 
-    GET_SCRIPT(ItemScript, item->GetScriptId(), tmpscript);
-    tmpscript->OnGossipSelect(player, item, sender, action);
+    GET_SCRIPT_RET(ItemScript, item->GetScriptId(), tmpscript, true);
+    return tmpscript->OnCastItemCombatSpell(player, victim, spellInfo, item);
 }
 
-void ScriptMgr::OnGossipSelectCode(Player* player, Item* item, uint32 sender, uint32 action, const char* code)
+bool ScriptMgr::CanSpawn(ObjectGuid::LowType spawnId, uint32 entry, CreatureTemplate const* actTemplate, CreatureData const* cData, Map const* map)
 {
-    ASSERT(player);
-    ASSERT(item);
+    ASSERT(actTemplate);
 
-    GET_SCRIPT(ItemScript, item->GetScriptId(), tmpscript);
-    tmpscript->OnGossipSelectCode(player, item, sender, action, code);
-}
-
-bool ScriptMgr::OnDummyEffect(Unit* caster, uint32 spellId, SpellEffIndex effIndex, Creature* target)
-{
-    ASSERT(caster);
-    ASSERT(target);
-
-    GET_SCRIPT_RET(CreatureScript, target->GetScriptId(), tmpscript, false);
-    return tmpscript->OnDummyEffect(caster, spellId, effIndex, target);
-}
-
-bool ScriptMgr::OnGossipHello(Player* player, Creature* creature)
-{
-    ASSERT(player);
-    ASSERT(creature);
-
-    GET_SCRIPT_RET(CreatureScript, creature->GetScriptId(), tmpscript, false);
-    player->PlayerTalkClass->ClearMenus();
-    return tmpscript->OnGossipHello(player, creature);
-}
-
-bool ScriptMgr::OnGossipSelect(Player* player, Creature* creature, uint32 sender, uint32 action)
-{
-    ASSERT(player);
-    ASSERT(creature);
-
-    GET_SCRIPT_RET(CreatureScript, creature->GetScriptId(), tmpscript, false);
-    return tmpscript->OnGossipSelect(player, creature, sender, action);
-}
-
-bool ScriptMgr::OnGossipSelectCode(Player* player, Creature* creature, uint32 sender, uint32 action, const char* code)
-{
-    ASSERT(player);
-    ASSERT(creature);
-    ASSERT(code);
-
-    GET_SCRIPT_RET(CreatureScript, creature->GetScriptId(), tmpscript, false);
-    return tmpscript->OnGossipSelectCode(player, creature, sender, action, code);
-}
-
-bool ScriptMgr::OnQuestAccept(Player* player, Creature* creature, Quest const* quest)
-{
-    ASSERT(player);
-    ASSERT(creature);
-    ASSERT(quest);
-
-    GET_SCRIPT_RET(CreatureScript, creature->GetScriptId(), tmpscript, false);
-    player->PlayerTalkClass->ClearMenus();
-    return tmpscript->OnQuestAccept(player, creature, quest);
-}
-
-bool ScriptMgr::OnQuestSelect(Player* player, Creature* creature, Quest const* quest)
-{
-    ASSERT(player);
-    ASSERT(creature);
-    ASSERT(quest);
-
-    GET_SCRIPT_RET(CreatureScript, creature->GetScriptId(), tmpscript, false);
-    player->PlayerTalkClass->ClearMenus();
-    return tmpscript->OnQuestSelect(player, creature, quest);
-}
-
-bool ScriptMgr::OnQuestReward(Player* player, Creature* creature, Quest const* quest, uint32 opt)
-{
-    ASSERT(player);
-    ASSERT(creature);
-    ASSERT(quest);
-
-    GET_SCRIPT_RET(CreatureScript, creature->GetScriptId(), tmpscript, false);
-    player->PlayerTalkClass->ClearMenus();
-    return tmpscript->OnQuestReward(player, creature, quest, opt);
-}
-
-uint32 ScriptMgr::GetDialogStatus(Player* player, Creature* creature)
-{
-    ASSERT(player);
-    ASSERT(creature);
-
-    GET_SCRIPT_RET(CreatureScript, creature->GetScriptId(), tmpscript, DIALOG_STATUS_SCRIPTED_NO_STATUS);
-    player->PlayerTalkClass->ClearMenus();
-    return tmpscript->GetDialogStatus(player, creature);
+    CreatureTemplate const* baseTemplate = sObjectMgr->GetCreatureTemplate(entry);
+    if (!baseTemplate)
+        baseTemplate = actTemplate;
+    GET_SCRIPT_RET(CreatureScript, (cData ? cData->ScriptId : baseTemplate->ScriptID), tmpscript, true);
+    return tmpscript->CanSpawn(spawnId, entry, baseTemplate, actTemplate, cData, map);
 }
 
 CreatureAI* ScriptMgr::GetCreatureAI(Creature* creature)
@@ -1635,29 +1593,9 @@ GameObjectAI* ScriptMgr::GetGameObjectAI(GameObject* gameobject)
     return tmpscript->GetAI(gameobject);
 }
 
-void ScriptMgr::OnCreatureUpdate(Creature* creature, uint32 diff)
-{
-    ASSERT(creature);
-
-	FOREACH_SCRIPT(AllCreatureScript)->OnAllCreatureUpdate(creature, diff);
-
-    GET_SCRIPT(CreatureScript, creature->GetScriptId(), tmpscript);
-    tmpscript->OnUpdate(creature, diff);
-}
-
 void ScriptMgr::Creature_SelectLevel(const CreatureTemplate *cinfo, Creature* creature)
 {
 	FOREACH_SCRIPT(AllCreatureScript)->Creature_SelectLevel(cinfo, creature);
-}
-
-bool ScriptMgr::OnGossipHello(Player* player, GameObject* go)
-{
-    ASSERT(player);
-    ASSERT(go);
-
-    GET_SCRIPT_RET(GameObjectScript, go->GetScriptId(), tmpscript, false);
-    player->PlayerTalkClass->ClearMenus();
-    return tmpscript->OnGossipHello(player, go);
 }
 
 void ScriptMgr::SetInitialWorldSettings()
@@ -1674,107 +1612,6 @@ float ScriptMgr::VAS_Script_Hooks()
 	//    TC_LOG_DEBUG(LOG_FILTER_WORLDSERVER, "--------------------------------------------------------------");
 	
 	return VAS_Script_Hook_Version;
-}
-
-
-bool ScriptMgr::OnGossipSelect(Player* player, GameObject* go, uint32 sender, uint32 action)
-{
-    ASSERT(player);
-    ASSERT(go);
-
-    GET_SCRIPT_RET(GameObjectScript, go->GetScriptId(), tmpscript, false);
-    return tmpscript->OnGossipSelect(player, go, sender, action);
-}
-
-bool ScriptMgr::OnGossipSelectCode(Player* player, GameObject* go, uint32 sender, uint32 action, const char* code)
-{
-    ASSERT(player);
-    ASSERT(go);
-    ASSERT(code);
-
-    GET_SCRIPT_RET(GameObjectScript, go->GetScriptId(), tmpscript, false);
-    return tmpscript->OnGossipSelectCode(player, go, sender, action, code);
-}
-
-bool ScriptMgr::OnQuestAccept(Player* player, GameObject* go, Quest const* quest)
-{
-    ASSERT(player);
-    ASSERT(go);
-    ASSERT(quest);
-
-    GET_SCRIPT_RET(GameObjectScript, go->GetScriptId(), tmpscript, false);
-    player->PlayerTalkClass->ClearMenus();
-    return tmpscript->OnQuestAccept(player, go, quest);
-}
-
-bool ScriptMgr::OnQuestReward(Player* player, GameObject* go, Quest const* quest, uint32 opt)
-{
-    ASSERT(player);
-    ASSERT(go);
-    ASSERT(quest);
-
-    GET_SCRIPT_RET(GameObjectScript, go->GetScriptId(), tmpscript, false);
-    player->PlayerTalkClass->ClearMenus();
-    return tmpscript->OnQuestReward(player, go, quest, opt);
-}
-
-uint32 ScriptMgr::GetDialogStatus(Player* player, GameObject* go)
-{
-    ASSERT(player);
-    ASSERT(go);
-
-    GET_SCRIPT_RET(GameObjectScript, go->GetScriptId(), tmpscript, DIALOG_STATUS_SCRIPTED_NO_STATUS);
-    player->PlayerTalkClass->ClearMenus();
-    return tmpscript->GetDialogStatus(player, go);
-}
-
-void ScriptMgr::OnGameObjectDestroyed(GameObject* go, Player* player)
-{
-    ASSERT(go);
-
-    GET_SCRIPT(GameObjectScript, go->GetScriptId(), tmpscript);
-    tmpscript->OnDestroyed(go, player);
-}
-
-void ScriptMgr::OnGameObjectDamaged(GameObject* go, Player* player)
-{
-    ASSERT(go);
-
-    GET_SCRIPT(GameObjectScript, go->GetScriptId(), tmpscript);
-    tmpscript->OnDamaged(go, player);
-}
-
-void ScriptMgr::OnGameObjectLootStateChanged(GameObject* go, uint32 state, Unit* unit)
-{
-    ASSERT(go);
-
-    GET_SCRIPT(GameObjectScript, go->GetScriptId(), tmpscript);
-    tmpscript->OnLootStateChanged(go, state, unit);
-}
-
-void ScriptMgr::OnGameObjectStateChanged(GameObject* go, uint32 state)
-{
-    ASSERT(go);
-
-    GET_SCRIPT(GameObjectScript, go->GetScriptId(), tmpscript);
-    tmpscript->OnGameObjectStateChanged(go, state);
-}
-
-void ScriptMgr::OnGameObjectUpdate(GameObject* go, uint32 diff)
-{
-    ASSERT(go);
-
-    GET_SCRIPT(GameObjectScript, go->GetScriptId(), tmpscript);
-    tmpscript->OnUpdate(go, diff);
-}
-
-bool ScriptMgr::OnDummyEffect(Unit* caster, uint32 spellId, SpellEffIndex effIndex, GameObject* target)
-{
-    ASSERT(caster);
-    ASSERT(target);
-
-    GET_SCRIPT_RET(GameObjectScript, target->GetScriptId(), tmpscript, false);
-    return tmpscript->OnDummyEffect(caster, spellId, effIndex, target);
 }
 
 bool ScriptMgr::OnAreaTrigger(Player* player, AreaTriggerEntry const* trigger)
@@ -2155,19 +1992,14 @@ void ScriptMgr::OnPlayerUpdateZone(Player* player, uint32 newZone, uint32 newAre
     FOREACH_SCRIPT(PlayerScript)->OnUpdateZone(player, newZone, newArea);
 }
 
-void ScriptMgr::OnGossipSelect(Player* player, uint32 menu_id, uint32 sender, uint32 action)
+void ScriptMgr::OnQuestStatusChange(Player* player, uint32 questId)
 {
-    FOREACH_SCRIPT(PlayerScript)->OnGossipSelect(player, menu_id, sender, action);
+    FOREACH_SCRIPT(PlayerScript)->OnQuestStatusChange(player, questId);
 }
 
-void ScriptMgr::OnGossipSelectCode(Player* player, uint32 menu_id, uint32 sender, uint32 action, const char* code)
+void ScriptMgr::OnPlayerRepop(Player* player)
 {
-    FOREACH_SCRIPT(PlayerScript)->OnGossipSelectCode(player, menu_id, sender, action, code);
-}
-
-void ScriptMgr::OnQuestStatusChange(Player* player, uint32 questId, QuestStatus status)
-{
-    FOREACH_SCRIPT(PlayerScript)->OnQuestStatusChange(player, questId, status);
+    FOREACH_SCRIPT(PlayerScript)->OnPlayerRepop(player);
 }
 
 // Account
@@ -2320,9 +2152,9 @@ void ScriptMgr::ModifySpellDamageTaken(Unit* target, Unit* attacker, int32& dama
     FOREACH_SCRIPT(PlayerScript)->ModifySpellDamageTaken(target, attacker, damage);
 }
 
-void ScriptMgr::ModifyHealRecieved(Unit* target, Unit* attacker, uint32& damage)
+void ScriptMgr::ModifyHealRecieved(HealInfo& healInfo)
 {
-	FOREACH_SCRIPT(UnitScript)->ModifyHealRecieved(target, attacker, damage);
+	FOREACH_SCRIPT(UnitScript)->ModifyHealRecieved(healInfo);
 }
 
 AllMapScript::AllMapScript(const char* name)

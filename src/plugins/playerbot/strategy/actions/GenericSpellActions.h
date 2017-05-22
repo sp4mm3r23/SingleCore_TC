@@ -61,6 +61,8 @@ namespace ai
 
 		virtual NextAction** getPrerequisites()
 		{
+			if (spell == "mount")
+				return NULL;			
 			if (range > sPlayerbotAIConfig.spellDistance)
 				return NULL;
 			else if (range > ATTACK_DISTANCE)
@@ -130,7 +132,7 @@ namespace ai
 			range = sPlayerbotAIConfig.spellDistance;
 		}
 
-        virtual bool isUseful();
+        virtual bool isPossible();
         virtual string GetTargetName() { return "self target"; }
 	};
 

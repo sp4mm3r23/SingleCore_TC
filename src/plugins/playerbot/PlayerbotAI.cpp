@@ -18,6 +18,7 @@
 #include "../Groups/Group.h"
 #include "../Entities/Pet/Pet.h"
 #include "../Spells/Auras/SpellAuraEffects.h"
+#include "CharacterCache.h"
 
 using namespace ai;
 using namespace std;
@@ -67,7 +68,7 @@ PlayerbotAI::PlayerbotAI(Player* bot) :
 {
 	this->bot = bot;
 
-	accountId = sObjectMgr->GetPlayerAccountIdByGUID(bot->GetGUID());
+	accountId = sCharacterCache->GetCharacterAccountIdByGuid(bot->GetGUID());
 
     aiObjectContext = AiFactory::createAiObjectContext(bot, this);
 
@@ -109,6 +110,7 @@ PlayerbotAI::PlayerbotAI(Player* bot) :
     botOutgoingPacketHandlers.AddHandler(SMSG_DUEL_REQUESTED, "duel requested");
     botOutgoingPacketHandlers.AddHandler(SMSG_LFG_ROLE_CHOSEN, "lfg role check");
     botOutgoingPacketHandlers.AddHandler(SMSG_LFG_PROPOSAL_UPDATE, "lfg proposal");
+	botOutgoingPacketHandlers.AddHandler(SMSG_BATTLEFIELD_STATUS, "bg status");
 
     masterOutgoingPacketHandlers.AddHandler(SMSG_PARTY_COMMAND_RESULT, "party command");
     masterOutgoingPacketHandlers.AddHandler(MSG_RAID_READY_CHECK, "ready check");
@@ -131,7 +133,14 @@ void PlayerbotAI::UpdateAI(uint32 elapsed)
 {
     if (bot->IsBeingTeleported())
         return;
-
+	
+	//DEBUG
+/*	engines[BOT_STATE_COMBAT]->testMode = bot->InBattleground();
+	engines[BOT_STATE_NON_COMBAT]->testMode = bot->InBattleground();
+	engines[BOT_STATE_COMBAT]->testPrefix = bot->GetName();
+	engines[BOT_STATE_NON_COMBAT]->testPrefix = bot->GetName();*/
+	//EOD
+	
     if (nextAICheckDelay > sPlayerbotAIConfig.globalCoolDown &&
             bot->IsNonMeleeSpellCast(true, true, false) &&
             *GetAiObjectContext()->GetValue<bool>("invalid target", "current target"))
@@ -189,7 +198,8 @@ void PlayerbotAI::HandleTeleportAck()
 	}
 	else if (bot->IsBeingTeleportedFar())
 	{
-		bot->GetSession()->HandleMoveWorldportAckOpcode();
+	    WorldPacket p;
+		bot->GetSession()->HandleMoveWorldportAckOpcode(p);
 		SetNextCheckDelay(1000);
 	}
 }
@@ -457,21 +467,21 @@ void PlayerbotAI::DoNextAction()
         ChangeEngine(BOT_STATE_NON_COMBAT);
 
     Group *group = bot->GetGroup();
-    if (!master && group)
-    {
-        for (GroupReference *gref = group->GetFirstMember(); gref; gref = gref->next())
-        {
-            Player* member = gref->GetSource();
-            PlayerbotAI* ai = bot->GetPlayerbotAI();
-            if (member && member->IsInWorld() && !member->GetPlayerbotAI() && (!master || master->GetPlayerbotAI()))
-            {
-                ai->SetMaster(member);
-                ai->ResetStrategies();
-                ai->TellMaster("Hello");
-                break;
-            }
-        }
-    }
+	if (!master && group &&!bot->InBattleground())
+	{
+		for (GroupReference *gref = group->GetFirstMember(); gref; gref = gref->next())
+		{
+			Player* member = gref->GetSource();
+			PlayerbotAI* ai = bot->GetPlayerbotAI();
+			if (member && member->IsInWorld() && !member->GetPlayerbotAI() && (!master || master->GetPlayerbotAI()))
+			{
+				ai->SetMaster(member);
+				ai->ResetStrategies();
+				ai->TellMaster("Hello");
+				break;
+			}
+		}
+	}
 }
 
 void PlayerbotAI::ReInitCurrentEngine()
@@ -749,10 +759,6 @@ bool PlayerbotAI::HasAura(string name, Unit* unit)
     if (!unit)
         return false;
 
-    uint32 spellId = aiObjectContext->GetValue<uint32>("spell id", name)->Get();
-    if (spellId)
-        return HasAura(spellId, unit);
-
     wstring wnamepart;
     if (!Utf8toWStr(name, wnamepart))
         return 0;
@@ -845,7 +851,7 @@ bool PlayerbotAI::CanCastSpell(uint32 spellid, Unit* target, bool checkHasSpell)
     if (!positiveSpell && bot->IsFriendlyTo(target))
         return false;
 
-    if (target->IsImmunedToSpell(spellInfo))
+    if (target->IsImmunedToSpell(spellInfo, target))
         return false;
 
     if (bot != target && bot->GetDistance(target) > sPlayerbotAIConfig.sightDistance)
@@ -991,22 +997,22 @@ bool PlayerbotAI::CastSpell(uint32 spellId, Unit* target)
         SetNextCheckDelay(sPlayerbotAIConfig.globalCoolDown);
         return false;
     }
-
+	if (spell->GetCastTime()>0)
+		bot->GetMotionMaster()->MovementExpired();
 	spell->prepare(&targets);
 	WaitForSpellCast(spell);
 
-    if (oldSel)
-        bot->SetSelection(oldSel->GetGUID());
-
-    LastSpellCast& lastSpell = aiObjectContext->GetValue<LastSpellCast&>("last spell cast")->Get();
-    return lastSpell.id == spellId;
+	if (oldSel)
+		bot->SetSelection(oldSel->GetGUID());
+	LastSpellCast& lastSpell = aiObjectContext->GetValue<LastSpellCast&>("last spell cast")->Get();
+	return lastSpell.id == spellId;
 }
 
 void PlayerbotAI::WaitForSpellCast(Spell *spell)
 {
     const SpellInfo* const pSpellInfo = spell->GetSpellInfo();
 
-    float castTime = spell->GetCastTime() + sPlayerbotAIConfig.reactDelay;
+    float castTime = spell->GetCastTime();
     if (pSpellInfo->IsChanneled())
     {
         int32 duration = pSpellInfo->GetDuration();
@@ -1020,7 +1026,7 @@ void PlayerbotAI::WaitForSpellCast(Spell *spell)
     if (castTime < globalCooldown)
         castTime = globalCooldown;
 
-    SetNextCheckDelay(castTime);
+    SetNextCheckDelay(castTime + sPlayerbotAIConfig.reactDelay);
 }
 
 void PlayerbotAI::InterruptSpell()
@@ -1034,6 +1040,9 @@ void PlayerbotAI::InterruptSpell()
     {
         Spell* spell = bot->GetCurrentSpell((CurrentSpellTypes)type);
         if (!spell)
+            continue;
+
+        if (spell->m_spellInfo->IsPositive())
             continue;
 
         bot->InterruptSpell((CurrentSpellTypes)type);
@@ -1076,7 +1085,7 @@ bool PlayerbotAI::IsInterruptableSpellCasting(Unit* target, string spell)
     if (!spellInfo)
         return false;
 
-    if (target->IsImmunedToSpell(spellInfo))
+    if (target->IsImmunedToSpell(spellInfo, target))
         return false;
 
     for (uint32 i = EFFECT_0; i <= EFFECT_2; i++)
@@ -1085,7 +1094,7 @@ bool PlayerbotAI::IsInterruptableSpellCasting(Unit* target, string spell)
             return true;
 
         if ((spellInfo->Effects[i].Effect == SPELL_EFFECT_REMOVE_AURA || spellInfo->Effects[i].Effect == SPELL_EFFECT_INTERRUPT_CAST) &&
-                !target->IsImmunedToSpellEffect(spellInfo, i))
+                !target->IsImmunedToSpellEffect(spellInfo, i, target))
             return true;
     }
 

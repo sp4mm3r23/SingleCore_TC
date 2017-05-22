@@ -81,13 +81,11 @@ protected:
         tick();
         addAura("holy shield");
 
-        assertActions(">S:devotion aura>S:seal of light>S:seal of justice>S:blessing of sanctuary>S:blessing of kings>S:righteous fury>S:holy shield");
+        assertActions(">S:devotion aura>S:blessing of sanctuary>S:righteous fury>S:holy shield>T:judgement of light>T:melee>T:melee");
     }
 
     void healing()
     {
-		tickWithLowHealth(50);
-
 		tickWithLowHealth(30);
         tickWithLowHealth(30);
 
@@ -99,7 +97,7 @@ protected:
         spellAvailable("flash of light");
         tickWithLowHealth(19);
 
-        assertActions(">S:flash of light>S:divine protection>S:holy light>S:lay on hands>P:lay on hands on party>S:divine shield>S:flash of light");
+        assertActions(">S:divine protection>S:holy light>S:lay on hands>P:lay on hands on party>S:divine shield>S:flash of light");
     }
 
     void paladinMustHoldAggro()

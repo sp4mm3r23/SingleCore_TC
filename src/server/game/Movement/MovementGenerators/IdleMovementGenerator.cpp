@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -24,93 +24,101 @@ IdleMovementGenerator si_idleMovement;
 
 // StopMoving is needed to make unit stop if its last movement generator expires
 // But it should not be sent otherwise there are many redundent packets
-void IdleMovementGenerator::Initialize(Unit* owner)
+void IdleMovementGenerator::Initialize(WorldObject* owner)
 {
     Reset(owner);
 }
 
-void IdleMovementGenerator::Reset(Unit* owner)
+void IdleMovementGenerator::Reset(WorldObject* owner)
 {
-    if (!owner->IsStopped())
-        owner->StopMoving();
+	if (!((Unit *)owner)->IsStopped())
+		((Unit *)owner)->StopMoving();
 }
 
-void RotateMovementGenerator::Initialize(Unit* owner)
+//----------------------------------------------------//
+
+void RotateMovementGenerator::Initialize(WorldObject* owner)
 {
-    if (!owner->IsStopped())
-        owner->StopMoving();
+	if (!((Unit *)owner)->IsStopped())
+		((Unit *)owner)->StopMoving();
 
-    if (owner->GetVictim())
-        owner->SetInFront(owner->GetVictim());
+	if (((Unit *)owner)->GetVictim())
+		((Unit *)owner)->SetInFront(((Unit *)owner)->GetVictim());;
 
-    owner->AddUnitState(UNIT_STATE_ROTATING);
+	((Unit *)owner)->AddUnitState(UNIT_STATE_ROTATING);
 
-    owner->AttackStop();
+	((Unit *)owner)->AttackStop();
 }
 
-bool RotateMovementGenerator::Update(Unit* owner, uint32 diff)
+bool RotateMovementGenerator::Update(WorldObject* owner, uint32 diff)
 {
     float angle = owner->GetOrientation();
-    if (m_direction == ROTATE_DIRECTION_LEFT)
+    if (_direction == ROTATE_DIRECTION_LEFT)
     {
-        angle += (float)diff * static_cast<float>(M_PI * 2) / m_maxDuration;
-        while (angle >= static_cast<float>(M_PI * 2)) angle -= static_cast<float>(M_PI * 2);
+        angle += float(diff) * float(M_PI) * 2.f / float(_maxDuration);
+        while (angle >= float(M_PI) * 2.f)
+            angle -= float(M_PI) * 2.f;
     }
     else
     {
-        angle -= (float)diff * static_cast<float>(M_PI * 2) / m_maxDuration;
-        while (angle < 0) angle += static_cast<float>(M_PI * 2);
+        angle -= float(diff) * float(M_PI) * 2.f / float(_maxDuration);
+        while (angle < 0.f)
+            angle += float(M_PI) * 2.f;
     }
 
-    owner->SetFacingTo(angle);
+	((Unit *)owner)->SetFacingTo(angle);
 
-    if (m_duration > diff)
-        m_duration -= diff;
+    if (_duration > diff)
+        _duration -= diff;
     else
         return false;
 
     return true;
 }
 
-void RotateMovementGenerator::Finalize(Unit* unit)
+void RotateMovementGenerator::Finalize(WorldObject* owner)
 {
-    unit->ClearUnitState(UNIT_STATE_ROTATING);
-    if (unit->GetTypeId() == TYPEID_UNIT)
-      unit->ToCreature()->AI()->MovementInform(ROTATE_MOTION_TYPE, 0);
+    ((Unit *)owner)->ClearUnitState(UNIT_STATE_ROTATING);
+    if (owner->GetTypeId() == TYPEID_UNIT)
+        owner->ToCreature()->AI()->MovementInform(ROTATE_MOTION_TYPE, 0);
 }
 
-void DistractMovementGenerator::Initialize(Unit* owner)
+//----------------------------------------------------//
+
+void DistractMovementGenerator::Initialize(WorldObject* owner)
 {
     // Distracted creatures stand up if not standing
-    if (!owner->IsStandState())
-        owner->SetStandState(UNIT_STAND_STATE_STAND);
+	if (!((Unit *)owner)->IsStandState())
+		((Unit *)owner)->SetStandState(UNIT_STAND_STATE_STAND);
 
-    owner->AddUnitState(UNIT_STATE_DISTRACTED);
+    ((Unit *)owner)->AddUnitState(UNIT_STATE_DISTRACTED);
 }
 
-void DistractMovementGenerator::Finalize(Unit* owner)
+void DistractMovementGenerator::Finalize(WorldObject* owner)
 {
-    owner->ClearUnitState(UNIT_STATE_DISTRACTED);
+	((Unit *)owner)->ClearUnitState(UNIT_STATE_DISTRACTED);
 
     // If this is a creature, then return orientation to original position (for idle movement creatures)
     if (owner->GetTypeId() == TYPEID_UNIT && owner->ToCreature())
     {
         float angle = owner->ToCreature()->GetHomePosition().GetOrientation();
-        owner->SetFacingTo(angle);
+		((Unit *)owner)->SetFacingTo(angle);
     }
 }
 
-bool DistractMovementGenerator::Update(Unit* /*owner*/, uint32 time_diff)
+bool DistractMovementGenerator::Update(WorldObject* /*owner*/, uint32 diff)
 {
-    if (time_diff > m_timer)
+    if (diff > _timer)
         return false;
 
-    m_timer -= time_diff;
+    _timer -= diff;
     return true;
 }
 
-void AssistanceDistractMovementGenerator::Finalize(Unit* unit)
+//----------------------------------------------------//
+
+void AssistanceDistractMovementGenerator::Finalize(WorldObject* owner)
 {
-    unit->ClearUnitState(UNIT_STATE_DISTRACTED);
-    unit->ToCreature()->SetReactState(REACT_AGGRESSIVE);
+    ((Unit *)owner)->ClearUnitState(UNIT_STATE_DISTRACTED);
+    owner->ToCreature()->SetReactState(REACT_AGGRESSIVE);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -46,7 +46,7 @@ public:
         {
             Initialize();
             creature->GetMotionMaster()->MovePoint(0, 8599.258f, 963.951f, 547.553f);
-            creature->setFaction(35); //wrong faction in db?
+            creature->SetFaction(35); //wrong faction in db?
         }
 
         void Initialize()
@@ -68,7 +68,7 @@ public:
             if (uiType != POINT_MOTION_TYPE)
                 return;
 
-            me->setFaction(14);
+            me->SetFaction(14);
         }
 
         void DamageTaken(Unit* pDoneBy, uint32& uiDamage) override
@@ -77,7 +77,7 @@ public:
             {
                 uiDamage = 0;
                 pDoneBy->CastSpell(pDoneBy, SPELL_KILL_CREDIT, true);
-                me->setFaction(35);
+                me->SetFaction(35);
                 me->DespawnOrUnsummon(5000);
                 me->SetHomePosition(me->GetPositionX(), me->GetPositionY(), me->GetPositionZ(), me->GetOrientation());
                 EnterEvadeMode();
@@ -215,17 +215,6 @@ class npc_tournament_training_dummy : public CreatureScript
                 me->SetControlled(true, UNIT_STATE_STUNNED);
                 Initialize();
 
-                // Cast Defend spells to max stack size
-                switch (me->GetEntry())
-                {
-                    case NPC_CHARGE_TARGET:
-                        DoCast(SPELL_CHARGE_DEFEND);
-                        break;
-                    case NPC_RANGED_TARGET:
-                        me->CastCustomSpell(SPELL_RANGED_DEFEND, SPELLVALUE_AURA_STACK, 3, me);
-                        break;
-                }
-
                 events.Reset();
                 events.ScheduleEvent(EVENT_DUMMY_RECAST_DEFEND, 5000);
             }
@@ -286,14 +275,14 @@ class npc_tournament_training_dummy : public CreatureScript
                             case NPC_CHARGE_TARGET:
                             {
                                 if (!me->HasAura(SPELL_CHARGE_DEFEND))
-                                    DoCast(SPELL_CHARGE_DEFEND);
+                                    DoCast(me, SPELL_CHARGE_DEFEND, true);
                                 break;
                             }
                             case NPC_RANGED_TARGET:
                             {
                                 Aura* defend = me->GetAura(SPELL_RANGED_DEFEND);
                                 if (!defend || defend->GetStackAmount() < 3 || defend->GetDuration() <= 8000)
-                                    DoCast(SPELL_RANGED_DEFEND);
+                                    DoCast(me, SPELL_RANGED_DEFEND, true);
                                 break;
                             }
                         }

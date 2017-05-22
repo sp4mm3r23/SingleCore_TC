@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -19,6 +19,7 @@
 #include "LFGMgr.h"
 #include "ScriptedGossip.h"
 #include "ScriptedCreature.h"
+#include "GameObjectAI.h"
 #include "ScriptMgr.h"
 #include "SpellAuraEffects.h"
 #include "SpellScript.h"
@@ -201,7 +202,7 @@ public:
             {
                 if (Group* group = players.begin()->GetSource()->GetGroup())
                     if (group->isLFGGroup())
-                        sLFGMgr->FinishDungeon(group->GetGUID(), 286);
+                        sLFGMgr->FinishDungeon(group->GetGUID(), 286, me->GetMap());
             }
 
             _JustDied();
@@ -395,7 +396,7 @@ public:
             _summons.DespawnAll();
             ResetFlameCallers();
 
-            me->SummonGameObject(GO_ICE_STONE, -69.90455f, -162.2449f, -2.366563f, 2.426008f, 0.0f, 0.0f, 0.9366722f, 0.3502074f, 0);
+            me->SummonGameObject(GO_ICE_STONE, -69.90455f, -162.2449f, -2.366563f, 2.426008f, G3D::Quat(0.0f, 0.0f, 0.9366722f, 0.3502074f), 0);
         }
 
         void DoAction(int32 action) override
@@ -646,25 +647,32 @@ class go_ahune_ice_stone : public GameObjectScript
 public:
     go_ahune_ice_stone() : GameObjectScript("go_ahune_ice_stone") { }
 
-    bool OnGossipSelect(Player* player, GameObject* go, uint32 /*sender*/, uint32 /*action*/)
+    struct go_ahune_ice_stoneAI : public GameObjectAI
     {
-        InstanceScript* instance = go->GetInstanceScript();
-        if (!instance)
-            return false;
+        go_ahune_ice_stoneAI(GameObject* go) : GameObjectAI(go), instance(go->GetInstanceScript()) { }
 
-        player->PlayerTalkClass->ClearMenus();
+        InstanceScript* instance;
 
-        if (Creature* ahuneBunny = ObjectAccessor::GetCreature(*go, instance->GetGuidData(DATA_AHUNE_BUNNY)))
+        bool OnGossipSelect(Player* player, uint32 /*menuId*/, uint32 /*gossipListId*/)
         {
-            ahuneBunny->AI()->DoAction(ACTION_START_EVENT);
-            ahuneBunny->SetInCombatWithZone();
-        }
-        if (Creature* luma = ObjectAccessor::GetCreature(*go, instance->GetGuidData(DATA_LUMA_SKYMOTHER)))
-            luma->CastSpell(player, SPELL_SUMMONING_RHYME_AURA, true);
-        player->CLOSE_GOSSIP_MENU();
-        go->Delete();
+            ClearGossipMenuFor(player);
 
-        return true;
+            if (Creature* ahuneBunny = ObjectAccessor::GetCreature(*me, instance->GetGuidData(DATA_AHUNE_BUNNY)))
+            {
+                ahuneBunny->AI()->DoAction(ACTION_START_EVENT);
+                ahuneBunny->SetInCombatWithZone();
+            }
+            if (Creature* luma = ObjectAccessor::GetCreature(*me, instance->GetGuidData(DATA_LUMA_SKYMOTHER)))
+                luma->CastSpell(player, SPELL_SUMMONING_RHYME_AURA, true);
+            CloseGossipMenuFor(player);
+            me->Delete();
+            return true;
+        }
+    };
+
+    GameObjectAI* GetAI(GameObject* go) const override
+    {
+        return GetInstanceAI<go_ahune_ice_stoneAI>(go);
     }
 };
 

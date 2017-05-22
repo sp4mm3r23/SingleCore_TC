@@ -1,5 +1,5 @@
- /*
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
+/*
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -37,6 +37,7 @@ EndContentData */
 #include "ScriptedCreature.h"
 #include "ScriptedEscortAI.h"
 #include "ScriptedGossip.h"
+#include "GameObjectAI.h"
 #include "Cell.h"
 #include "CellImpl.h"
 #include "GridNotifiersImpl.h"
@@ -202,7 +203,7 @@ public:
         npc_engineer_spark_overgrindAI(Creature* creature) : ScriptedAI(creature)
         {
             Initialize();
-            NormFaction = creature->getFaction();
+            NormFaction = creature->GetFaction();
             NpcFlags = creature->GetUInt32Value(UNIT_NPC_FLAGS);
         }
 
@@ -221,7 +222,7 @@ public:
         {
             Initialize();
 
-            me->setFaction(NormFaction);
+            me->SetFaction(NormFaction);
             me->SetUInt32Value(UNIT_NPC_FLAGS, NpcFlags);
         }
 
@@ -230,11 +231,12 @@ public:
             Talk(ATTACK_YELL, who);
         }
 
-        void sGossipSelect(Player* player, uint32 /*menuId*/, uint32 /*gossipListId*/) override
+        bool GossipSelect(Player* player, uint32 /*menuId*/, uint32 /*gossipListId*/) override
         {
-            player->CLOSE_GOSSIP_MENU();
-            me->setFaction(FACTION_HOSTILE);
+            CloseGossipMenuFor(player);
+            me->SetFaction(FACTION_HOSTILE);
             me->Attack(player, true);
+            return false;
         }
 
         void UpdateAI(uint32 diff) override
@@ -331,7 +333,14 @@ enum Magwin
     SAY_END1                    = 3,
     SAY_END2                    = 4,
     EMOTE_HUG                   = 5,
-    QUEST_A_CRY_FOR_SAY_HELP    = 9528,
+    NPC_COWLEN                  = 17311,
+    SAY_COWLEN                  = 0,
+    EVENT_ACCEPT_QUEST          = 1,
+    EVENT_START_ESCORT          = 2,
+    EVENT_STAND                 = 3,
+    EVENT_TALK_END              = 4,
+    EVENT_COWLEN_TALK           = 5,
+    QUEST_A_CRY_FOR_HELP        = 9528,
     FACTION_QUEST               = 113
 };
 
@@ -344,19 +353,22 @@ public:
     {
         npc_magwinAI(Creature* creature) : npc_escortAI(creature) { }
 
-        void Reset() override { }
+        void Reset() override
+        {
+            _events.Reset();
+        }
 
         void EnterCombat(Unit* who) override
         {
             Talk(SAY_AGGRO, who);
         }
 
-        void sQuestAccept(Player* player, Quest const* quest) override
+        void QuestAccept(Player* player, Quest const* quest) override
         {
-            if (quest->GetQuestId() == QUEST_A_CRY_FOR_SAY_HELP)
+            if (quest->GetQuestId() == QUEST_A_CRY_FOR_HELP)
             {
-                me->setFaction(FACTION_QUEST);
-                npc_escortAI::Start(true, false, player->GetGUID());
+                _player = player->GetGUID();
+                _events.ScheduleEvent(EVENT_ACCEPT_QUEST, Seconds(2));
             }
         }
 
@@ -366,23 +378,63 @@ public:
             {
                 switch (waypointId)
                 {
-                    case 0:
-                        Talk(SAY_START, player);
-                        break;
                     case 17:
                         Talk(SAY_PROGRESS, player);
                         break;
                     case 28:
-                        Talk(SAY_END1, player);
+                        player->GroupEventHappens(QUEST_A_CRY_FOR_HELP, me);
+                        _events.ScheduleEvent(EVENT_TALK_END, Seconds(2));
+                        SetRun(true);
                         break;
                     case 29:
-                        Talk(EMOTE_HUG, player);
+                        if (Creature* cowlen = me->FindNearestCreature(NPC_COWLEN, 50.0f, true))
+                            Talk(EMOTE_HUG, cowlen);
                         Talk(SAY_END2, player);
-                        player->GroupEventHappens(QUEST_A_CRY_FOR_SAY_HELP, me);
                         break;
                 }
             }
         }
+
+        void UpdateEscortAI(uint32 diff) override
+        {
+            _events.Update(diff);
+
+            if (uint32 eventId = _events.ExecuteEvent())
+            {
+                switch (eventId)
+                {
+                    case EVENT_ACCEPT_QUEST:
+                        if (Player* player = ObjectAccessor::GetPlayer(*me, _player))
+                            Talk(SAY_START, player);
+                        me->SetFaction(FACTION_QUEST);
+                        _events.ScheduleEvent(EVENT_START_ESCORT, Seconds(1));
+                        break;
+                    case EVENT_START_ESCORT:
+                        if (Player* player = ObjectAccessor::GetPlayer(*me, _player))
+                            npc_escortAI::Start(true, false, player->GetGUID());
+                        _events.ScheduleEvent(EVENT_STAND, Seconds(2));
+                        break;
+                    case EVENT_STAND: // Remove kneel standstate. Using a separate delayed event because it causes unwanted delay before starting waypoint movement.
+                        me->SetByteValue(UNIT_FIELD_BYTES_1, 0, 0);
+                        break;
+                    case EVENT_TALK_END:
+                        if (Player* player = ObjectAccessor::GetPlayer(*me, _player))
+                            Talk(SAY_END1, player);
+                        _events.ScheduleEvent(EVENT_COWLEN_TALK, Seconds(2));
+                        break;
+                    case EVENT_COWLEN_TALK:
+                        if (Creature* cowlen = me->FindNearestCreature(NPC_COWLEN, 50.0f, true))
+                            cowlen->AI()->Talk(SAY_COWLEN);
+                        break;
+                }
+            }
+
+            npc_escortAI::UpdateEscortAI(diff);
+        }
+
+    private:
+        EventMap _events;
+        ObjectGuid _player;
     };
 
     CreatureAI* GetAI(Creature* creature) const override
@@ -483,8 +535,8 @@ public:
                     return 1000;
                 case 2:
                     Talk(GEEZLE_SAY_1, Spark);
-                    Spark->SetInFront(me);
-                    me->SetInFront(Spark);
+                    Spark->SetFacingToObject(me);
+                    me->SetFacingToObject(Spark);
                     return 5000;
                 case 3:
                     Spark->AI()->Talk(SPARK_SAY_2);
@@ -583,19 +635,29 @@ class go_ravager_cage : public GameObjectScript
 public:
     go_ravager_cage() : GameObjectScript("go_ravager_cage") { }
 
-    bool OnGossipHello(Player* player, GameObject* go) override
+    struct go_ravager_cageAI : public GameObjectAI
     {
-        go->UseDoorOrButton();
-        if (player->GetQuestStatus(QUEST_STRENGTH_ONE) == QUEST_STATUS_INCOMPLETE)
+        go_ravager_cageAI(GameObject* go) : GameObjectAI(go) { }
+
+        bool GossipHello(Player* player, bool /*reportUse*/) override
         {
-            if (Creature* ravager = go->FindNearestCreature(NPC_DEATH_RAVAGER, 5.0f, true))
+            me->UseDoorOrButton();
+            if (player->GetQuestStatus(QUEST_STRENGTH_ONE) == QUEST_STATUS_INCOMPLETE)
             {
-                ravager->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
-                ravager->SetReactState(REACT_AGGRESSIVE);
-                ravager->AI()->AttackStart(player);
+                if (Creature* ravager = me->FindNearestCreature(NPC_DEATH_RAVAGER, 5.0f, true))
+                {
+                    ravager->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+                    ravager->SetReactState(REACT_AGGRESSIVE);
+                    ravager->AI()->AttackStart(player);
+                }
             }
+            return true;
         }
-        return true;
+    };
+
+    GameObjectAI* GetAI(GameObject* go) const override
+    {
+        return new go_ravager_cageAI(go);
     }
 };
 
@@ -753,19 +815,29 @@ class go_bristlelimb_cage : public GameObjectScript
     public:
         go_bristlelimb_cage() : GameObjectScript("go_bristlelimb_cage") { }
 
-        bool OnGossipHello(Player* player, GameObject* go) override
+        struct go_bristlelimb_cageAI : public GameObjectAI
         {
-            go->SetGoState(GO_STATE_READY);
-            if (player->GetQuestStatus(QUEST_THE_PROPHECY_OF_AKIDA) == QUEST_STATUS_INCOMPLETE)
+            go_bristlelimb_cageAI(GameObject* go) : GameObjectAI(go) { }
+
+            bool GossipHello(Player* player, bool /*reportUse*/) override
             {
-                if (Creature* capitive = go->FindNearestCreature(NPC_STILLPINE_CAPITIVE, 5.0f, true))
+                me->SetGoState(GO_STATE_READY);
+                if (player->GetQuestStatus(QUEST_THE_PROPHECY_OF_AKIDA) == QUEST_STATUS_INCOMPLETE)
                 {
-                    go->ResetDoorOrButton();
-                    ENSURE_AI(npc_stillpine_capitive::npc_stillpine_capitiveAI, capitive->AI())->StartMoving(player);
-                    return false;
+                    if (Creature* capitive = me->FindNearestCreature(NPC_STILLPINE_CAPITIVE, 5.0f, true))
+                    {
+                        me->ResetDoorOrButton();
+                        ENSURE_AI(npc_stillpine_capitive::npc_stillpine_capitiveAI, capitive->AI())->StartMoving(player);
+                        return false;
+                    }
                 }
+                return true;
             }
-            return true;
+        };
+
+        GameObjectAI* GetAI(GameObject* go) const override
+        {
+            return new go_bristlelimb_cageAI(go);
         }
 };
 
