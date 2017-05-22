@@ -165,7 +165,7 @@ void TargetedMovementGenerator<T, D>::SetTargetLocation(T* owner, bool updateDes
     // allow pets to use shortcut if no path found when following their master
     bool forceDest = (owner->GetTypeId() == TYPEID_UNIT && owner->ToCreature()->IsPet() && owner->HasUnitState(UNIT_STATE_FOLLOW));
 	bool warsongFlag = false;
-	if (i_target->GetName() == "Warsong Flag")
+	if (GetTarget()->GetName() == "Warsong Flag")
 	{
 		warsongFlag = true;
 	}		
@@ -253,7 +253,7 @@ void ChaseMovementGenerator<T>::AddUnitStateMove(T* owner)
 template<class T>
 bool ChaseMovementGenerator<T>::HasLostTarget(T* owner) const
 {
-    return owner->GetVictim() != TargetedMovementGeneratorBase::((Unit *)GetTarget());
+    return ((Unit *)owner)->GetVictim() != TargetedMovementGeneratorBase::GetTarget();
 }
 
 template<class T>
@@ -261,11 +261,11 @@ void ChaseMovementGenerator<T>::ReachTarget(T* owner)
 {
     ClearUnitStateMove(owner);
 
-    if (owner->IsWithinMeleeRange(TargetedMovementGeneratorBase::GetTarget()))
-        owner->Attack(TargetedMovementGeneratorBase::GetTarget(), true);
+    if (((Unit *)owner)->IsWithinMeleeRange(((Unit *)TargetedMovementGeneratorBase::GetTarget())))
+		((Unit *)owner)->Attack(((Unit *)TargetedMovementGeneratorBase::GetTarget()), true);
 
-    if (owner->GetTypeId() == TYPEID_UNIT)
-        owner->ToCreature()->SetCannotReachTarget(false);
+    if (((Unit *)owner)->GetTypeId() == TYPEID_UNIT)
+		((Unit *)owner)->ToCreature()->SetCannotReachTarget(false);
 }
 
 template<class T>
@@ -342,7 +342,7 @@ void FollowMovementGenerator<T>::ReachTarget(T* owner)
 template<>
 bool FollowMovementGenerator<Creature>::EnableWalking() const
 {
-    return IsTargetValid() && GetTarget()->IsWalking();
+    return IsTargetValid() && ((Unit *)GetTarget())->IsWalking();
 }
 
 template<>

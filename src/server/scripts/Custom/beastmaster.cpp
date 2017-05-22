@@ -2,6 +2,7 @@
 //original script created by ??
 #include "Config.h"
 #include "Pet.h"
+#include "ScriptedCreature.h"
 
 #define GOSSIP_SENDER_MAIN      1000
 #define MSG_TYPE                100004

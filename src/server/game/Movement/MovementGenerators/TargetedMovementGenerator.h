@@ -32,7 +32,7 @@ class TargetedMovementGeneratorBase
         }
 
         bool IsTargetValid() const { return _target.isValid(); }
-        Unit* GetTarget() const { return _target.getTarget(); }
+        WorldObject* GetTarget() const { return _target.getTarget(); }
         void stopFollowing() { }
 
     private:

@@ -193,9 +193,9 @@ template void FleeingMovementGenerator<Creature>::GetPoint(Creature*, Position &
 
 //---- TimedFleeingMovementGenerator
 
-bool TimedFleeingMovementGenerator::Update(Unit* owner, uint32 time_diff)
+bool TimedFleeingMovementGenerator::Update(WorldObject* owner, uint32 time_diff)
 {
-    if (!owner->IsAlive())
+    if (!((Unit *)owner)->IsAlive())
         return false;
 
     _totalFleeTime.Update(time_diff);

@@ -68,7 +68,7 @@ class EffectMovementGenerator : public MovementGenerator
         MovementGeneratorType GetMovementGeneratorType() const override { return EFFECT_MOTION_TYPE; }
 
     private:
-        void MovementInform(Unit*);
+        void MovementInform(WorldObject*);
 
         uint32 _pointId;
 };

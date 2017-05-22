@@ -1,3 +1,5 @@
+#include "ScriptedCreature.h"
+
 enum Enchants
 {
     ENCHANT_WEP_BERSERKING              = 3789,

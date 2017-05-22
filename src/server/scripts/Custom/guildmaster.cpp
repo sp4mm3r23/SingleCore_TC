@@ -1,4 +1,5 @@
 #include "Config.h"
+#include "ScriptedCreature.h"
 
 #define MSG_GOSSIP_TELE          "Teleport to GuildHouse"
 #define MSG_GOSSIP_BUY           "Buy GuildHouse"
