@@ -31,6 +31,15 @@ void AddSC_custom_CongratsOnLevel();
 
 // The name of this function should match:
 // void Add${NameOfDirectory}Scripts()
+
+void AddSC_Elwynn_Forest_TBE();
+
+// Pandaria
+void AddSC_the_wandering_isle_TBE();
+
+// Spell
+void AddSC_priest_spell_scripts_TBE();
+
 void AddCustomScripts()
 {
 	AddSC_solocraft();
@@ -45,4 +54,7 @@ void AddCustomScripts()
 	AddSC_Dynamic_Resurrections();
 	AddSC_Duel_Reset();
 	AddSC_custom_CongratsOnLevel();
+    AddSC_Elwynn_Forest_TBE();
+    AddSC_the_wandering_isle_TBE();
+    AddSC_priest_spell_scripts_TBE();
 }
