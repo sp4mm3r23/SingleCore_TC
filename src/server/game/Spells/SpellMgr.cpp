@@ -3714,6 +3714,12 @@ void SpellMgr::LoadSpellInfoCorrections()
     });
     // ENDOF FIRELANDS SPELLS
 
+	// Demon Hunter landing	
+	ApplySpellFix({ 199737 }, [](SpellInfo* spellInfo)
+	{
+		spellInfo->AuraInterruptFlags |= AURA_INTERRUPT_FLAG_LANDING;
+	});
+
     // Summon Master Li Fei
     ApplySpellFix({ 102445 }, [](SpellInfo* spellInfo)
     {
