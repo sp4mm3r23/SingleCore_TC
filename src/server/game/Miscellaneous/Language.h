@@ -1247,6 +1247,9 @@ enum TrinityStrings
     LANG_SELECT_PLAYER_OR_PET                     = 11016,
     LANG_SHUTDOWN_DELAYED                         = 11017,
     LANG_SHUTDOWN_CANCELLED                       = 11018,
+    LANG_YOU_CHANGE_POWER                         = 11019,
+    LANG_YOUR_POWER_CHANGED                       = 11020,
+    LANG_INVALID_POWER_NAME                       = 11021
 
     //Twin Peaks
     LANG_BG_TP_START_TWO_MINUTES                  = 12000,

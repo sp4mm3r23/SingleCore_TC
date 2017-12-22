@@ -2459,8 +2459,8 @@ struct SpellInterruptsEntry
 {
     uint32 ID;
     uint32 SpellID;
-    uint32 AuraInterruptFlags[2];
-    uint32 ChannelInterruptFlags[2];
+    uint32 AuraInterruptFlags[MAX_SPELL_AURA_INTERRUPT_FLAGS];
+    uint32 ChannelInterruptFlags[MAX_SPELL_AURA_INTERRUPT_FLAGS];
     uint16 InterruptFlags;
     uint8 DifficultyID;
 };
@@ -2987,6 +2987,17 @@ struct WMOAreaTableEntry
     uint8 Flags;
     uint32 ID;
     uint32 UWZoneMusic;
+};
+
+struct WorldEffectEntry
+{
+    uint32 ID;
+    uint32 TargetAsset;
+    uint16 CombatConditionID;
+    uint8 TargetType;
+    uint8 WhenToDisplay;
+    uint32 QuestFeedbackEffectID;
+    uint32 PlayerConditionID;
 };
 
 struct WorldMapAreaEntry
