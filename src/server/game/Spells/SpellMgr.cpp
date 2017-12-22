@@ -3360,7 +3360,7 @@ void SpellMgr::LoadSpellInfoCorrections()
 	// Demon Hunter landing	
 	ApplySpellFix({ 199737 }, [](SpellInfo* spellInfo)
 	{
-		spellInfo->AuraInterruptFlags |= AURA_INTERRUPT_FLAG_LANDING;
+		spellInfo->AuraInterruptFlags[0] |= AURA_INTERRUPT_FLAG_LANDING;
 	});
 
     // THE WANDERING ISLE SPELLS
