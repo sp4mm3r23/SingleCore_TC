@@ -22,49 +22,51 @@
 #include "SpellScript.h"
 #include "Unit.h"
 #include "SpellMgr.h"
+#include "ScriptMgr.h"
+#include "SpellAuraEffects.h"
+#include "SpellMgr.h"
+#include "SpellScript.h"
 
 enum DemonHunterSpells
 {
 	SPELL_FEL_RUSH_GROUND = 197922,
 	SPELL_FEL_RUSH_AIR = 197923,
 	SPELL_FEL_RUSH_DAMAGE = 192611,
-	SPELL_CHAOS_STRIKE_PROC = 193840,
+    SPELL_CHAOS_STRIKE_ENERGIZE = 193840,
 	SPELL_DEMON_BLADES_PROC = 203796
 };
 
 // 197125 - Chaos Strike
-// 7.x.x
 class spell_dh_chaos_strike : public SpellScriptLoader
 {
 public:
-	spell_dh_chaos_strike() : SpellScriptLoader("spell_dh_chaos_strike") { }
+    spell_dh_chaos_strike() : SpellScriptLoader("spell_dh_chaos_strike") { }
 
-	class spell_dh_chaos_strike_AuraScript : public AuraScript
-	{
-		PrepareAuraScript(spell_dh_chaos_strike_AuraScript);
+    class spell_dh_chaos_strike_AuraScript : public AuraScript
+    {
+        PrepareAuraScript(spell_dh_chaos_strike_AuraScript);
 
-		bool Validate(SpellInfo const* /*spellInfo*/) override
-		{
-			if (!sSpellMgr->GetSpellInfo(SPELL_CHAOS_STRIKE_PROC))
-				return false;
-			return true;
-		}
+        bool Validate(SpellInfo const* /*spellInfo*/) override
+        {
+            return ValidateSpellInfo({ SPELL_CHAOS_STRIKE_ENERGIZE });
+        }
 
-		void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& /*eventInfo*/)
-		{
-			if (Unit* caster = GetCaster())
-				caster->CastCustomSpell(SPELL_CHAOS_STRIKE_PROC, SPELLVALUE_BASE_POINT0, aurEff->GetBaseAmount(), caster);
-		}
+        void HandleEffectProc(AuraEffect const* aurEff, ProcEventInfo& /*eventInfo*/)
+        {
+            PreventDefaultAction();
+            GetTarget()->CastCustomSpell(SPELL_CHAOS_STRIKE_ENERGIZE, SPELLVALUE_BASE_POINT0, aurEff->GetAmount(), GetTarget(), true, nullptr, aurEff);
+        }
 
-		void Register() override
-		{
-			OnEffectProc += AuraEffectProcFn(spell_dh_chaos_strike_AuraScript::HandleEffectProc, EFFECT_0, SPELL_AURA_PROC_TRIGGER_SPELL);
-		}
-	};
-	AuraScript* GetAuraScript() const override
-	{
-		return new spell_dh_chaos_strike_AuraScript();
-	}
+        void Register() override
+        {
+            OnEffectProc += AuraEffectProcFn(spell_dh_chaos_strike_AuraScript::HandleEffectProc, EFFECT_0, SPELL_AURA_PROC_TRIGGER_SPELL);
+        }
+    };
+
+    AuraScript* GetAuraScript() const override
+    {
+        return new spell_dh_chaos_strike_AuraScript();
+    }
 };
 
 // 195072 - Fel Rush
