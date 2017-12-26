@@ -17,6 +17,7 @@
  */
 
 #include "ObjectMgr.h"
+#include "AreaTriggerDataStore.h"
 #include "ArenaTeamMgr.h"
 #include "Chat.h"
 #include "Containers.h"
@@ -35,6 +36,7 @@
 #include "LootMgr.h"
 #include "Mail.h"
 #include "MapManager.h"
+#include "MiscPackets.h"
 #include "MotionMaster.h"
 #include "ObjectAccessor.h"
 #include "ObjectDefines.h"
@@ -53,6 +55,7 @@
 #include "VMapFactory.h"
 #include "World.h"
 #include <G3D/g3dmath.h>
+#include "WorldQuestMgr.h"
 
 ScriptMapMap sSpellScripts;
 ScriptMapMap sEventScripts;
@@ -641,8 +644,8 @@ void ObjectMgr::LoadCreatureScalingData()
 {
     uint32 oldMSTime = getMSTime();
 
-    //                                                 0            1
-    QueryResult result = WorldDatabase.Query("SELECT Entry, LevelScalingMin, LevelScalingMax, LevelScalingDelta FROM creature_template_scaling");
+    //                                               0      1
+    QueryResult result = WorldDatabase.Query("SELECT Entry, LevelScalingDelta FROM creature_template_scaling");
 
     if (!result)
     {
@@ -665,15 +668,80 @@ void ObjectMgr::LoadCreatureScalingData()
         }
 
         CreatureLevelScaling creatureLevelScaling;
-        creatureLevelScaling.MinLevel              = fields[1].GetUInt16();
-        creatureLevelScaling.MaxLevel              = fields[2].GetUInt16();
-        creatureLevelScaling.DeltaLevel            = fields[3].GetInt16();
+        creatureLevelScaling.DeltaLevel            = fields[1].GetInt16();
         itr->second.levelScaling                   = creatureLevelScaling;
 
         ++count;
     } while (result->NextRow());
 
     TC_LOG_INFO("server.loading", ">> Loaded %u creature template scaling data in %u ms", count, GetMSTimeDiffToNow(oldMSTime));
+}
+
+void ObjectMgr::LoadScriptParams()
+{
+    _scriptParamContainer.clear();
+    _templateScriptParamContainer.clear();
+
+    uint32 oldMSTime = getMSTime();
+
+    //                                                0              1        2               3
+    QueryResult result = WorldDatabase.Query("SELECT `entryOrGuid`, `index`, `numericParam`, `stringParam` FROM script_params");
+
+    if (!result)
+    {
+        TC_LOG_INFO("server.loading", ">> Loaded 0 script param creature definitions. DB table `script_params` is empty.");
+        return;
+    }
+
+    uint32 count = 0;
+    do
+    {
+        Field* fields = result->Fetch();
+
+        int64 entryOrGuid = fields[0].GetInt64();
+
+        if (entryOrGuid == 0)
+        {
+            TC_LOG_ERROR("sql.sql", "Table `script_params` have record with entryOrGuid = 0");
+            continue;
+        }
+
+        uint8  index = fields[1].GetUInt8();
+
+        ScriptParam param;
+        param.numericValue  = fields[2].GetDouble();
+        param.stringValue   = fields[3].GetString();
+
+        if (entryOrGuid > 0)
+        {
+            uint32 entry = (uint32)entryOrGuid;
+
+            if (!sObjectMgr->GetCreatureTemplate(entryOrGuid))
+            {
+                TC_LOG_ERROR("sql.sql", "Creature template (Entry: " SI64FMTD ") does not exist but has a record in `script_params`", entryOrGuid);
+                continue;
+            }
+
+            _templateScriptParamContainer[entry][index] = param;
+        }
+        else
+        {
+            ObjectGuid::LowType lowGuid = (ObjectGuid::LowType)-entryOrGuid;
+
+            CreatureData const* creature = sObjectMgr->GetCreatureData(lowGuid);
+            if (!creature)
+            {
+                TC_LOG_ERROR("sql.sql", "ObjectMgr::LoadCreatureScriptParams: Creature guid (%lu) does not exist, skipped loading.", lowGuid);
+                continue;
+            }
+
+            _scriptParamContainer[lowGuid][index] = param;
+        }
+
+        ++count;
+    } while (result->NextRow());
+
+    TC_LOG_INFO("server.loading", ">> Loaded %u script params in %u ms", count, GetMSTimeDiffToNow(oldMSTime));
 }
 
 void ObjectMgr::CheckCreatureTemplate(CreatureTemplate const* cInfo)
@@ -3888,6 +3956,7 @@ void ObjectMgr::LoadQuests()
         delete itr->second;
     _questTemplates.clear();
     _questObjectives.clear();
+    _worldQuestStore.clear();
 
     mExclusiveQuestGroups.clear();
 
@@ -3938,6 +4007,9 @@ void ObjectMgr::LoadQuests()
 
         Quest* newQuest = new Quest(fields);
         _questTemplates[newQuest->GetQuestId()] = newQuest;
+
+        if (newQuest->IsWorldQuest())
+            _worldQuestStore[newQuest->QuestInfoID].push_back(newQuest->GetQuestId());
     } while (result->NextRow());
 
     // Load `quest_details`
@@ -4738,6 +4810,8 @@ void ObjectMgr::LoadQuests()
             }
         }
     }
+
+    sWorldQuestMgr->LoadWorldQuests();
 
     TC_LOG_INFO("server.loading", ">> Loaded " SZFMTD " quests definitions in %u ms", _questTemplates.size(), GetMSTimeDiffToNow(oldMSTime));
 }
@@ -6080,6 +6154,34 @@ void ObjectMgr::LoadAreaTriggerScripts()
     while (result->NextRow());
 
     TC_LOG_INFO("server.loading", ">> Loaded " SZFMTD " areatrigger scripts in %u ms", _areaTriggerScriptStore.size(), GetMSTimeDiffToNow(oldMSTime));
+}
+
+void ObjectMgr::AddAreaTriggerToGrid(ObjectGuid::LowType guid, AreaTriggerData const* data)
+{
+    uint32 mask = data->spawn_mask;
+    for (uint8 i = 0; mask != 0; i++, mask >>= 1)
+    {
+        if (mask & 1)
+        {
+            CellCoord cellCoord = Trinity::ComputeCellCoord(data->position_x, data->position_y);
+            CellObjectGuids& cell_guid = _mapObjectGuidsStore[MAKE_PAIR32(data->map_id, i)][cellCoord.GetId()];
+            cell_guid.areatriggers.insert(guid);
+        }
+    }
+}
+
+void ObjectMgr::RemoveAreaTriggerFromGrid(ObjectGuid::LowType guid, AreaTriggerData const* data)
+{
+    uint32 mask = data->spawn_mask;
+    for (uint8 i = 0; mask != 0; i++, mask >>= 1)
+    {
+        if (mask & 1)
+        {
+            CellCoord cellCoord = Trinity::ComputeCellCoord(data->position_x, data->position_y);
+            CellObjectGuids& cell_guid = _mapObjectGuidsStore[MAKE_PAIR32(data->map_id, i)][cellCoord.GetId()];
+            cell_guid.areatriggers.erase(guid);
+        }
+    }
 }
 
 uint32 ObjectMgr::GetNearestTaxiNode(float x, float y, float z, uint32 mapid, uint32 team)
@@ -8528,6 +8630,117 @@ void ObjectMgr::LoadMailLevelRewards()
     TC_LOG_INFO("server.loading", ">> Loaded %u level dependent mail rewards in %u ms", count, GetMSTimeDiffToNow(oldMSTime));
 }
 
+void ObjectMgr::LoadTrainerSpell()
+{
+    uint32 oldMSTime = getMSTime();
+
+    // For reload case
+    _cacheTrainerSpellStore.clear();
+
+    QueryResult result = WorldDatabase.Query("SELECT b.ID, a.SpellID, a.MoneyCost, a.ReqSkillLine, a.ReqSkillRank, a.Reqlevel, a.Index FROM npc_trainer AS a "
+        "INNER JOIN npc_trainer AS b ON a.ID = -(b.SpellID) "
+        "UNION SELECT * FROM npc_trainer WHERE SpellID > 0");
+
+    if (!result)
+    {
+        TC_LOG_ERROR("server.loading", ">>  Loaded 0 Trainers. DB table `npc_trainer` is empty!");
+
+        return;
+    }
+
+    uint32 count = 0;
+
+    do
+    {
+        Field* fields = result->Fetch();
+
+        uint32 ID = fields[0].GetUInt32();
+        uint32 SpellID = fields[1].GetUInt32();
+        uint32 MoneyCost = fields[2].GetUInt32();
+        uint32 ReqSkillLine = fields[3].GetUInt16();
+        uint32 ReqSkillRank = fields[4].GetUInt16();
+        uint32 ReqLevel = fields[5].GetUInt8();
+        uint32 Index = fields[6].GetUInt8();
+
+        AddSpellToTrainer(ID, SpellID, MoneyCost, ReqSkillLine, ReqSkillRank, ReqLevel, Index);
+
+        ++count;
+    } while (result->NextRow());
+
+    TC_LOG_INFO("server.loading", ">> Loaded %d Trainers in %u ms", count, GetMSTimeDiffToNow(oldMSTime));
+}
+
+void ObjectMgr::AddSpellToTrainer(uint32 ID, uint32 SpellID, uint32 MoneyCost, uint32 ReqSkillLine, uint32 ReqSkillRank, uint32 ReqLevel, uint32 Index)
+{
+    if (ID >= TRINITY_TRAINER_START_REF)
+        return;
+
+    CreatureTemplate const* cInfo = GetCreatureTemplate(ID);
+    if (!cInfo)
+    {
+        TC_LOG_ERROR("sql.sql", "Table `npc_trainer` contains entries for a non-existing creature template (ID: %u), ignoring", ID);
+        return;
+    }
+
+    if (!(cInfo->npcflag & UNIT_NPC_FLAG_TRAINER))
+    {
+        TC_LOG_ERROR("sql.sql", "Table `npc_trainer` contains entries for a creature template (ID: %u) without any trainer flag, ignoring", ID);
+        return;
+    }
+
+    SpellInfo const* spellinfo = sSpellMgr->GetSpellInfo(SpellID);
+    if (!spellinfo)
+    {
+        TC_LOG_ERROR("sql.sql", "Table `npc_trainer` contains an ID (%u) for a non-existing spell (Spell: %u), ignoring", ID, SpellID);
+        return;
+    }
+
+    if (!SpellMgr::IsSpellValid(spellinfo))
+    {
+        TC_LOG_ERROR("sql.sql", "Table `npc_trainer` contains an ID (%u) for a broken spell (Spell: %u), ignoring", ID, SpellID);
+        return;
+    }
+
+    TrainerSpellData& data = _cacheTrainerSpellStore[ID];
+
+    TrainerSpell& trainerSpell = data.spellList[SpellID];
+    trainerSpell.SpellID = SpellID;
+    trainerSpell.MoneyCost = MoneyCost;
+    trainerSpell.ReqSkillLine = ReqSkillLine;
+    trainerSpell.ReqSkillRank = ReqSkillRank;
+    trainerSpell.ReqLevel = ReqLevel;
+    trainerSpell.Index = Index;
+
+    if (!trainerSpell.ReqLevel)
+        trainerSpell.ReqLevel = spellinfo->SpellLevel;
+
+    // calculate learned spell for profession case when stored cast-spell
+    trainerSpell.ReqAbility[0] = SpellID;
+    for (SpellEffectInfo const* effect : spellinfo->GetEffectsForDifficulty(DIFFICULTY_NONE))
+    {
+        if (!effect || effect->Effect != SPELL_EFFECT_LEARN_SPELL)
+            continue;
+        if (trainerSpell.ReqAbility[0] == SpellID)
+            trainerSpell.ReqAbility[0] = 0;
+        // player must be able to cast spell on himself
+        if (effect->TargetA.GetTarget() != 0 && effect->TargetA.GetTarget() != TARGET_UNIT_TARGET_ALLY
+            && effect->TargetA.GetTarget() != TARGET_UNIT_TARGET_ANY && effect->TargetA.GetTarget() != TARGET_UNIT_CASTER)
+        {
+            TC_LOG_ERROR("sql.sql", "Table `npc_trainer` has spell %u for trainer entry %u with learn effect which has incorrect target type, ignoring learn effect!", SpellID, ID);
+            continue;
+        }
+
+        trainerSpell.ReqAbility[effect->EffectIndex] = effect->TriggerSpell;
+
+        if (trainerSpell.ReqAbility[effect->EffectIndex])
+        {
+            SpellInfo const* learnedSpellInfo = sSpellMgr->GetSpellInfo(trainerSpell.ReqAbility[effect->EffectIndex]);
+            if (learnedSpellInfo && learnedSpellInfo->IsProfession())
+                data.trainerType = 2;
+        }
+    }
+}
+
 void ObjectMgr::LoadTrainers()
 {
     uint32 oldMSTime = getMSTime();
@@ -8712,11 +8925,12 @@ int ObjectMgr::LoadReferenceVendor(int32 vendor, int32 item, std::set<uint32> *s
             vItem.maxcount          = fields[1].GetUInt32();
             vItem.incrtime          = fields[2].GetUInt32();
             vItem.ExtendedCost      = fields[3].GetUInt32();
-            vItem.Type              = fields[4].GetUInt8();
-            vItem.PlayerConditionId = fields[6].GetUInt32();
-            vItem.IgnoreFiltering   = fields[7].GetBool();
+            vItem.OverrideGoldCost  = fields[4].GetInt32();
+            vItem.Type              = fields[5].GetUInt8();
+            vItem.PlayerConditionId = fields[7].GetUInt32();
+            vItem.IgnoreFiltering   = fields[8].GetBool();
 
-            Tokenizer bonusListIDsTok(fields[5].GetString(), ' ');
+            Tokenizer bonusListIDsTok(fields[6].GetString(), ' ');
             for (char const* token : bonusListIDsTok)
                 vItem.BonusListIDs.push_back(int32(atol(token)));
 
@@ -8743,7 +8957,7 @@ void ObjectMgr::LoadVendors()
 
     std::set<uint32> skip_vendors;
 
-    QueryResult result = WorldDatabase.Query("SELECT entry, item, maxcount, incrtime, ExtendedCost, type, BonusListIDs, PlayerConditionID, IgnoreFiltering FROM npc_vendor ORDER BY entry, slot ASC");
+    QueryResult result = WorldDatabase.Query("SELECT entry, item, maxcount, incrtime, ExtendedCost, OverrideGoldCost, type, BonusListIDs, PlayerConditionID, IgnoreFiltering FROM npc_vendor ORDER BY entry, slot ASC");
     if (!result)
     {
         TC_LOG_ERROR("server.loading", ">>  Loaded 0 Vendors. DB table `npc_vendor` is empty!");
@@ -8769,11 +8983,12 @@ void ObjectMgr::LoadVendors()
             vItem.maxcount          = fields[2].GetUInt32();
             vItem.incrtime          = fields[3].GetUInt32();
             vItem.ExtendedCost      = fields[4].GetUInt32();
-            vItem.Type              = fields[5].GetUInt8();
-            vItem.PlayerConditionId = fields[7].GetUInt32();
-            vItem.IgnoreFiltering   = fields[8].GetBool();
+            vItem.OverrideGoldCost  = fields[5].GetInt32();
+            vItem.Type              = fields[6].GetUInt8();
+            vItem.PlayerConditionId = fields[8].GetUInt32();
+            vItem.IgnoreFiltering   = fields[9].GetBool();
 
-            Tokenizer bonusListIDsTok(fields[6].GetString(), ' ');
+            Tokenizer bonusListIDsTok(fields[7].GetString(), ' ');
             for (char const* token : bonusListIDsTok)
                 vItem.BonusListIDs.push_back(int32(atol(token)));
 
@@ -8812,7 +9027,7 @@ void ObjectMgr::LoadGossipMenu()
 
         GossipMenus gMenu;
 
-        gMenu.MenuID = fields[0].GetUInt16();
+        gMenu.MenuID = fields[0].GetUInt32();
         gMenu.TextID = fields[1].GetUInt32();
 
         if (!GetNpcText(gMenu.TextID))
@@ -9104,6 +9319,8 @@ void ObjectMgr::LoadScriptNames()
         "SELECT DISTINCT(ScriptName) FROM gameobject_template WHERE ScriptName <> '' "
         "UNION "
         "SELECT DISTINCT(ScriptName) FROM item_script_names WHERE ScriptName <> '' "
+        "UNION "
+        "SELECT DISTINCT(ScriptName) FROM areatrigger WHERE ScriptName <> '' "
         "UNION "
         "SELECT DISTINCT(ScriptName) FROM areatrigger_scripts WHERE ScriptName <> '' "
         "UNION "
@@ -9936,4 +10153,166 @@ void ObjectMgr::LoadSceneTemplates()
     } while (templates->NextRow());
 
     TC_LOG_INFO("server.loading", ">> Loaded %u scene templates in %u ms.", count, GetMSTimeDiffToNow(oldMSTime));
+}
+
+void ObjectMgr::LoadQuestTasks()
+{
+    for (auto const& it : _questTemplates)
+    {
+        Quest const* quest_template = it.second;
+
+        //CriteriaEntry const* criteria = sCriteriaStore.LookupEntry(l_I);
+        //if (!criteria || criteria->Type != CRITERIA_TYPE_COMPLETE_QUEST)
+        //    continue;
+
+        QuestV2CliTaskEntry const* cliTask = sQuestV2CliTaskStore.LookupEntry(quest_template->GetQuestId());
+        if (!cliTask)
+            continue;
+
+        if (!quest_template || quest_template->GetQuestType() != QUEST_TYPE_TASK)
+            continue;
+
+        QuestPOIVector const* questPOIs = GetQuestPOIVector(quest_template->GetQuestId());
+        if (questPOIs)
+        {
+            for (QuestPOIVector::const_iterator itr = questPOIs->begin(); itr != questPOIs->end(); ++itr)
+            {
+                int32 minX, minY, maxX, maxY;
+                bool first = true;
+                for (auto poi : itr->points)
+                {
+                    if (first)
+                    {
+                        minX = poi.X;
+                        minY = poi.Y;
+                        maxX = poi.X;
+                        maxY = poi.Y;
+                        first = false;
+                    }
+                    else
+                    {
+                        if (poi.X > maxX)
+                            maxX = poi.X;
+                        if (poi.Y > maxY)
+                            maxY = poi.Y;
+                        if (poi.X < minX)
+                            minX = poi.X;
+                        if (poi.Y < minY)
+                            minY = poi.Y;
+                    }
+                }
+                int32 areaWidth = std::abs(maxX - minX);
+                int32 areaHeight = std::abs(maxY - minY);
+                minX -= (0.35f * float(areaWidth)) / 2.0f;
+                minY -= (0.35f * float(areaHeight)) / 2.0f;
+                maxX += (0.35f * float(areaWidth)) / 2.0f;
+                maxY += (0.35f * float(areaHeight)) / 2.0f;
+                BonusQuestRectEntry rec;
+                rec.X = minX;
+                rec.Y = minY;
+                rec.XMax = maxX;
+                rec.YMax = maxY;
+                rec.MapID = itr->MapID;
+                BonusQuestsRects[quest_template->GetQuestId()].push_back(rec);
+            }
+        }
+    }
+}
+
+void ObjectMgr::LoadPlayerChoices()
+{
+    uint32 oldMSTime = getMSTime();
+    _playerChoiceContainer.clear();
+
+    QueryResult choices = WorldDatabase.Query("SELECT ChoiceID, Question FROM playerchoice");
+
+    if (!choices)
+    {
+        TC_LOG_INFO("server.loading", ">> Loaded 0 player choices. DB table `playerchoice` is empty.");
+        return;
+    }
+
+
+    uint32 choiceCount = 0;
+    uint32 responseCount = 0;
+    uint32 rewardCount = 0;
+
+    do
+    {
+        ++choiceCount;
+        Field* fields = choices->Fetch();
+
+        int32 choiceId = fields[0].GetInt32();
+
+        PlayerChoice& choice = _playerChoiceContainer[choiceId];
+        choice.ChoiceId = choiceId;
+        choice.Question = fields[1].GetString();
+    } while (choices->NextRow());
+
+    QueryResult responses = WorldDatabase.Query("SELECT ChoiceID, ResponseID, ChoiceArtFileID, Header, Answer, Description, Confirmation FROM playerchoice_response");
+
+    if (responses)
+    {
+        do
+        {
+            ++responseCount;
+            Field* fields = responses->Fetch();
+
+            int32 choiceId      = fields[0].GetInt32();
+            int32 ResponseID    = fields[1].GetInt32();
+
+            PlayerChoice& choice = _playerChoiceContainer[choiceId];
+            PlayerChoiceResponse& response = choice.Responses[ResponseID];
+
+            response.ResponseID         = ResponseID;
+            response.ChoiceArtFileID    = fields[2].GetInt32();
+            response.Header             = fields[3].GetString();
+            response.Answer             = fields[4].GetString();
+            response.Description        = fields[5].GetString();
+            response.Confirmation       = fields[6].GetString();
+        } while (responses->NextRow());
+    }
+    else
+    {
+        TC_LOG_INFO("server.loading", ">> Loaded 0 player choices responses. DB table `playerchoice_response` is empty.");
+    }
+
+    QueryResult rewards = WorldDatabase.Query("SELECT ChoiceID, ResponseID, TitleID, PackageID, SkillLineID, SkillPointCount, ArenaPointCount, HonorPointCount, Money, Xp FROM playerchoice_response_reward");
+
+    if (rewards)
+    {
+        do
+        {
+            ++rewardCount;
+            Field* fields = rewards->Fetch();
+
+            int32 choiceId      = fields[0].GetInt32();
+            int32 ResponseID    = fields[1].GetInt32();
+
+            PlayerChoice& choice = _playerChoiceContainer[choiceId];
+            PlayerChoiceResponse& response = choice.Responses[ResponseID];
+
+            PlayerChoiceResponseReward reward;
+
+            reward.TitleID          = fields[2].GetInt32();
+            reward.PackageID        = fields[3].GetInt32();
+            reward.SkillLineID      = fields[4].GetUInt32();
+            reward.SkillPointCount  = fields[5].GetUInt32();
+            reward.ArenaPointCount  = fields[6].GetUInt32();
+            reward.HonorPointCount  = fields[7].GetUInt32();
+            reward.Money            = fields[8].GetUInt64();
+            reward.Xp               = fields[9].GetUInt32();
+
+            response.Reward = reward;
+
+        } while (rewards->NextRow());
+    }
+    else
+    {
+        TC_LOG_INFO("server.loading", ">> Loaded 0 player choices responses reward. DB table `playerchoice_response_reward` is empty.");
+    }
+
+    TC_LOG_INFO("server.loading", ">> Loaded %u player choices in %u ms.",          choiceCount,    GetMSTimeDiffToNow(oldMSTime));
+    TC_LOG_INFO("server.loading", ">> Loaded %u player choices response in %u ms.", responseCount,  GetMSTimeDiffToNow(oldMSTime));
+    TC_LOG_INFO("server.loading", ">> Loaded %u player choices reward in %u ms.",   rewardCount,    GetMSTimeDiffToNow(oldMSTime));
 }

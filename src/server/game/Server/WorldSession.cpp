@@ -101,7 +101,7 @@ bool WorldSessionFilter::Process(WorldPacket* packet)
 
 /// WorldSession constructor
 WorldSession::WorldSession(uint32 id, std::string&& name, uint32 battlenetAccountId, std::shared_ptr<WorldSocket> sock, AccountTypes sec, uint8 expansion, time_t mute_time,
-    std::string os, LocaleConstant locale, uint32 recruiter, bool isARecruiter):
+    std::string os, LocaleConstant locale, uint32 recruiter, bool isARecruiter, std::string&& battlenetAccountName):
     m_muteTime(mute_time),
     m_timeOutTime(0),
     AntiDOS(this),
@@ -111,6 +111,7 @@ WorldSession::WorldSession(uint32 id, std::string&& name, uint32 battlenetAccoun
     _accountId(id),
     _accountName(std::move(name)),
     _battlenetAccountId(battlenetAccountId),
+    _battlenetAccountName(std::move(battlenetAccountName)),
     m_expansion(expansion),
     _os(os),
     _battlenetRequestToken(0),
@@ -1265,8 +1266,9 @@ uint32 WorldSession::DosProtection::GetMaxPacketCounterAllowed(uint16 opcode) co
         case CMSG_WHO:                                  //   0               7
         case CMSG_RIDE_VEHICLE_INTERACT:                //   0               8
         case CMSG_MOVE_HEARTBEAT:
+        case CMSG_OBJECT_UPDATE_FAILED:
         {
-            maxPacketCounterAllowed = 200;
+            maxPacketCounterAllowed = 300;
             break;
         }
 

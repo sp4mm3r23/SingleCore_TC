@@ -22,6 +22,7 @@
 #include "Battleground.h"
 #include "BattlegroundMgr.h"
 #include "BattlePetMgr.h"
+#include "ClassHall.h"
 #include "CombatLogPackets.h"
 #include "CombatPackets.h"
 #include "Common.h"
@@ -67,6 +68,7 @@
 #include "Totem.h"
 #include "Unit.h"
 #include "Util.h"
+#include "WodGarrison.h"
 #include "World.h"
 #include "WorldPacket.h"
 #include "WorldSession.h"
@@ -278,7 +280,7 @@ pEffect SpellEffects[TOTAL_SPELL_EFFECTS]=
     &Spell::EffectNULL,                                     //202 SPELL_EFFECT_202
     &Spell::EffectNULL,                                     //203 SPELL_EFFECT_203
     &Spell::EffectNULL,                                     //204 SPELL_EFFECT_CHANGE_BATTLEPET_QUALITY
-    &Spell::EffectNULL,                                     //205 SPELL_EFFECT_LAUNCH_QUEST_CHOICE
+    &Spell::EffectLaunchQuestChoice,                        //205 SPELL_EFFECT_LAUNCH_QUEST_CHOICE
     &Spell::EffectNULL,                                     //206 SPELL_EFFECT_ALTER_ITEM
     &Spell::EffectNULL,                                     //207 SPELL_EFFECT_LAUNCH_QUEST_TASK
     &Spell::EffectNULL,                                     //208 SPELL_EFFECT_208
@@ -327,7 +329,7 @@ pEffect SpellEffects[TOTAL_SPELL_EFFECTS]=
     &Spell::EffectNULL,                                     //251 SPELL_EFFECT_SET_GARRISON_CACHE_SIZE
     &Spell::EffectTeleportUnits,                            //252 SPELL_EFFECT_TELEPORT_UNITS
     &Spell::EffectGiveHonor,                                //253 SPELL_EFFECT_GIVE_HONOR
-    &Spell::EffectNULL,                                     //254 SPELL_EFFECT_254
+    &Spell::EffectDash,                                     //254 SPELL_EFFECT_DASH
     &Spell::EffectLearnTransmogSet,                         //255 SPELL_EFFECT_LEARN_TRANSMOG_SET
 };
 
@@ -724,8 +726,26 @@ void Spell::EffectTriggerSpell(SpellEffIndex /*effIndex*/)
         values.AddSpellMod(SPELLVALUE_BASE_POINT2, damage);
     }
 
-    // original caster guid only for GO cast
-    m_caster->CastSpell(targets, spellInfo, &values, TRIGGERED_FULL_MASK, NULL, NULL, m_originalCasterGUID);
+    // MiscValue is the delay between the trigger and the action
+    if (effectInfo->MiscValue)
+    {
+        // triggerSpellId will be used as scheduler group
+        // if one delayed trigger spell fail, the next one must also fail
+        uint32 triggerSpellId           = m_spellInfo->Id;
+        ObjectGuid originalCasterGUID   = m_originalCasterGUID;
+
+        m_caster->GetScheduler().Schedule(Milliseconds(effectInfo->MiscValue), triggerSpellId, [targets, spellInfo, values, originalCasterGUID, triggerSpellId](TaskContext task)
+        {
+            if (Unit* caster = task.GetContextUnit())
+                if (!caster->CastSpell(targets, spellInfo, &values, TRIGGERED_FULL_MASK, NULL, NULL, originalCasterGUID))
+                    task.CancelGroup(triggerSpellId);
+        });
+    }
+    else
+    {
+        // original caster guid only for GO cast
+        m_caster->CastSpell(targets, spellInfo, &values, TRIGGERED_FULL_MASK, NULL, NULL, m_originalCasterGUID);
+    }
 }
 
 void Spell::EffectTriggerMissileSpell(SpellEffIndex /*effIndex*/)
@@ -830,7 +850,7 @@ void Spell::EffectForceCast(SpellEffIndex /*effIndex*/)
     SpellCastTargets targets;
     targets.SetUnitTarget(m_caster);
 
-    unitTarget->CastSpell(targets, spellInfo, &values, TRIGGERED_FULL_MASK);
+    unitTarget->CastSpell(targets, spellInfo, &values, TriggerCastFlags(TRIGGERED_FULL_MASK & ~TRIGGERED_IGNORE_SPELL_AND_CATEGORY_CD));
 }
 
 void Spell::EffectTriggerRitualOfSummoning(SpellEffIndex /*effIndex*/)
@@ -1477,7 +1497,7 @@ void Spell::EffectCreateItem2(SpellEffIndex effIndex)
             player->AutoStoreLoot(m_spellInfo->Id, LootTemplates_Spell);
         }
         else
-            player->AutoStoreLoot(m_spellInfo->Id, LootTemplates_Spell);    // create some random items
+            player->AutoStoreLoot(m_spellInfo->Id, LootTemplates_Spell, false, true);    // create some random items for player spec only
 
         player->UpdateCraftSkill(m_spellInfo->Id);
     }
@@ -1717,6 +1737,11 @@ void Spell::SendLoot(ObjectGuid guid, LootType loottype)
                 if (uint32 trapEntry = gameObjTarget->GetGOInfo()->chest.linkedTrap)
                     gameObjTarget->TriggeringLinkedGameObject(trapEntry, m_caster);
 
+                if (PlayerConditionEntry const* playerCondition = sPlayerConditionStore.LookupEntry(gameObjTarget->GetGOInfo()->chest.conditionID1))
+                    if (playerCondition->PrevQuestID[1] != 0)
+                        if (Quest const* quest = sObjectMgr->GetQuestTemplate(playerCondition->PrevQuestID[1]))
+                            player->RewardQuest(quest, 0, player);
+
                 // Don't return, let loots been taken
             default:
                 break;
@@ -1780,6 +1805,11 @@ void Spell::EffectOpenLock(SpellEffIndex effIndex)
         // these objects must have been spawned by outdoorpvp!
         else if (gameObjTarget->GetGOInfo()->type == GAMEOBJECT_TYPE_GOOBER && sOutdoorPvPMgr->HandleOpenGo(player, gameObjTarget))
             return;
+        else if (player && gameObjTarget->GetGOInfo()->type == GAMEOBJECT_TYPE_CHEST)
+            if (PlayerConditionEntry const* playerCondition = sPlayerConditionStore.LookupEntry(goInfo->chest.conditionID1))
+                if (!sConditionMgr->IsPlayerMeetingCondition(player, playerCondition))
+                    return;
+
         lockId = goInfo->GetLockId();
         guid = gameObjTarget->GetGUID();
     }
@@ -1987,6 +2017,8 @@ void Spell::EffectSummonType(SpellEffIndex effIndex)
     if (!m_originalCaster)
         return;
 
+    bool personalSpawn = (properties->Flags & SUMMON_PROP_FLAG_PERSONAL_SPAWN) != 0;
+
     int32 duration = m_spellInfo->CalcDuration(m_originalCaster);
 
     TempSummon* summon = NULL;
@@ -2043,12 +2075,12 @@ void Spell::EffectSummonType(SpellEffIndex effIndex)
                 // Summons a vehicle, but doesn't force anyone to enter it (see SUMMON_CATEGORY_VEHICLE)
                 case SUMMON_TYPE_VEHICLE:
                 case SUMMON_TYPE_VEHICLE2:
-                    summon = m_caster->GetMap()->SummonCreature(entry, *destTarget, properties, duration, m_originalCaster, m_spellInfo->Id);
+                    summon = m_caster->GetMap()->SummonCreature(entry, *destTarget, properties, duration, m_originalCaster, m_spellInfo->Id, 0, personalSpawn);
                     break;
                 case SUMMON_TYPE_LIGHTWELL:
                 case SUMMON_TYPE_TOTEM:
                 {
-                    summon = m_caster->GetMap()->SummonCreature(entry, *destTarget, properties, duration, m_originalCaster, m_spellInfo->Id);
+                    summon = m_caster->GetMap()->SummonCreature(entry, *destTarget, properties, duration, m_originalCaster, m_spellInfo->Id, 0, personalSpawn);
                     if (!summon || !summon->IsTotem())
                         return;
 
@@ -2061,7 +2093,7 @@ void Spell::EffectSummonType(SpellEffIndex effIndex)
                 }
                 case SUMMON_TYPE_MINIPET:
                 {
-                    summon = m_caster->GetMap()->SummonCreature(entry, *destTarget, properties, duration, m_originalCaster, m_spellInfo->Id);
+                    summon = m_caster->GetMap()->SummonCreature(entry, *destTarget, properties, duration, m_originalCaster, m_spellInfo->Id, 0, personalSpawn);
                     if (!summon || !summon->HasUnitTypeMask(UNIT_MASK_MINION))
                         return;
 
@@ -2088,7 +2120,7 @@ void Spell::EffectSummonType(SpellEffIndex effIndex)
                             // randomize position for multiple summons
                             pos = m_caster->GetRandomPoint(*destTarget, radius);
 
-                        summon = m_originalCaster->SummonCreature(entry, pos, summonType, duration);
+                        summon = m_originalCaster->SummonCreature(entry, pos, summonType, duration, 0, personalSpawn);
                         if (!summon)
                             continue;
 
@@ -2109,7 +2141,7 @@ void Spell::EffectSummonType(SpellEffIndex effIndex)
             SummonGuardian(effIndex, entry, properties, numSummons);
             break;
         case SUMMON_CATEGORY_PUPPET:
-            summon = m_caster->GetMap()->SummonCreature(entry, *destTarget, properties, duration, m_originalCaster, m_spellInfo->Id);
+            summon = m_caster->GetMap()->SummonCreature(entry, *destTarget, properties, duration, m_originalCaster, m_spellInfo->Id, 0, personalSpawn);
             break;
         case SUMMON_CATEGORY_VEHICLE:
             // Summoning spells (usually triggered by npc_spellclick) that spawn a vehicle and that cause the clicker
@@ -2139,6 +2171,7 @@ void Spell::EffectSummonType(SpellEffIndex effIndex)
     {
         summon->SetCreatorGUID(m_originalCaster->GetGUID());
         ExecuteLogEffectSummonObject(effIndex, summon);
+        CallScriptOnSummonHandlers(summon);
     }
 }
 
@@ -2771,6 +2804,7 @@ void Spell::EffectSummonPet(SpellEffIndex effIndex)
         pet->SetName(new_name);
 
     ExecuteLogEffectSummonObject(effIndex, pet);
+    CallScriptOnSummonHandlers(pet);
 }
 
 void Spell::EffectLearnPetSpell(SpellEffIndex effIndex)
@@ -4332,7 +4366,11 @@ void Spell::EffectKnockBack(SpellEffIndex /*effIndex*/)
     }
     else //if (m_spellInfo->Effects[i].Effect == SPELL_EFFECT_KNOCK_BACK)
     {
-        m_caster->GetPosition(x, y);
+        // If the caster IS the target, we want him go back by default
+        if (m_caster == unitTarget)
+            m_caster->GetPositionWithDistInFront(-1.0f, x, y);
+        else
+            m_caster->GetPosition(x, y);
     }
 
     unitTarget->KnockbackFrom(x, y, speedxy, speedz);
@@ -4349,7 +4387,7 @@ void Spell::EffectLeapBack(SpellEffIndex /*effIndex*/)
     float speedxy = effectInfo->MiscValue / 10.f;
     float speedz = damage / 10.f;
     // Disengage
-    unitTarget->JumpTo(speedxy, speedz, m_spellInfo->IconFileDataId != 132572);
+    unitTarget->JumpTo(speedxy, speedz, false);
 }
 
 void Spell::EffectQuestClear(SpellEffIndex /*effIndex*/)
@@ -4393,7 +4431,7 @@ void Spell::EffectQuestClear(SpellEffIndex /*effIndex*/)
         }
     }
 
-    player->RemoveActiveQuest(quest_id, false);
+    player->RemoveActiveQuest(quest, false);
     player->RemoveRewardedQuest(quest_id);
 
     sScriptMgr->OnQuestStatusChange(player, quest_id);
@@ -5249,6 +5287,7 @@ void Spell::SummonGuardian(uint32 i, uint32 entry, SummonPropertiesEntry const* 
         }
 
         summon->AI()->EnterEvadeMode();
+        CallScriptOnSummonHandlers(summon);
 
         ExecuteLogEffectSummonObject(i, summon);
     }
@@ -5572,8 +5611,8 @@ void Spell::EffectLearnGarrisonBuilding(SpellEffIndex effIndex)
     if (!unitTarget || unitTarget->GetTypeId() != TYPEID_PLAYER)
         return;
 
-    if (Garrison* garrison = unitTarget->ToPlayer()->GetGarrison())
-        garrison->LearnBlueprint(GetEffect(effIndex)->MiscValue);
+    if (Garrison* garrison = unitTarget->ToPlayer()->GetGarrison(GARRISON_TYPE_GARRISON))
+        garrison->ToWodGarrison()->LearnBlueprint(GetEffect(effIndex)->MiscValue);
 }
 
 void Spell::EffectCreateGarrison(SpellEffIndex effIndex)
@@ -5606,8 +5645,7 @@ void Spell::EffectAddGarrisonFollower(SpellEffIndex effIndex)
     if (!unitTarget || unitTarget->GetTypeId() != TYPEID_PLAYER)
         return;
 
-    if (Garrison* garrison = unitTarget->ToPlayer()->GetGarrison())
-        garrison->AddFollower(GetEffect(effIndex)->MiscValue);
+    unitTarget->ToPlayer()->AddGarrisonFollower(GetEffect(effIndex)->MiscValue);
 }
 
 void Spell::EffectCreateHeirloomItem(SpellEffIndex effIndex)
@@ -5638,8 +5676,8 @@ void Spell::EffectActivateGarrisonBuilding(SpellEffIndex effIndex)
     if (!unitTarget || unitTarget->GetTypeId() != TYPEID_PLAYER)
         return;
 
-    if (Garrison* garrison = unitTarget->ToPlayer()->GetGarrison())
-        garrison->ActivateBuilding(GetEffect(effIndex)->MiscValue);
+    if (Garrison* garrison = unitTarget->ToPlayer()->GetGarrison(GARRISON_TYPE_GARRISON))
+        garrison->ToWodGarrison()->ActivateBuilding(GetEffect(effIndex)->MiscValue);
 }
 
 void Spell::EffectHealBattlePetPct(SpellEffIndex effIndex)
@@ -5665,6 +5703,17 @@ void Spell::EffectEnableBattlePets(SpellEffIndex /*effIndex*/)
     Player* plr = unitTarget->ToPlayer();
     plr->SetFlag(PLAYER_FLAGS, PLAYER_FLAGS_PET_BATTLES_UNLOCKED);
     plr->GetSession()->GetBattlePetMgr()->UnlockSlot(0);
+}
+
+void Spell::EffectLaunchQuestChoice(SpellEffIndex effIndex)
+{
+    if (effectHandleMode != SPELL_EFFECT_HANDLE_HIT_TARGET)
+        return;
+
+    if (!unitTarget || unitTarget->GetTypeId() != TYPEID_PLAYER)
+        return;
+
+    unitTarget->ToPlayer()->SendPlayerChoice(GetCaster()->GetGUID(), GetEffect(effIndex)->MiscValue);
 }
 
 void Spell::EffectUncageBattlePet(SpellEffIndex /*effIndex*/)
@@ -5829,6 +5878,25 @@ void Spell::EffectGiveHonor(SpellEffIndex /*effIndex*/)
     Player* playerTarget = unitTarget->ToPlayer();
     playerTarget->AddHonorXP(damage);
     playerTarget->SendDirectMessage(packet.Write());
+}
+
+void Spell::EffectDash(SpellEffIndex /* effIndex */)
+{
+    if (effectHandleMode != SPELL_EFFECT_HANDLE_HIT)
+        return;
+
+    if (!unitTarget && !destTarget)
+        return;
+
+    WorldLocation* pTarget = destTarget;
+    if (unitTarget)
+    {
+        pTarget = static_cast<WorldLocation*>(unitTarget);
+    }
+
+    float speedXY, speedZ;
+    CalculateJumpSpeeds(effectInfo, m_caster->GetExactDist2d(pTarget), speedXY, speedZ);
+    m_caster->GetMotionMaster()->MoveJump(*pTarget, speedXY, speedZ, EVENT_JUMP);
 }
 
 void Spell::EffectLearnTransmogSet(SpellEffIndex /*effIndex*/)

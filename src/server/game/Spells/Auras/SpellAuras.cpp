@@ -162,6 +162,20 @@ void AuraApplication::SetNeedClientUpdate()
     _target->SetVisibleAuraUpdate(this);
 }
 
+void AuraApplication::SendFakeAuraUpdate(uint32 auraId, bool remove)
+{
+    WorldPackets::Spells::AuraUpdate data;
+    data.UpdateAll = false;
+    data.UnitGUID = GetTarget()->GetGUID();
+
+    WorldPackets::Spells::AuraInfo inf;
+    inf.AuraData->SpellID = auraId;
+    BuildUpdatePacket(inf, remove);
+    data.Auras.push_back(inf);
+
+    _target->SendMessageToSet(data.Write(), true);
+}
+
 void AuraApplication::BuildUpdatePacket(WorldPackets::Spells::AuraInfo& auraInfo, bool remove)
 {
     ASSERT(_target->HasVisibleAura(this) != remove);
@@ -714,6 +728,8 @@ void Aura::Update(uint32 diff, Unit* caster)
         m_duration -= diff;
         if (m_duration < 0)
             m_duration = 0;
+
+        CallScriptAuraUpdateHandlers(diff);
 
         // handle manaPerSecond/manaPerSecondPerLevel
         if (m_timeCla)
@@ -2013,6 +2029,18 @@ void Aura::CallScriptEffectUpdatePeriodicHandlers(AuraEffect* aurEff)
             if (effItr->IsEffectAffected(m_spellInfo, aurEff->GetEffIndex()))
                 effItr->Call(*scritr, aurEff);
 
+        (*scritr)->_FinishScriptCall();
+    }
+}
+
+void Aura::CallScriptAuraUpdateHandlers(uint32 diff)
+{
+    for (auto scritr = m_loadedScripts.begin(); scritr != m_loadedScripts.end(); ++scritr)
+    {
+        (*scritr)->_PrepareScriptCall(AURA_SCRIPT_HOOK_ON_UPDATE);
+        std::vector<AuraScript::AuraUpdateHandler>::iterator hookItrEnd = (*scritr)->OnAuraUpdate.end(), hookItr = (*scritr)->OnAuraUpdate.begin();
+        for (; hookItr != hookItrEnd; ++hookItr)
+            (*hookItr).Call(*scritr, diff);
         (*scritr)->_FinishScriptCall();
     }
 }

@@ -116,6 +116,7 @@ private:
 class TC_GAME_API Object
 {
     public:
+        Ashamane::VariablesSafe Variables;
         virtual ~Object();
 
         bool IsInWorld() const { return m_inWorld; }
@@ -410,6 +411,10 @@ class TC_GAME_API WorldObject : public Object, public WorldLocation
 
         virtual void SetPhaseMask(uint32 newPhaseMask, bool update);
         virtual bool SetInPhase(uint32 id, bool update, bool apply);
+        bool AddPhase(uint32 id, bool update = true) { return SetInPhase(id, update, true); }
+        bool RemovePhase(uint32 id, bool update = true) { return SetInPhase(id, update, false); }
+        void AddPhases(std::initializer_list<uint32> const& phases, bool update = true);
+        void RemovePhases(std::initializer_list<uint32> const& phases, bool update = true);
         void CopyPhaseFrom(WorldObject* obj, bool update = false);
         void UpdateAreaAndZonePhase();
         void ClearPhases(bool update = false);
@@ -425,6 +430,9 @@ class TC_GAME_API WorldObject : public Object, public WorldLocation
         std::set<uint32> const& GetTerrainSwaps() const { return _terrainSwaps; }
         std::set<uint32> const& GetWorldMapAreaSwaps() const { return _worldMapAreaSwaps; }
         int32 GetDBPhase() const { return _dbPhase; }
+
+        void SetVisibleBySummonerOnly(bool visibleBySummonerOnly) { m_visibleBySummonerOnly = visibleBySummonerOnly; }
+        bool IsVisibleBySummonerOnly() const { return m_visibleBySummonerOnly; }
 
         // if negative it is used as PhaseGroupId
         void SetDBPhase(int32 p) { _dbPhase = p; }
@@ -513,22 +521,41 @@ class TC_GAME_API WorldObject : public Object, public WorldLocation
 
         Scenario* GetScenario() const;
 
-        TempSummon* SummonCreature(uint32 id, Position const& pos, TempSummonType spwtype = TEMPSUMMON_MANUAL_DESPAWN, uint32 despwtime = 0, uint32 vehId = 0) const;
-        TempSummon* SummonCreature(uint32 id, float x, float y, float z, float ang = 0, TempSummonType spwtype = TEMPSUMMON_MANUAL_DESPAWN, uint32 despwtime = 0) const;
-        GameObject* SummonGameObject(uint32 entry, Position const& pos, QuaternionData const& rot, uint32 respawnTime /* s */);
-        GameObject* SummonGameObject(uint32 entry, float x, float y, float z, float ang, QuaternionData const& rot, uint32 respawnTime /* s */);
+        TempSummon* SummonCreature(uint32 id, Position const& pos, TempSummonType spwtype = TEMPSUMMON_MANUAL_DESPAWN, uint32 despwtime = 0, uint32 vehId = 0, bool visibleBySummonerOnly = false) const;
+        TempSummon* SummonCreature(uint32 id, float x, float y, float z, float ang = 0, TempSummonType spwtype = TEMPSUMMON_MANUAL_DESPAWN, uint32 despwtime = 0, bool visibleBySummonerOnly = false) const;
+        GameObject* SummonGameObject(uint32 entry, Position const& pos, QuaternionData const& rot, uint32 respawnTime /* s */, bool visibleBySummonerOnly = false);
+        GameObject* SummonGameObject(uint32 entry, float x, float y, float z, float ang, QuaternionData const& rot, uint32 respawnTime /* s */, bool visibleBySummonerOnly = false);
         Creature*   SummonTrigger(float x, float y, float z, float ang, uint32 dur, CreatureAI* (*GetAI)(Creature*) = NULL);
         void SummonCreatureGroup(uint8 group, std::list<TempSummon*>* list = NULL);
 
-        Creature*   FindNearestCreature(uint32 entry, float range, bool alive = true) const;
-        GameObject* FindNearestGameObject(uint32 entry, float range) const;
-        GameObject* FindNearestGameObjectOfType(GameobjectTypes type, float range) const;
+        Creature*               FindNearestCreature(uint32 entry, float range, bool alive = true) const;
+        Creature*               FindNearestCreature(std::list<uint32> entrys, float range, bool alive = true) const;
+        std::list<Creature*>    FindNearestCreatures(uint32 entry, float range) const;
+        std::list<Creature*>    FindAllCreaturesInRange(float range);
+        std::list<Creature*>    FindAllUnfriendlyCreaturesInRange(float range);
+        Creature*               FindNearestAttackableCreatureOnTransportInFloor(float rangeXY, float rangeZ);
+        Creature*               FindNearestCreatureOnTransportInFloor(uint32 entry, float rangeXY, float rangeZ);
+
+        GameObject*             FindNearestGameObject(uint32 entry, float range) const;
+        std::list<GameObject*>  FindNearestGameObjects(uint32 entry, float range) const;
+        GameObject*             FindNearestGameObjectOfType(GameobjectTypes type, float range) const;
+
+        Player*                 SelectNearestPlayer(float distance = 0.0f) const;
+        std::list<Player*>      SelectNearestPlayers(float range, bool alive = true);
+        Player*                 SelectRandomPlayerInRange(float range, bool alive);
 
         template <typename Container>
         void GetGameObjectListWithEntryInGrid(Container& gameObjectContainer, uint32 entry, float maxSearchRange = 250.0f) const;
 
+        void GetGameObjectListWithEntryInGridAppend(std::list<GameObject*>& lList, uint32 uiEntry, float fMaxSearchRange = 250.0f) const;
+
         template <typename Container>
         void GetCreatureListWithEntryInGrid(Container& creatureContainer, uint32 entry, float maxSearchRange = 250.0f) const;
+
+        void GetCreatureListWithEntryInGridAppend(std::list<Creature*>& lList, uint32 uiEntry, float fMaxSearchRange = 250.0f) const;
+
+        template <typename Container>
+        void GetCreatureListInGrid(Container& creatureContainer, float maxSearchRange = 250.0f) const;
 
         template <typename Container>
         void GetPlayerListInGrid(Container& playerContainer, float maxSearchRange) const;
@@ -613,6 +640,7 @@ class TC_GAME_API WorldObject : public Object, public WorldLocation
         std::set<uint32> _terrainSwaps;
         std::set<uint32> _worldMapAreaSwaps;
         int32 _dbPhase;
+        bool m_visibleBySummonerOnly;
 
         uint16 m_notifyflags;
         uint16 m_executed_notifies;

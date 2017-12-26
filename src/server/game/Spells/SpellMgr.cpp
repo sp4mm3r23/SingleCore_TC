@@ -621,6 +621,10 @@ bool SpellArea::IsFitToRequirements(Player const* player, uint32 newZone, uint32
         if (!player || gender != player->getGender())
             return false;
 
+    if (teamId != -1)                            // is not expected team
+        if (!player || player->GetTeamId() != teamId)
+            return false;
+
     if (raceMask)                                // is not expected race
         if (!player || !(raceMask & player->getRaceMask()))
             return false;
@@ -634,7 +638,7 @@ bool SpellArea::IsFitToRequirements(Player const* player, uint32 newZone, uint32
             return false;
 
     if (questEnd)                                // is not in expected forbidden quest state
-        if (!player || (((1 << player->GetQuestStatus(questEnd)) & questEndStatus) == 0))
+        if (!player || (((1 << player->GetQuestStatus(questEnd)) & questEndStatus) != 0))
             return false;
 
     if (auraSpell)                               // does not have expected aura
@@ -2005,8 +2009,8 @@ void SpellMgr::LoadSpellAreas()
     mSpellAreaForQuestEndMap.clear();
     mSpellAreaForAuraMap.clear();
 
-    //                                                  0     1         2              3               4                 5          6          7       8         9
-    QueryResult result = WorldDatabase.Query("SELECT spell, area, quest_start, quest_start_status, quest_end_status, quest_end, aura_spell, racemask, gender, autocast FROM spell_area");
+    //                                                  0     1         2              3               4                 5          6         7       8         9       10
+    QueryResult result = WorldDatabase.Query("SELECT spell, area, quest_start, quest_start_status, quest_end_status, quest_end, aura_spell, teamId, racemask, gender, autocast FROM spell_area");
     if (!result)
     {
         TC_LOG_INFO("server.loading", ">> Loaded 0 spell area requirements. DB table `spell_area` is empty.");
@@ -2028,9 +2032,10 @@ void SpellMgr::LoadSpellAreas()
         spellArea.questEndStatus      = fields[4].GetUInt32();
         spellArea.questEnd            = fields[5].GetUInt32();
         spellArea.auraSpell           = fields[6].GetInt32();
-        spellArea.raceMask            = fields[7].GetUInt32();
-        spellArea.gender              = Gender(fields[8].GetUInt8());
-        spellArea.autocast            = fields[9].GetBool();
+        spellArea.teamId              = fields[7].GetInt8();
+        spellArea.raceMask            = fields[8].GetUInt32();
+        spellArea.gender              = Gender(fields[9].GetUInt8());
+        spellArea.autocast            = fields[10].GetBool();
 
         if (SpellInfo const* spellInfo = GetSpellInfo(spell))
         {
@@ -2055,6 +2060,8 @@ void SpellMgr::LoadSpellAreas()
                 if (spellArea.questStart != itr->second.questStart)
                     continue;
                 if (spellArea.auraSpell != itr->second.auraSpell)
+                    continue;
+                if (spellArea.teamId != itr->second.teamId)
                     continue;
                 if ((spellArea.raceMask & itr->second.raceMask) == 0)
                     continue;
@@ -2145,6 +2152,12 @@ void SpellMgr::LoadSpellAreas()
                     continue;
                 }
             }
+        }
+
+        if (spellArea.teamId < -1 || spellArea.teamId > TEAM_HORDE)
+        {
+            TC_LOG_ERROR("sql.sql", "The spell %u listed in `spell_area` has wrong team id (%u) requirement.", spell, spellArea.teamId);
+            continue;
         }
 
         if (spellArea.raceMask && (spellArea.raceMask & RACEMASK_ALL_PLAYABLE) == 0)
@@ -2846,6 +2859,12 @@ void SpellMgr::LoadSpellInfoCorrections()
         spellInfo->SpellFamilyFlags[2] = 0x80000000;
     });
 
+    // Unleashed Souls
+    ApplySpellFix({ 68979 }, [](SpellInfo* spellInfo)
+    {
+        spellInfo->RangeEntry = sSpellRangeStore.LookupEntry(13); // 50000yd
+    });
+
     //
     // VIOLET HOLD SPELLS
     //
@@ -3025,7 +3044,7 @@ void SpellMgr::LoadSpellInfoCorrections()
     // Lock Players and Tap Chest
     ApplySpellFix({ 72347 }, [](SpellInfo* spellInfo)
     {
-                spellInfo->AttributesEx3 &= ~SPELL_ATTR3_NO_INITIAL_AGGRO;
+        spellInfo->AttributesEx3 &= ~SPELL_ATTR3_NO_INITIAL_AGGRO;
     });
 
     // Resistant Skin (Deathbringer Saurfang adds)
@@ -3325,6 +3344,12 @@ void SpellMgr::LoadSpellInfoCorrections()
         const_cast<SpellEffectInfo*>(spellInfo->GetEffect(EFFECT_0))->TargetA = SpellImplicitTargetInfo(TARGET_UNIT_SRC_AREA_ENTRY);
     });
 
+    // Fel Rush &  Demon Hunter Glide
+    ApplySpellFix({ 199737, 131347 }, [](SpellInfo* spellInfo)
+    {
+        spellInfo->AuraInterruptFlags[0] |= AURA_INTERRUPT_FLAG_LANDING;
+    });
+
     //
     // ISLE OF CONQUEST SPELLS
     //
@@ -3354,6 +3379,28 @@ void SpellMgr::LoadSpellInfoCorrections()
     ApplySpellFix({ 99252 }, [](SpellInfo* spellInfo)
     {
         spellInfo->AuraInterruptFlags[0] |= AURA_INTERRUPT_FLAG_CHANGE_MAP;
+    });
+
+    ApplySpellFix({
+        98135, // Summon Fragment of Rhyolith
+        98553  // Summon Spark of Rhyolith
+    }, [](SpellInfo* spellInfo)
+    {
+        const_cast<SpellEffectInfo*>(spellInfo->GetEffect(EFFECT_0))->TargetA = SpellImplicitTargetInfo(TARGET_DEST_DEST);
+    });
+
+    // Volcanic Birth
+    ApplySpellFix({ 98010 }, [](SpellInfo* spellInfo)
+    {
+        const_cast<SpellEffectInfo*>(spellInfo->GetEffect(EFFECT_1))->TargetA = SpellImplicitTargetInfo(TARGET_DEST_DEST);
+        const_cast<SpellEffectInfo*>(spellInfo->GetEffect(EFFECT_1))->TargetB = 0;
+    });
+
+    // Burning Orbs summon
+    ApplySpellFix({ 98565 }, [](SpellInfo* spellInfo)
+    {
+        const_cast<SpellEffectInfo*>(spellInfo->GetEffect(EFFECT_0))->TargetA = SpellImplicitTargetInfo(TARGET_DEST_DEST);
+        const_cast<SpellEffectInfo*>(spellInfo->GetEffect(EFFECT_0))->TargetB = 0;
     });
     // ENDOF FIRELANDS SPELLS
 
@@ -3393,6 +3440,13 @@ void SpellMgr::LoadSpellInfoCorrections()
     }, [](SpellInfo* spellInfo)
     {
         const_cast<SpellEffectInfo*>(spellInfo->GetEffect(EFFECT_0))->TargetA = SpellImplicitTargetInfo(TARGET_DEST_DB);
+    });
+
+    // Taste of Iron Game Aura
+    ApplySpellFix({ 164042 }, [](SpellInfo* spellInfo)
+    {
+        const_cast<SpellEffectInfo*>(spellInfo->GetEffect(EFFECT_2))->Effect = 0;
+        const_cast<SpellEffectInfo*>(spellInfo->GetEffect(EFFECT_2))->Effect = 0;
     });
 
     ApplySpellFix({

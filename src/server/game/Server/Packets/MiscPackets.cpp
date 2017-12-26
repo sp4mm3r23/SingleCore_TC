@@ -17,6 +17,7 @@
 
 #include "MiscPackets.h"
 #include "Common.h"
+#include "Player.h"
 
 WorldPacket const* WorldPackets::Misc::BindPointUpdate::Write()
 {
@@ -105,6 +106,11 @@ WorldPacket const* WorldPackets::Misc::SetupCurrency::Write()
 void WorldPackets::Misc::ViolenceLevel::Read()
 {
     _worldPacket >> ViolenceLvl;
+}
+
+void WorldPackets::Misc::PlayerSelectFaction::Read()
+{
+    _worldPacket >> SelectedFaction;
 }
 
 WorldPacket const* WorldPackets::Misc::TimeSyncRequest::Write()
@@ -666,4 +672,14 @@ void WorldPackets::Misc::MountSetFavorite::Read()
 void WorldPackets::Misc::CloseInteraction::Read()
 {
     _worldPacket >> SourceGuid;
+}
+
+void WorldPackets::Misc::AdventureJournalOpenQuest::Read()
+{
+    _worldPacket >> AdventureJournalID;
+}
+
+void WorldPackets::Misc::AdventureJournalStartQuest::Read()
+{
+    _worldPacket >> QuestID;
 }

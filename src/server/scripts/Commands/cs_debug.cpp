@@ -37,6 +37,7 @@ EndScriptData */
 #include "M2Stores.h"
 #include "MapManager.h"
 #include "MovementPackets.h"
+#include "MotionMaster.h"
 #include "ObjectMgr.h"
 #include "RBAC.h"
 #include "SpellPackets.h"
@@ -71,6 +72,12 @@ public:
             { "sellerror",     rbac::RBAC_PERM_COMMAND_DEBUG_SEND_SELLERROR,     false, &HandleDebugSendSellErrorCommand,       "" },
             { "setphaseshift", rbac::RBAC_PERM_COMMAND_DEBUG_SEND_SETPHASESHIFT, false, &HandleDebugSendSetPhaseShiftCommand,   "" },
             { "spellfail",     rbac::RBAC_PERM_COMMAND_DEBUG_SEND_SPELLFAIL,     false, &HandleDebugSendSpellFailCommand,       "" },
+            { "playerchoice",  rbac::RBAC_PERM_COMMAND_DEBUG_SEND_SPELLFAIL,     false, &HandleDebugSendPlayerChoiceCommand,    "" },
+        };
+        static std::vector<ChatCommand> debugMovementForceCommandTable =
+        {
+            { "apply",         rbac::RBAC_PERM_COMMAND_DEBUG_APPLY_MOVEMENT_FORCE,      false, &HandleDebugApplyForceMovementCommand,  "" },
+            { "remove",        rbac::RBAC_PERM_COMMAND_DEBUG_REMOVE_MOVEMENT_FORCE,     false, &HandleDebugRemoveForceMovementCommand, "" },
         };
         static std::vector<ChatCommand> debugCommandTable =
         {
@@ -106,6 +113,8 @@ public:
             { "raidreset",     rbac::RBAC_PERM_COMMAND_INSTANCE_UNBIND,     false, &HandleDebugRaidResetCommand,        "" },
             { "neargraveyard", rbac::RBAC_PERM_COMMAND_NEARGRAVEYARD,       false, &HandleDebugNearGraveyard,           "" },
             { "conversation" , rbac::RBAC_PERM_COMMAND_DEBUG_CONVERSATION,  false, &HandleDebugConversationCommand,     "" },
+            { "criteria",      rbac::RBAC_PERM_COMMAND_DEBUG,               false, &HandleDebugCriteriaCommand,         "" },
+            { "movementforce", rbac::RBAC_PERM_COMMAND_DEBUG_MOVEMENT_FORCE,false, nullptr,                             "", debugMovementForceCommandTable },
         };
         static std::vector<ChatCommand> commandTable =
         {
@@ -242,6 +251,18 @@ public:
         castFailed.FailedArg2 = failArg2;
         handler->GetSession()->SendPacket(castFailed.Write());
 
+        return true;
+    }
+
+    static bool HandleDebugSendPlayerChoiceCommand(ChatHandler* handler, char const* args)
+    {
+        if (!*args)
+            return false;
+
+        int32 choiceId = atoi(args);
+        Player* player = handler->GetSession()->GetPlayer();
+
+        player->SendPlayerChoice(player->GetGUID(), choiceId);
         return true;
     }
 
@@ -1573,6 +1594,72 @@ public:
         }
 
         return Conversation::CreateConversation(conversationEntry, target, *target, { target->GetGUID() }) != nullptr;
+    }
+
+    static bool HandleDebugCriteriaCommand(ChatHandler* handler, char const* args)
+    {
+        if (!args)
+            return false;
+
+        WorldPacket packet;
+
+        packet << uint32(atoi(args));
+        packet << uint64(1);
+        packet << handler->GetSession()->GetPlayer()->GetGUID();
+        packet << uint32(0);
+        packet.AppendPackedTime(time(nullptr));
+        packet << uint32(0);
+        packet << uint32(0);
+
+        handler->GetSession()->SendPacket(&packet);
+        return true;
+    }
+
+    static bool HandleDebugApplyForceMovementCommand(ChatHandler* handler, char const* args)
+    {
+        Unit* unit = handler->getSelectedUnit();
+        if (!unit)
+        {
+            handler->SendSysMessage(LANG_SELECT_CHAR_OR_CREATURE);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        Player* player = handler->GetSession()->GetPlayer();
+
+        float magnitude     = 10.0f;
+        Position direction  = player->GetPosition();
+
+        if (*args)
+        {
+            char* magnitudeStr = strtok((char*)args, " ");
+            char* directionX = strtok(NULL, " ");
+            char* directionY = strtok(NULL, " ");
+            char* directionZ = strtok(NULL, " ");
+
+            if (magnitudeStr)
+                magnitude = (float)atof(magnitudeStr);
+
+            if (directionX && directionY && directionZ)
+                direction.Relocate((float)atof(directionX), (float)atof(directionY), (float)atof(directionZ));
+        }
+
+        unit->ApplyMovementForce(player->GetGUID(), magnitude, direction);
+        return true;
+    }
+
+    static bool HandleDebugRemoveForceMovementCommand(ChatHandler* handler, char const* /*args*/)
+    {
+        Unit* unit = handler->getSelectedUnit();
+        if (!unit)
+        {
+            handler->SendSysMessage(LANG_SELECT_CHAR_OR_CREATURE);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        unit->RemoveMovementForce(handler->GetSession()->GetPlayer()->GetGUID());
+        return true;
     }
 };
 

@@ -16,6 +16,7 @@
  */
 
 // This is where scripts' loading functions should be declared:
+void AddSC_custom_npcs();
 void AddSC_solocraft();
 void AddSC_FireWorksOnLevelUp();
 void AddSC_Player_Boa();
@@ -42,6 +43,7 @@ void AddSC_priest_spell_scripts_TBE();
 
 void AddCustomScripts()
 {
+    AddSC_custom_npcs();
 	AddSC_solocraft();
 	AddSC_FireWorksOnLevelUp();
 	AddSC_Player_Boa();

@@ -227,7 +227,7 @@ void LFGMgr::LoadLFGDungeons(bool reload /* = false */)
         LFGDungeonContainer::iterator dungeonItr = LfgDungeonStore.find(dungeonId);
         if (dungeonItr == LfgDungeonStore.end())
         {
-            TC_LOG_ERROR("sql.sql", "table `lfg_entrances` contains coordinates for wrong dungeon %u", dungeonId);
+            TC_LOG_ERROR("sql.sql", "table `lfg_dungeon_template` contains coordinates for wrong dungeon %u", dungeonId);
             continue;
         }
 
@@ -1638,7 +1638,7 @@ LfgLockMap const LFGMgr::GetLockedDungeons(ObjectGuid guid)
             lockStatus = LFG_LOCKSTATUS_TOO_HIGH_LEVEL;
         else if (dungeon->seasonal && !IsSeasonActive(dungeon->id))
             lockStatus = LFG_LOCKSTATUS_NOT_IN_SEASON;
-        else if (dungeon->requiredItemLevel > player->GetAverageItemLevel())
+        else if (dungeon->requiredItemLevel > player->GetAverageItemLevelEquipped())
             lockStatus = LFG_LOCKSTATUS_TOO_LOW_GEAR_SCORE;
         else if (AccessRequirement const* ar = sObjectMgr->GetAccessRequirement(dungeon->map, Difficulty(dungeon->difficulty)))
         {
@@ -1665,7 +1665,7 @@ LfgLockMap const LFGMgr::GetLockedDungeons(ObjectGuid guid)
         */
 
         if (lockStatus)
-            lock[dungeon->Entry()] = LfgLockInfoData(lockStatus, dungeon->requiredItemLevel, player->GetAverageItemLevel());
+            lock[dungeon->Entry()] = LfgLockInfoData(lockStatus, dungeon->requiredItemLevel, player->GetAverageItemLevelEquipped());
     }
 
     return lock;

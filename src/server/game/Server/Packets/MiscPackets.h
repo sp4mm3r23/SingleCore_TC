@@ -26,6 +26,7 @@
 #include "PacketUtilities.h"
 #include "Position.h"
 #include "SharedDefines.h"
+#include "ItemPackets.h"
 #include <array>
 #include <map>
 #include <set>
@@ -152,6 +153,23 @@ namespace WorldPackets
             void Read() override;
 
             int8 ViolenceLvl = -1; ///< 0 - no combat effects, 1 - display some combat effects, 2 - blood, 3 - bloody, 4 - bloodier, 5 - bloodiest
+        };
+
+        class PlayerSelectFaction final : public ClientPacket
+        {
+        public:
+            PlayerSelectFaction(WorldPacket&& packet) : ClientPacket(CMSG_NEUTRAL_PLAYER_SELECT_FACTION, std::move(packet)) { }
+
+            void Read() override;
+
+            // DestrinyFrame.xml : lua function NeutralPlayerSelectFaction
+            enum Values
+            {
+                Horde       = 0,
+                Alliance    = 1
+            };
+
+            uint32 SelectedFaction = -1; ///< 0 - horde, 1 - alliance
         };
 
         class TimeSyncRequest final : public ServerPacket
@@ -875,6 +893,24 @@ namespace WorldPackets
             void Read() override { }
         };
 
+        class DisplayToast final : public ServerPacket
+        {
+        public:
+            DisplayToast() : ServerPacket(SMSG_DISPLAY_TOAST) { }
+
+            WorldPacket const* Write() override;
+
+            uint32 EntityId = 0;
+            uint32 ToastType = 0;
+            uint64 Quantity = 1;
+            int32 RandomPropertiesID = 0;
+            uint32 QuestID = 0;
+            uint8 ToastMethod = 1; // TOAST_METHOD_POPUP
+            bool IsBonusRoll = false;
+            bool Mailed = false;
+            std::vector<int32> bonusListIDs;
+        };
+
         class CloseInteraction final : public ClientPacket
         {
         public:
@@ -883,6 +919,26 @@ namespace WorldPackets
             void Read() override;
 
             ObjectGuid SourceGuid;
+        };
+
+        class AdventureJournalOpenQuest final : public ClientPacket
+        {
+        public:
+            AdventureJournalOpenQuest(WorldPacket&& packet) : ClientPacket(CMSG_ADVENTURE_JOURNAL_OPEN_QUEST, std::move(packet)) { }
+
+            void Read() override;
+
+            uint32 AdventureJournalID;
+        };
+
+        class AdventureJournalStartQuest final : public ClientPacket
+        {
+        public:
+            AdventureJournalStartQuest(WorldPacket&& packet) : ClientPacket(CMSG_ADVENTURE_JOURNAL_START_QUEST, std::move(packet)) { }
+
+            void Read() override;
+
+            uint32 QuestID;
         };
     }
 }

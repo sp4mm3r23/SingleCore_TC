@@ -149,7 +149,7 @@ public:
             }
         }
 
-        player->RemoveActiveQuest(entry, false);
+        player->RemoveActiveQuest(quest, false);
         player->RemoveRewardedQuest(entry);
 
         sScriptMgr->OnQuestStatusChange(player, entry);

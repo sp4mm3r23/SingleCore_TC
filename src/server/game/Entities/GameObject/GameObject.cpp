@@ -55,7 +55,8 @@ QuaternionData QuaternionData::fromEulerAnglesZYX(float Z, float Y, float X)
 }
 
 GameObject::GameObject() : WorldObject(false), MapObject(),
-    m_model(nullptr), m_goValue(), m_AI(nullptr), _animKitId(0), _worldEffectID(0)
+    m_model(nullptr), m_goValue(), m_AI(nullptr), _animKitId(0),
+    _worldEffectID(0), _scheduler(this)
 {
     m_objectType |= TYPEMASK_GAMEOBJECT;
     m_objectTypeId = TYPEID_GAMEOBJECT;
@@ -83,6 +84,8 @@ GameObject::GameObject() : WorldObject(false), MapObject(),
 
     ResetLootMode(); // restore default loot mode
     m_stationaryPosition.Relocate(0.0f, 0.0f, 0.0f, 0.0f);
+
+    m_shouldIntersectWithAllPhases = false;
 }
 
 GameObject::~GameObject()
@@ -128,6 +131,9 @@ void GameObject::CleanupsBeforeDelete(bool finalCleanup)
 
     if (m_uint32Values)                                      // field array can be not exist if GameOBject not loaded
         RemoveFromOwner();
+
+    m_Events.KillAllEvents(false);
+    _scheduler.CancelAll();
 }
 
 void GameObject::RemoveFromOwner()
@@ -395,6 +401,9 @@ bool GameObject::Create(uint32 name_id, Map* map, uint32 phaseMask, Position con
 
 void GameObject::Update(uint32 diff)
 {
+    m_Events.Update(diff);
+    _scheduler.Update(diff);
+
     if (AI())
         AI()->UpdateAI(diff);
     else if (!AIM_Initialize())
@@ -1088,6 +1097,11 @@ bool GameObject::IsNeverVisibleFor(WorldObject const* seer) const
 
     if (!GetUInt32Value(GAMEOBJECT_DISPLAYID))
         return true;
+
+    if (seer->IsPlayer() && GetGoType() == GAMEOBJECT_TYPE_CHEST)
+        if (PlayerConditionEntry const* playerCondition = sPlayerConditionStore.LookupEntry(GetGOInfo()->chest.conditionID1))
+            if (!sConditionMgr->IsPlayerMeetingCondition(seer->ToPlayer(), playerCondition))
+                return true;
 
     return false;
 }
@@ -2587,7 +2601,7 @@ public:
 
     virtual bool IsSpawned() const override { return _owner->isSpawned(); }
     virtual uint32 GetDisplayId() const override { return _owner->GetDisplayId(); }
-    virtual bool IsInPhase(std::set<uint32> const& phases) const override { return _owner->IsInPhase(phases); }
+    virtual bool IsInPhase(std::set<uint32> const& phases) const override { return _owner->IsInPhase(phases) || _owner->shouldIntersectWithAllPhases(); }
     virtual G3D::Vector3 GetPosition() const override { return G3D::Vector3(_owner->GetPositionX(), _owner->GetPositionY(), _owner->GetPositionZ()); }
     virtual float GetOrientation() const override { return _owner->GetOrientation(); }
     virtual float GetScale() const override { return _owner->GetObjectScale(); }

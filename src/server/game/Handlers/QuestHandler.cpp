@@ -36,6 +36,7 @@
 #include "UnitAI.h"
 #include "World.h"
 #include "WorldPacket.h"
+#include "WorldQuestMgr.h"
 
 void WorldSession::HandleQuestgiverStatusQueryOpcode(WorldPackets::Quest::QuestGiverStatusQuery& packet)
 {
@@ -130,7 +131,8 @@ void WorldSession::HandleQuestgiverAcceptQuestOpcode(WorldPackets::Quest::QuestG
 
     if (Player* playerQuestObject = object->ToPlayer())
     {
-        if ((_player->GetDivider().IsEmpty() && _player->GetDivider() != packet.QuestGiverGUID) || !playerQuestObject->CanShareQuest(packet.QuestID))
+        if (_player->GetGUID() != packet.QuestGiverGUID &&
+          ((_player->GetDivider().IsEmpty() && _player->GetDivider() != packet.QuestGiverGUID) || !playerQuestObject->CanShareQuest(packet.QuestID)))
         {
             CLOSE_GOSSIP_CLEAR_DIVIDER();
             return;
@@ -443,24 +445,24 @@ void WorldSession::HandleQuestLogRemoveQuest(WorldPackets::Quest::QuestLogRemove
                 return;                                     // can't un-equip some items, reject quest cancel
 
             Quest const* quest = sObjectMgr->GetQuestTemplate(questId);
+
+            if (!quest)
+                return;
+
             QuestStatus oldStatus = _player->GetQuestStatus(questId);
 
-            if (quest)
+            if (quest->HasSpecialFlag(QUEST_SPECIAL_FLAGS_TIMED))
+                _player->RemoveTimedQuest(questId);
+
+            if (quest->HasFlag(QUEST_FLAGS_FLAGS_PVP))
             {
-                if (quest->HasSpecialFlag(QUEST_SPECIAL_FLAGS_TIMED))
-                    _player->RemoveTimedQuest(questId);
-
-                if (quest->HasFlag(QUEST_FLAGS_FLAGS_PVP))
-                {
-                    _player->pvpInfo.IsHostile = _player->pvpInfo.IsInHostileArea || _player->HasPvPForcingQuest();
-                    _player->UpdatePvPState();
-                }
-
+                _player->pvpInfo.IsHostile = _player->pvpInfo.IsInHostileArea || _player->HasPvPForcingQuest();
+                _player->UpdatePvPState();
             }
 
             _player->TakeQuestSourceItem(questId, true); // remove quest src item from player
             _player->AbandonQuest(questId); // remove all quest items player received before abandoning quest. Note, this does not remove normal drop items that happen to be quest requirements.
-            _player->RemoveActiveQuest(questId);
+            _player->RemoveActiveQuest(quest);
             _player->RemoveCriteriaTimer(CRITERIA_TIMED_TYPE_QUEST, questId);
 
             TC_LOG_INFO("network", "%s abandoned quest %u", _player->GetGUID().ToString().c_str(), questId);
@@ -477,9 +479,7 @@ void WorldSession::HandleQuestLogRemoveQuest(WorldPackets::Quest::QuestLogRemove
             }
 
             sScriptMgr->OnQuestStatusChange(_player, questId);
-
-            if (quest)
-                sScriptMgr->OnQuestStatusChange(_player, quest, oldStatus, QUEST_STATUS_NONE);
+            sScriptMgr->OnQuestStatusChange(_player, quest, oldStatus, QUEST_STATUS_NONE);
         }
 
         _player->SetQuestSlot(packet.Entry, 0);
@@ -672,10 +672,30 @@ void WorldSession::HandleQuestgiverStatusMultipleQuery(WorldPackets::Quest::Ques
 
 void WorldSession::HandleRequestWorldQuestUpdate(WorldPackets::Quest::RequestWorldQuestUpdate& /*packet*/)
 {
+    if (!GetPlayer())
+        return;
+
     WorldPackets::Quest::WorldQuestUpdate response;
-
-    /// @todo: 7.x Has to be implemented
-    //response.WorldQuestUpdates.push_back(WorldPackets::Quest::WorldQuestUpdateInfo(lastUpdate, questID, timer, variableID, value));
-
+    sWorldQuestMgr->BuildPacket(response);
     SendPacket(response.Write());
+}
+
+void WorldSession::HandleQueryQuestRewards(WorldPackets::Quest::QueryQuestReward& packet)
+{
+    WorldPackets::Quest::QueryQuestRewardResponse response;
+    response.QuestID = packet.QuestID;
+    response.Unk1 = packet.Unk;
+    /* WorldPackets::Quest::QueryQuestRewardResponse::ItemReward item;
+    item.Item.ItemID = packet.ItemID;
+    item.Quantity = packet.Quantity;
+    response.ItemRewards.push_back(item); */
+    SendPacket(response.Write());
+}
+
+void WorldSession::HandlePlayerChoiceResponse(WorldPackets::Quest::PlayerChoiceResponse& packet)
+{
+    if (!GetPlayer())
+        return;
+
+    sScriptMgr->OnPlayerChoiceResponse(GetPlayer(), packet.ChoiceID, packet.ResponseID);
 }
