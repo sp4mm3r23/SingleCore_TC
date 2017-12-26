@@ -33,6 +33,9 @@
 #include "SpellAuraEffects.h"
 #include "SpellMgr.h"
 #include "Vehicle.h"
+#include "Pet.h"
+#include "InstanceScript.h"
+#include "World.h"
 #include <G3D/g3dmath.h>
 
 uint32 GetTargetFlagMask(SpellTargetObjectTypes objType)
@@ -1777,7 +1780,7 @@ SpellCastResult SpellInfo::CheckLocation(uint32 map_id, uint32 zone_id, uint32 a
     {
         case 23333:                                         // Warsong Flag
         case 23335:                                         // Silverwing Flag
-            return map_id == 489 && player && player->InBattleground() ? SPELL_CAST_OK : SPELL_FAILED_REQUIRES_AREA;
+            return (map_id == 489 || map_id == 726) && player && player->InBattleground() ? SPELL_CAST_OK : SPELL_FAILED_REQUIRES_AREA;
         case 34976:                                         // Netherstorm Flag
             return map_id == 566 && player && player->InBattleground() ? SPELL_CAST_OK : SPELL_FAILED_REQUIRES_AREA;
         case 2584:                                          // Waiting to Resurrect
@@ -1834,6 +1837,13 @@ SpellCastResult SpellInfo::CheckLocation(uint32 map_id, uint32 zone_id, uint32 a
 
             Battleground* bg = player->GetBattleground();
             return bg && bg->GetStatus() == STATUS_WAIT_JOIN ? SPELL_CAST_OK : SPELL_FAILED_REQUIRES_AREA;
+        }
+        case 161862: // Ascension
+        {
+            if (!player)
+                return SPELL_FAILED_DONT_REPORT;
+
+            return zone_id == 6941 ? SPELL_CAST_OK : SPELL_FAILED_INCORRECT_AREA; // Ashran
         }
     }
 
@@ -3042,7 +3052,10 @@ uint32 SpellInfo::CalcCastTime(uint8 level, Spell* spell /*= NULL*/) const
     if (HasAttribute(SPELL_ATTR0_REQ_AMMO) && !IsAutoRepeatRangedSpell() && !HasAttribute(SPELL_ATTR9_AIMED_SHOT))
         castTime += 500;
 
-    return (castTime > 0) ? uint32(castTime) : 0;
+	if (!sWorld->getBoolConfig(CONFIG_NO_CAST_TIME))
+		return (castTime > 0) ? uint32(castTime) : 0;
+	else
+		return 0;
 }
 
 uint32 SpellInfo::GetMaxTicks(uint32 difficulty) const

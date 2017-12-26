@@ -16,10 +16,45 @@
  */
 
 // This is where scripts' loading functions should be declared:
-
+void AddSC_solocraft();
+void AddSC_FireWorksOnLevelUp();
+void AddSC_Player_Boa();
+void AddSC_gon_playerscripts();
+void AddSC_login_script();
+void AddSC_announce_login();
+void AddSC_Boss_Announcer();
+void AddSC_XpWeekend();
+void AddSC_RandomEnchantsScript();
+void AddSC_Dynamic_Resurrections();
+void AddSC_Duel_Reset();
+void AddSC_custom_CongratsOnLevel();
 
 // The name of this function should match:
 // void Add${NameOfDirectory}Scripts()
+
+void AddSC_Elwynn_Forest_TBE();
+
+// Pandaria
+void AddSC_the_wandering_isle_TBE();
+
+// Spell
+void AddSC_priest_spell_scripts_TBE();
+
 void AddCustomScripts()
 {
+	AddSC_solocraft();
+	AddSC_FireWorksOnLevelUp();
+	AddSC_Player_Boa();
+	AddSC_gon_playerscripts();
+	AddSC_login_script();
+	AddSC_announce_login();
+	AddSC_Boss_Announcer();
+	AddSC_XpWeekend();
+	AddSC_RandomEnchantsScript();
+	AddSC_Dynamic_Resurrections();
+	AddSC_Duel_Reset();
+	AddSC_custom_CongratsOnLevel();
+    AddSC_Elwynn_Forest_TBE();
+    AddSC_the_wandering_isle_TBE();
+    AddSC_priest_spell_scripts_TBE();
 }

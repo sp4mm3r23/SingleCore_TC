@@ -1121,6 +1121,10 @@ class TC_GAME_API Player : public Unit, public GridObject<Player>
         void SetCommandStatusOn(uint32 command) { _activeCheats |= command; }
         void SetCommandStatusOff(uint32 command) { _activeCheats &= ~command; }
 
+		// TimeIsMoneyFriend
+		uint32 ptr_Interval;
+		uint32 ptr_Money;
+
         // Played Time Stuff
         time_t m_logintime;
         time_t m_Last_tick;
@@ -2620,6 +2624,9 @@ class TC_GAME_API Player : public Unit, public GridObject<Player>
         void SendItemRefundResult(Item* item, ItemExtendedCostEntry const* iece, uint8 error) const;
 
         void AdjustQuestReqItemCount(Quest const* quest);
+
+		void AutoQuestCompleteDisplayQuestGiver(uint32 questId);// LASYAN3
+		Quest const *m_lastQuestCompleted = NULL;// LASYAN3
 
         bool IsCanDelayTeleport() const { return m_bCanDelayTeleport; }
         void SetCanDelayTeleport(bool setting) { m_bCanDelayTeleport = setting; }

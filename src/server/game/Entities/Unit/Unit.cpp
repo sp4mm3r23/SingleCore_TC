@@ -29,6 +29,7 @@
 #include "CombatPackets.h"
 #include "Common.h"
 #include "ConditionMgr.h"
+#include "Config.h"
 #include "Creature.h"
 #include "CreatureAI.h"
 #include "CreatureAIImpl.h"
@@ -565,7 +566,25 @@ void Unit::DisableSpline()
 
 void Unit::resetAttackTimer(WeaponAttackType type)
 {
-    m_attackTimer[type] = uint32(GetBaseAttackTime(type) * m_modAttackSpeedPct[type]);
+	if (sConfigMgr->GetBoolDefault("Custom.HurtInRealTime", true))
+	{
+		if (GetTypeId() == TYPEID_PLAYER || (ToCreature()->GetOwner() && ToCreature()->GetOwner()->GetTypeId() == TYPEID_PLAYER))
+		{
+			m_attackTimer[type] = uint32(GetBaseAttackTime(type) * m_modAttackSpeedPct[type] / 2 / sWorld->getFloatConfig(CONFIG_ATTACKSPEED_PLAYER));
+		}
+		else
+		{
+			m_attackTimer[type] = uint32(GetBaseAttackTime(type) * m_modAttackSpeedPct[type] / sWorld->getFloatConfig(CONFIG_ATTACKSPEED_ALL));
+		}
+	}
+	else if (GetTypeId() == TYPEID_PLAYER || (ToCreature()->GetOwner() && ToCreature()->GetOwner()->GetTypeId() == TYPEID_PLAYER))
+	{
+		m_attackTimer[type] = uint32(GetBaseAttackTime(type) * m_modAttackSpeedPct[type] / sWorld->getFloatConfig(CONFIG_ATTACKSPEED_PLAYER));
+	}
+	else
+	{
+		m_attackTimer[type] = uint32(GetBaseAttackTime(type) * m_modAttackSpeedPct[type] / sWorld->getFloatConfig(CONFIG_ATTACKSPEED_ALL));
+	}
 }
 
 bool Unit::IsWithinCombatRange(const Unit* obj, float dist2compare) const
@@ -3892,10 +3911,15 @@ void Unit::RemoveNotOwnSingleTargetAuras(uint32 newPhase, bool phaseid)
     for (AuraList::iterator iter = scAuras.begin(); iter != scAuras.end();)
     {
         Aura* aura = *iter;
-        if (aura->GetUnitOwner() != this && !aura->GetUnitOwner()->IsInPhase(newPhase))
+        if (aura->GetUnitOwner() && aura->GetUnitOwner() != this && !aura->GetUnitOwner()->IsInPhase(newPhase))
         {
-            aura->Remove();
-            iter = scAuras.begin();
+            if ((newPhase == 0x0 && !phaseid) || ((!aura->GetEffect(0) || aura->GetEffect(0)->GetAuraType() != SPELL_AURA_CONTROL_VEHICLE) && (!aura->GetEffect(1) || aura->GetEffect(1)->GetAuraType() != SPELL_AURA_CONTROL_VEHICLE)))
+            {
+                aura->Remove();
+                iter = scAuras.begin();
+            }
+            else
+                ++iter;
         }
         else
             ++iter;

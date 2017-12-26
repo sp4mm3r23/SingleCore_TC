@@ -45,6 +45,7 @@
 #include "CombatPackets.h"
 #include "Common.h"
 #include "ConditionMgr.h"
+#include "Config.h"
 #include "CreatureAI.h"
 #include "DB2Stores.h"
 #include "DatabaseEnv.h"
@@ -119,6 +120,7 @@
 #include "WorldPacket.h"
 #include "WorldSession.h"
 #include "WorldStatePackets.h"
+#include "DynamicResurrection.h"
 #include <G3D/g3dmath.h>
 
 #define ZONE_UPDATE_INTERVAL (1*IN_MILLISECONDS)
@@ -221,6 +223,10 @@ Player::Player(WorldSession* session) : Unit(true), m_sceneMgr(this)
         m_bgBattlegroundQueueID[j].invitedToInstance = 0;
         m_bgBattlegroundQueueID[j].joinTime = 0;
     }
+
+    // TimeIsMoneyFriend
+	ptr_Interval = sConfigMgr->GetIntDefault("TimeIsMoneyFriend.Interval", 0);
+	ptr_Money = sConfigMgr->GetIntDefault("TimeIsMoneyFriend.Money", 0);
 
     m_logintime = time(nullptr);
     m_Last_tick = m_logintime;
@@ -1106,6 +1112,21 @@ void Player::Update(uint32 p_time)
         LoginDatabase.Execute(stmt);
     }
 
+	// TimeIsMoneyFriend
+	if (ptr_Interval > 0)
+	{
+		if (ptr_Interval <= p_time)
+		{
+			std::ostringstream ss;
+			ss << "|cff3DAEFF[Time is money friend]|cffFFD800 You recieved |cffFF0000" << sConfigMgr->GetIntDefault("TimeIsMoneyFriend.Money", 0) << "|cffFFD800 money for |cffFF0000"<< sConfigMgr->GetIntDefault("TimeIsMoneyFriend.Interval", 0) /60000 <<"|cffFFD800 minute(s) played time.|cffFFD800";
+			sWorld->SendServerMessage(SERVER_MSG_STRING, ss.str().c_str());("");
+			ModifyMoney(ptr_Money);
+			ptr_Interval = sConfigMgr->GetIntDefault("TimeIsMoneyFriend.Interval", 0);
+		}
+		else
+	ptr_Interval -= p_time;
+	}
+
     if (!m_timedquests.empty())
     {
         QuestSet::iterator iter = m_timedquests.begin();
@@ -1168,7 +1189,10 @@ void Player::Update(uint32 p_time)
 
                     // do attack
                     AttackerStateUpdate(victim, BASE_ATTACK);
-                    resetAttackTimer(BASE_ATTACK);
+					if (sWorld->getBoolConfig(CONFIG_HURT_IN_REAL_TIME))
+						resetAttackTimer(BASE_ATTACK), AttackStop();
+					else
+						resetAttackTimer(BASE_ATTACK);
                 }
             }
 
@@ -4610,17 +4634,36 @@ void Player::RepopAtGraveyard()
 
     // if no grave found, stay at the current location
     // and don't show spirit healer location
-    if (ClosestGrave)
-    {
-        TeleportTo(ClosestGrave->MapID, ClosestGrave->Loc.X, ClosestGrave->Loc.Y, ClosestGrave->Loc.Z, (ClosestGrave->Facing * M_PI) / 180); // Orientation is initially in degrees
-        if (isDead())                                        // not send if alive, because it used in TeleportTo()
-        {
-            WorldPackets::Misc::DeathReleaseLoc packet;
-            packet.MapID = ClosestGrave->MapID;
-            packet.Loc = Position(ClosestGrave->Loc.X, ClosestGrave->Loc.Y, ClosestGrave->Loc.Z);
-            GetSession()->SendPacket(packet.Write());
-        }
-    }
+	if (ClosestGrave)
+	{
+		if (sConfigMgr->GetBoolDefault("Dungeon.Checkpoints.Enable", true))
+		{
+			if (sDynRes->IsInDungeonOrRaid(this) && sDynRes->CheckForSpawnPoint(this))
+				sDynRes->DynamicResurrection(this);
+			else
+			{
+				TeleportTo(ClosestGrave->MapID, ClosestGrave->Loc.X, ClosestGrave->Loc.Y, ClosestGrave->Loc.Z, (ClosestGrave->Facing * M_PI) / 180); // Orientation is initially in degrees
+				if (isDead())                                        // not send if alive, because it used in TeleportTo()
+				{
+					WorldPackets::Misc::DeathReleaseLoc packet;
+					packet.MapID = ClosestGrave->MapID;
+					packet.Loc = Position(ClosestGrave->Loc.X, ClosestGrave->Loc.Y, ClosestGrave->Loc.Z);
+					GetSession()->SendPacket(packet.Write());
+				}
+			}
+		}
+		else
+		{
+			TeleportTo(ClosestGrave->MapID, ClosestGrave->Loc.X, ClosestGrave->Loc.Y, ClosestGrave->Loc.Z, (ClosestGrave->Facing * M_PI) / 180); // Orientation is initially in degrees
+			if (isDead())                                        // not send if alive, because it used in TeleportTo()
+			{
+				WorldPackets::Misc::DeathReleaseLoc packet;
+				packet.MapID = ClosestGrave->MapID;
+				packet.Loc = Position(ClosestGrave->Loc.X, ClosestGrave->Loc.Y, ClosestGrave->Loc.Z);
+				GetSession()->SendPacket(packet.Write());
+			}
+		}
+	}
     else if (GetPositionZ() < GetMap()->GetMinHeight(GetPositionX(), GetPositionY()))
         TeleportTo(m_homebindMapId, m_homebindX, m_homebindY, m_homebindZ, GetOrientation());
 
@@ -6310,6 +6353,53 @@ bool Player::RewardHonor(Unit* victim, uint32 groupsize, int32 honor, bool pvpto
             UpdateCriteria(CRITERIA_TYPE_HONORABLE_KILL_AT_AREA, GetAreaId());
             UpdateCriteria(CRITERIA_TYPE_HONORABLE_KILL, 1, 0, 0, victim);
         }
+		else if (sWorld->getBoolConfig(CONFIG_GAIN_HONOR_GUARD) && victim->ToCreature()->IsGuard())
+		{
+			uint8 k_level = getLevel();
+			uint8 k_grey = Trinity::XP::GetGrayLevel(k_level);
+			uint8 v_level = victim->getLevel();
+
+			if (v_level <= k_grey)
+				return false;
+
+			uint32 victim_title = 0;
+			victim_guid = ObjectGuid::Empty;
+
+			honor_f = ceil(Trinity::Honor::hk_honor_at_level_f(k_level) * (v_level - k_grey) / (k_level - k_grey));
+
+			// count the number of playerkills in one day
+			ApplyModUInt32Value(PLAYER_FIELD_KILLS, 1, true);
+			// and those in a lifetime
+			ApplyModUInt32Value(PLAYER_FIELD_LIFETIME_HONORABLE_KILLS, 1, true);
+			UpdateCriteria(CRITERIA_TYPE_EARN_HONORABLE_KILL);
+			UpdateCriteria(CRITERIA_TYPE_HK_CLASS, victim->getClass());
+			UpdateCriteria(CRITERIA_TYPE_HK_RACE, victim->getRace());
+			UpdateCriteria(CRITERIA_TYPE_HONORABLE_KILL_AT_AREA, GetAreaId());
+			UpdateCriteria(CRITERIA_TYPE_HONORABLE_KILL, 1, 0, 0, victim);
+		}
+		else if (sWorld->getBoolConfig(CONFIG_GAIN_HONOR_ELITE) && victim->ToCreature()->isElite())
+		{
+			uint8 k_level = getLevel();
+			uint8 k_grey = Trinity::XP::GetGrayLevel(k_level);
+			uint8 v_level = victim->getLevel();
+
+			if (v_level <= k_grey)
+				return false;
+
+			uint32 victim_title = 0;
+			victim_guid = ObjectGuid::Empty;
+			honor_f = ceil(Trinity::Honor::hk_honor_at_level_f(k_level) * (v_level - k_grey) / (k_level - k_grey));
+			// count the number of playerkills in one day
+			ApplyModUInt32Value(PLAYER_FIELD_KILLS, 1, true);
+
+			// and those in a lifetime
+			ApplyModUInt32Value(PLAYER_FIELD_LIFETIME_HONORABLE_KILLS, 1, true);
+			UpdateCriteria(CRITERIA_TYPE_EARN_HONORABLE_KILL);
+			UpdateCriteria(CRITERIA_TYPE_HK_CLASS, victim->getClass());
+			UpdateCriteria(CRITERIA_TYPE_HK_RACE, victim->getRace());
+			UpdateCriteria(CRITERIA_TYPE_HONORABLE_KILL_AT_AREA, GetAreaId());
+			UpdateCriteria(CRITERIA_TYPE_HONORABLE_KILL, 1, 0, 0, victim);
+		}
         else
         {
             if (!victim->ToCreature()->IsRacialLeader())
@@ -9192,6 +9282,26 @@ void Player::SendInitWorldStates(uint32 zoneid, uint32 areaid)
         case 5449:
             if (bg && bg->GetTypeID(true) == BATTLEGROUND_BFG)
                 bg->FillInitialWorldStates(packet);
+            break;
+        case 6732:
+            if (bg && bg->GetTypeID(true) == BATTLEGROUND_TTP)
+                bg->FillInitialWorldStates(packet);
+            else
+            {
+                packet.Worldstates.emplace_back(0xE10, 0x0);           // 7 gold
+                packet.Worldstates.emplace_back(0xE11, 0x0);           // 8 green
+                packet.Worldstates.emplace_back(0xE1A, 0x0);           // 9 show
+            }
+            break;
+        case 6296:
+            if (bg && bg->GetTypeID(true) == BATTLEGROUND_TVA)
+                bg->FillInitialWorldStates(packet);
+            else
+            {
+                packet.Worldstates.emplace_back(0xE10, 0x0);           // 7 gold
+                packet.Worldstates.emplace_back(0xE11, 0x0);           // 8 green
+                packet.Worldstates.emplace_back(0xE1A, 0x0);           // 9 show
+            }
             break;
         // Tol Barad Peninsula
         case 5389:
@@ -15267,10 +15377,13 @@ void Player::RewardQuest(Quest const* quest, uint32 reward, Object* questGiver, 
     if (quest->GetRewSpell() > 0)
     {
         SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(quest->GetRewSpell());
-        if (questGiver && questGiver->isType(TYPEMASK_UNIT) &&
-            !spellInfo->HasEffect(DIFFICULTY_NONE, SPELL_EFFECT_LEARN_SPELL) &&
+        if (questGiver->isType(TYPEMASK_UNIT) && 
+            !spellInfo->HasEffect(DIFFICULTY_NONE, SPELL_EFFECT_LEARN_SPELL) && 
             !spellInfo->HasEffect(DIFFICULTY_NONE, SPELL_EFFECT_CREATE_ITEM) &&
-            !spellInfo->HasEffect(DIFFICULTY_NONE, SPELL_EFFECT_APPLY_AURA))
+            !spellInfo->HasEffect(DIFFICULTY_NONE, SPELL_EFFECT_APPLY_AURA) && 
+            !spellInfo->HasEffect(DIFFICULTY_NONE, SPELL_EFFECT_SUMMON) && 
+            !spellInfo->HasEffect(DIFFICULTY_NONE, SPELL_EFFECT_UPDATE_ZONE_AURAS_AND_PHASES) &&
+            !spellInfo->HasEffect(DIFFICULTY_NONE, SPELL_EFFECT_DUMMY))
         {
             if (Unit* unit = questGiver->ToUnit())
                 unit->CastSpell(this, quest->GetRewSpell(), true);
@@ -16273,8 +16386,11 @@ void Player::AreaExploredOrEventHappens(uint32 questId)
                 SendQuestComplete(questId);
             }**/
         }
-        if (CanCompleteQuest(questId))
-            CompleteQuest(questId);
+		if (CanCompleteQuest(questId))
+		{
+			AutoQuestCompleteDisplayQuestGiver(questId);
+			CompleteQuest(questId);
+		}
     }
 }
 
@@ -16332,9 +16448,11 @@ void Player::ItemAddedQuestCheck(uint32 entry, uint32 count)
                     // FIXME: verify if there's any packet sent updating item
                 }
 
-                if (CanCompleteQuest(questid))
-                    CompleteQuest(questid);
-
+				if (CanCompleteQuest(questid))
+				{
+					CompleteQuest(questid);
+					AutoQuestCompleteDisplayQuestGiver(questid);
+				}
                 return;
             }
         }
@@ -16445,8 +16563,11 @@ void Player::KilledMonsterCredit(uint32 entry, ObjectGuid guid /*= ObjectGuid::E
                             SendQuestUpdateAddCredit(qInfo, guid, obj, curKillCount + addKillCount);
                         }
 
-                        if (CanCompleteQuest(questid))
-                            CompleteQuest(questid);
+						if (CanCompleteQuest(questid))
+						{
+							CompleteQuest(questid);
+							AutoQuestCompleteDisplayQuestGiver(questid);
+						}
 
                         // same objective target can be in many active quests, but not in 2 objectives for single quest (code optimization).
                         break;
@@ -16520,16 +16641,16 @@ void Player::KillCreditGO(uint32 entry, ObjectGuid guid)
         {
             if (qInfo->HasSpecialFlag(QUEST_SPECIAL_FLAGS_CAST) /*&& !qInfo->HasSpecialFlag(QUEST_SPECIAL_FLAGS_KILL)*/)
             {
-                for (QuestObjective const& obj : qInfo->GetObjectives())
-                {
-                    if (obj.Type != QUEST_OBJECTIVE_GAMEOBJECT)
-                        continue;
+				for (QuestObjective const& obj : qInfo->GetObjectives())
+				{
+					if (obj.Type != QUEST_OBJECTIVE_GAMEOBJECT)
+						continue;
 
-                    uint32 reqTarget = obj.ObjectID;
+					uint32 reqTarget = obj.ObjectID;
 
-                    // other not this creature/GO related objectives
-                    if (reqTarget != entry)
-                        continue;
+					// other not this creature/GO related objectives
+					if (reqTarget != entry)
+						continue;
 
                     uint32 reqCastCount = obj.Amount;
                     uint32 curCastCount = GetQuestObjectiveData(qInfo, obj.StorageIndex);
@@ -16539,8 +16660,11 @@ void Player::KillCreditGO(uint32 entry, ObjectGuid guid)
                         SendQuestUpdateAddCredit(qInfo, guid, obj, curCastCount + addCastCount);
                     }
 
-                    if (CanCompleteQuest(questid))
-                        CompleteQuest(questid);
+					if (CanCompleteQuest(questid))
+					{
+						CompleteQuest(questid);
+						AutoQuestCompleteDisplayQuestGiver(questid);
+					}
 
                     // same objective target can be in many active quests, but not in 2 objectives for single quest (code optimization).
                     break;
@@ -17132,6 +17256,47 @@ bool Player::HasPvPForcingQuest() const
     }
 
     return false;
+}
+
+void Player::AutoQuestCompleteDisplayQuestGiver(uint32 p_questId)
+{
+	if (sWorld->getIntConfig(CONFIG_QUEST_AUTOCOMPLETE_DELAY) == 0) return;
+	std::ostringstream sql;
+	sql << "SELECT c.id FROM creature c"
+		<< " INNER JOIN creature_queststarter s ON s.id = c.id"
+		<< " INNER JOIN creature_questender e ON e.id = c.id AND e.quest = s.quest"
+		<< " WHERE e.quest = %d";
+	QueryResult result = WorldDatabase.PQuery(sql.str().c_str(), p_questId);
+	if (!result)
+		return;
+	if (result->GetRowCount() > 1)
+		return;
+
+	uint32 entry = (*result)[0].GetUInt32();
+	bool visible = false;
+	for (auto itr = m_clientGUIDs.begin(); itr != m_clientGUIDs.end(); ++itr)
+	{
+		if (!itr->IsCreatureOrPet() && !itr->IsCreatureOrVehicle()) continue;
+		Creature* questgiver = ObjectAccessor::GetCreatureOrPetOrVehicle(*this, *itr);
+		if (!questgiver || questgiver->IsHostileTo(this))
+			continue;
+		if (!questgiver->HasFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER))
+			continue;
+		if (questgiver->GetEntry() == entry)
+			return; // Quest giver already exists on the same map than the player
+	}
+	TempSummon *_sum = SummonCreature(entry, GetPositionX(), GetPositionY(), GetPositionZ(), 3.3f, TEMPSUMMON_TIMED_DESPAWN, sWorld->getIntConfig(CONFIG_QUEST_AUTOCOMPLETE_DELAY) * 1000);
+	_sum->SetInFront(this);
+	// remove fake death
+	if (HasUnitState(UNIT_STATE_DIED))
+		RemoveAurasByType(SPELL_AURA_FEIGN_DEATH);
+	// Stop the npc if moving
+	_sum->StopMoving();
+	_sum->SetReactState(REACT_PASSIVE);
+	// Display quest popup
+	m_lastQuestCompleted = sObjectMgr->GetQuestTemplate(p_questId);
+	PrepareGossipMenu(_sum, _sum->GetCreatureTemplate()->GossipMenuId, true);
+	SendPreparedGossip(_sum);
 }
 
 /*********************************************************/
@@ -23537,15 +23702,18 @@ void Player::SendInitialPacketsBeforeAddToMap()
     /// SMSG_EQUIPMENT_SET_LIST
     SendEquipmentSetList();
 
+	float speedrate = sWorld->getFloatConfig(CONFIG_SPEED_GAME);
+	uint32 speedtime = ((sWorld->GetGameTime() - sWorld->GetUptime()) + (sWorld->GetUptime() * speedrate));
+
     m_achievementMgr->SendAllData(this);
     m_questObjectiveCriteriaMgr->SendAllData(this);
 
     /// SMSG_LOGIN_SETTIMESPEED
-    static float const TimeSpeed = 0.01666667f;
+    static float const TimeSpeed = 0.01666667f * speedrate;
     WorldPackets::Misc::LoginSetTimeSpeed loginSetTimeSpeed;
     loginSetTimeSpeed.NewSpeed = TimeSpeed;
-    loginSetTimeSpeed.GameTime = sWorld->GetGameTime();
-    loginSetTimeSpeed.ServerTime = sWorld->GetGameTime();
+    loginSetTimeSpeed.GameTime = speedtime;
+    loginSetTimeSpeed.ServerTime = speedtime;
     loginSetTimeSpeed.GameTimeHolidayOffset = 0; /// @todo
     loginSetTimeSpeed.ServerTimeHolidayOffset = 0; /// @todo
     SendDirectMessage(loginSetTimeSpeed.Write());
@@ -25660,6 +25828,8 @@ void Player::StoreLootItem(uint8 lootSlot, Loot* loot, AELootResult* aeResult/* 
         // LootItem is being removed (looted) from the container, delete it from the DB.
         if (!loot->containerID.IsEmpty())
             loot->DeleteLootItemFromContainerItemDB(item->itemid);
+
+		sScriptMgr->OnLootItem(this, newitem, item->count);
     }
     else
         SendEquipError(msg, nullptr, nullptr, item->itemid);

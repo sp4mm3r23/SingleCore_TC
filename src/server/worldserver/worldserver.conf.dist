@@ -4013,3 +4013,245 @@ Metric.OverallStatusInterval = 1
 
 #
 ###################################################################################################
+
+####################
+# PATCHES SETTINGS #
+####################
+
+###################################################################################################
+# lasyan3 #
+###########
+#
+#     Custom.AutoCompleteQuestDelay
+#         Set it to a number to enable the summon of the quest giver of the quest you just completed.
+#	      The number indicates the duration of the summoning.
+#     Default : 0 (AutoComplete Disable)
+#     Example : 180 (When a quest is completed, the quest giver will be summoned for 3 minutes)
+#
+
+Custom.AutoCompleteQuestDelay = 180
+
+#
+#     Custom.SpeedGame
+#         Set it to a number upper than 1 to speed up realm timer
+#     Default : 1 (Real Time)
+#     Example : 60 to force 1scde (real time) = 1 minute (realm timer)
+#
+
+Custom.SpeedGame = 1
+
+#
+#     Custom.NoCastTime
+#         Set it to 1 to disable cast time
+#     Default : 0 (Cast Time Enable)
+#
+
+Custom.NoCastTime = 0
+
+#
+#     Custom.HurtInRealTime
+#         Set it to 1 to disable autohurt with weapon
+#     Default : 0 (Autohurt Enable)
+#
+
+Custom.HurtInRealTime = 0
+
+#
+#     Custom.AttackSpeedForPlayer
+#     Custom.AttackSpeedForMobs
+#         Set it to a number upper than 1 to speed up the attack of the player or the mobs
+#     Default : 1.0 (Normal speed)
+#     Example : 2.0 (attack speed is 200% faster)
+#     Example : 0.5 (attack speed is 50% slower)
+#
+
+Custom.AttackSpeedForPlayer = 1.0
+Custom.AttackSpeedForMobs = 1.0
+
+#
+#     Custom.RespawnSpeed
+#         Set it to a number upper than 1 to speed up the respawn of mobs (and lower than 1 to slow down).
+#     Default : 1.0 (Normal speed)
+#
+
+Custom.RespawnSpeed = 1.0
+
+#
+###################################################################################################
+
+###################################################################################################
+#
+#     Solocraft.Enable
+#        Description: Solocraft is a script to increase players and bots stats in raids, 
+#		 based on group size. It feels a little Hacky, but raids is unfair hard with playerbots.
+#        Default:     0 (disabled)
+#                     1 (enabled)
+
+Solocraft.Enable = 0
+
+#
+#     FireWorksOnLevelUp
+#        Description: Players shoot a firework when reach level 110.
+#        Default:     0 (disabled)
+#                     1 (enabled)
+
+FireWorksOnLevelUp = 1
+
+#
+#     Login.BoA
+#        Description: New players get some starting equipment.
+#        Default:     0 (disabled)
+#                     1 (enabled)
+
+Login.BoA = 1
+
+#
+#     StartGuild
+#        Description: New players automatically added for the configurated guild IDs.
+#		 Example: 	  StartGuild.Alliance = 45
+#					  StartGuild.Horde = 46
+#        Default:     0 (disabled)
+
+StartGuild.Alliance = 0
+StartGuild.Horde = 0
+
+#
+#     Reset.on.login
+#        Description: Restore players health, mana and cooldowns when log into the game.
+#        Default:     0 (disabled)
+#                     1 (enabled)
+
+Reset.on.login = 1
+
+#
+#     Duel.Reset.Enable
+#        Description: Restore players health, mana and cooldowns when a duel started and ended.
+#        Default:     0 (disabled)
+#                     1 (enabled)
+
+Duel.Reset.Enable = 1
+
+#
+#     Login.Announcer.Enable
+#        Description: Announce every player and bots login
+#        Default:     0 (disabled)
+#                     1 (enabled)
+
+Login.Announcer.Enable = 1
+
+#
+#     Boss.Announcer.Enable
+#        Description: System announce who killed a world boss in global.
+#        Default:     0 (disabled)
+#                     1 (enabled)
+
+Boss.Announcer.Enable = 1
+
+#
+#    Double XP Weekend
+#        Description: Enables or disables the Double XP Weekend Script
+#
+#    DoubleXP.Enable
+#        Default:     1 (enabled)
+#                     0 (disabled)
+
+DoubleXP.Enable = 1
+
+#
+# Custom.GainHonorOnGuardKill
+# Set it to 1 to gain honor when you kill a guard.
+# Note that not all city guards will give you honor. It seems only capital and big city guards are flagged
+# as so in the database.
+# Default : 0 (No honor when you kill a guard)
+
+Custom.GainHonorOnGuardKill = 1
+
+#
+# Custom.GainHonorOnEliteKill
+# Set it to 1 to gain honor when you kill an elite mob (this does not apply on rare mob, unless he is also elite).
+# Default : 0 (No honor when you kill an elite mob)
+
+Custom.GainHonorOnEliteKill = 1
+
+#
+#     XP for PvP kills
+#         Set the XP and money rate for PvP kills.
+#
+#     Default:  Xp.For.Pvp.Low.Rate = 1
+#               Xp.For.Pvp.High.Rate = 1
+
+Xp.For.Pvp.Low.Rate = 1
+Xp.For.Pvp.High.Rate = 1
+
+#
+#     Time Is Money Friend
+#         Gives money for players who is online after every X minutes.
+#
+#     Default:  TimeIsMoneyFriend.Interval = 600000 (10 minutes)
+#               TimeIsMoneyFriend.Money    = 1000 (10 silver)
+
+TimeIsMoneyFriend.Interval = 600000
+TimeIsMoneyFriend.Money    = 1000
+
+#
+#    Dungeon Checkpoints
+#        Description: Enable checkpoints in dungeons/instances. 
+#        The server set a respawn point after every world boss you defeated.
+#
+#    Dungeon.Checkpoints.Enable
+#        Default:     1 (enabled)
+#                     0 (disabled)
+
+Dungeon.Checkpoints.Enable = 1
+
+#
+#     Congrats.Level
+#        Description: Server gives money for players on every 10 level.
+#        Default:     0 (disabled)
+#                     1 (enabled)
+
+Congrats.Level = 0
+
+#
+###################################################################################################
+
+###################################################################################################
+#
+# RANDOM ENCHANTS OPTIONS
+#
+#     RandomEnchants.AnnounceOnLogin
+#        Announce a message on login for this module
+#        Default:     1
+
+RandomEnchants.AnnounceOnLogin = 1
+
+#
+#     RandomEnchants.OnLoginMessage
+#        Message to display on login(Only applies if AnnounceOnLogin is enabled)
+#        Default:    "This server is running a RandomEnchants Module."
+
+RandomEnchants.OnLoginMessage="This server is based on Single Player Project - Legion repack."
+
+#
+#     RandomEnchants.OnLoot
+#        Chance at random enchant on looting an item
+#        Default:     1
+
+RandomEnchants.OnLoot = 1
+
+#
+#     RandomEnchants.OnCreate
+#        Chance at random enchant on creating an item via profession
+#        Default:     1
+
+RandomEnchants.OnCreate = 1
+
+#
+#     RandomEnchants.OnQuestReward (Not working yet)
+#        Chance at random enchant on obtaining item from quest reward
+#        Default:     1
+
+RandomEnchants.OnQuestReward = 1
+
+#
+###################################################################################################
