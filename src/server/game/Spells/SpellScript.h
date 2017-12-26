@@ -232,15 +232,6 @@ class TC_GAME_API SpellScript : public _SpellScript
                 SpellCheckCastFnType _checkCastHandlerScript;
         };
 
-        class TC_GAME_API OnPrepareHandler
-        {
-        public:
-            OnPrepareHandler(SpellOnPrepareFnType OnPrepareHandlerScript);
-            void Call(SpellScript* spellScript);
-        private:
-            SpellOnPrepareFnType _onPrepareHandlerScript;
-        };
-
         class TC_GAME_API OnSummonHandler
         {
         public:
@@ -370,11 +361,6 @@ class TC_GAME_API SpellScript : public _SpellScript
         // where function is SpellCastResult function()
         HookList<CheckCastHandler> OnCheckCast;
         #define SpellCheckCastFn(F) CheckCastHandlerFunction(&F)
-
-        // example: OnPrepare += SpellOnPrepareFn();
-        // where function is bool function()
-        HookList<OnPrepareHandler> OnPrepare;
-        #define SpellOnPrepareFn(F) OnPrepareHandlerFunction(&F)
 
         // example: OnEffect**** += SpellEffectFn(class::function, EffectIndexSpecifier, EffectNameSpecifier);
         // where function is void function(SpellEffIndex effIndex)

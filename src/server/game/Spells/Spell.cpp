@@ -7411,20 +7411,6 @@ SpellCastResult Spell::CallScriptCheckCastHandlers()
     return retVal;
 }
 
-void Spell::CallScriptOnPrepareHandlers()
-{
-    for (auto scritr = m_loadedScripts.begin(); scritr != m_loadedScripts.end(); ++scritr)
-    {
-        (*scritr)->_PrepareScriptCall(SPELL_SCRIPT_HOOK_ON_PREPARE);
-
-        auto hookItrEnd = (*scritr)->OnPrepare.end(), hookItr = (*scritr)->OnPrepare.begin();
-        for (; hookItr != hookItrEnd; ++hookItr)
-            (*hookItr).Call(*scritr);
-
-        (*scritr)->_FinishScriptCall();
-    }
-}
-
 void Spell::PrepareScriptHitHandlers()
 {
     for (auto scritr = m_loadedScripts.begin(); scritr != m_loadedScripts.end(); ++scritr)
