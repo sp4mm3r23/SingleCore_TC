@@ -2034,6 +2034,11 @@ public:
             });
         }
 
+        bool Load() override
+        {
+            return true;
+        }
+
         void AddCp()
         {
             if (!_hit)
