@@ -112,7 +112,7 @@ enum SkillFieldOffset
     SKILL_PERM_BONUS_OFFSET = SKILL_TEMP_BONUS_OFFSET + 64
 };
 
-#define PLAYER_EXPLORED_ZONES_SIZE  256
+#define PLAYER_EXPLORED_ZONES_SIZE  320
 
 // Note: SPELLMOD_* values is aura types in fact
 enum SpellModType : uint8
@@ -478,7 +478,7 @@ enum PlayerFieldBytesOffsets
     PLAYER_FIELD_BYTES_OFFSET_RAF_GRANTABLE_LEVEL       = 0,
     PLAYER_FIELD_BYTES_OFFSET_ACTION_BAR_TOGGLES        = 1,
     PLAYER_FIELD_BYTES_OFFSET_LIFETIME_MAX_PVP_RANK     = 2,
-    PLAYER_FIELD_BYTES_OFFSET_MAX_ARTIFACT_POWER_RANKS  = 3,
+    PLAYER_FIELD_BYTES_OFFSET_NUM_RESPECS               = 3,
 };
 
 enum PlayerFieldBytes2Offsets
@@ -1375,6 +1375,7 @@ class TC_GAME_API Player : public Unit, public GridObject<Player>
         void AddQuestAndCheckCompletion(Quest const* quest, Object* questGiver);
         void AddQuest(Quest const* quest, Object* questGiver);
         void AbandonQuest(uint32 quest_id);
+        void ForceCompleteQuest(uint32 quest_id);
         void CompleteQuest(uint32 quest_id);
         void IncompleteQuest(uint32 quest_id);
         uint32 GetQuestMoneyReward(Quest const* quest) const;
@@ -2387,6 +2388,7 @@ class TC_GAME_API Player : public Unit, public GridObject<Player>
         Garrison* GetGarrison(GarrisonType type) const { auto garItr = _garrisons.find(type); return (garItr != _garrisons.end()) ? garItr->second.get() : nullptr; }
 
         void AddGarrisonFollower(uint32 garrFollowerId);
+        void AddGarrisonMission(uint32 garrMissionId);
 
         void SendGarrisonInfo() const;
         void SendGarrisonRemoteInfo() const;

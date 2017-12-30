@@ -1654,6 +1654,7 @@ bool Player::TeleportTo(uint32 mapid, float x, float y, float z, float orientati
                 // send transfer packets
                 WorldPackets::Movement::TransferPending transferPending;
                 transferPending.MapID = mapid;
+                transferPending.OldMapPosition = GetPosition();
                 if (Transport* transport = GetTransport())
                 {
                     transferPending.Ship = boost::in_place();
@@ -6269,7 +6270,7 @@ void Player::RewardReputation(Unit* victim, float rate)
         // support for: Championing - http://www.wowwiki.com/Championing
         Map const* map = GetMap();
         if (map->IsNonRaidDungeon())
-            if (LfgDungeonsEntry const* dungeon = DB2Manager::GetLfgDungeon(map->GetId(), map->GetDifficultyID()))
+            if (LFGDungeonsEntry const* dungeon = DB2Manager::GetLfgDungeon(map->GetId(), map->GetDifficultyID()))
                 if (dungeon->TargetLevel == 80)
                     ChampioningFaction = GetChampioningFaction();
     }
@@ -15236,6 +15237,70 @@ void Player::AddQuest(Quest const* quest, Object* questGiver)
 
     sScriptMgr->OnQuestStatusChange(this, quest_id);
     sScriptMgr->OnQuestStatusChange(this, quest, oldStatus, questStatusData.Status);
+}
+
+void Player::ForceCompleteQuest(uint32 quest_id)
+{
+    Quest const* quest = sObjectMgr->GetQuestTemplate(quest_id);
+    if (!quest)
+        return;
+
+    for (uint32 i = 0; i < quest->Objectives.size(); ++i)
+    {
+        QuestObjective const& obj = quest->Objectives[i];
+
+        switch (obj.Type)
+        {
+            case QUEST_OBJECTIVE_ITEM:
+            {
+                uint32 curItemCount = GetItemCount(obj.ObjectID, true);
+                ItemPosCountVec dest;
+                uint8 msg = CanStoreNewItem(NULL_BAG, NULL_SLOT, dest, obj.ObjectID, obj.Amount - curItemCount);
+                if (msg == EQUIP_ERR_OK)
+                {
+                    Item* item = StoreNewItem(dest, obj.ObjectID, true);
+                    SendNewItem(item, obj.Amount - curItemCount, true, false);
+                }
+                break;
+            }
+            case QUEST_OBJECTIVE_MONSTER:
+            {
+                if (CreatureTemplate const* creatureInfo = sObjectMgr->GetCreatureTemplate(obj.ObjectID))
+                    for (uint16 z = 0; z < obj.Amount; ++z)
+                        KilledMonster(creatureInfo, ObjectGuid::Empty);
+                break;
+            }
+            case QUEST_OBJECTIVE_GAMEOBJECT:
+            {
+                for (uint16 z = 0; z < obj.Amount; ++z)
+                    KillCreditGO(obj.ObjectID);
+                break;
+            }
+            case QUEST_OBJECTIVE_MIN_REPUTATION:
+            {
+                uint32 curRep = GetReputationMgr().GetReputation(obj.ObjectID);
+                if (curRep < uint32(obj.Amount))
+                    if (FactionEntry const* factionEntry = sFactionStore.LookupEntry(obj.ObjectID))
+                        GetReputationMgr().SetReputation(factionEntry, obj.Amount);
+                break;
+            }
+            case QUEST_OBJECTIVE_MAX_REPUTATION:
+            {
+                uint32 curRep = GetReputationMgr().GetReputation(obj.ObjectID);
+                if (curRep > uint32(obj.Amount))
+                    if (FactionEntry const* factionEntry = sFactionStore.LookupEntry(obj.ObjectID))
+                        GetReputationMgr().SetReputation(factionEntry, obj.Amount);
+                break;
+            }
+            case QUEST_OBJECTIVE_MONEY:
+            {
+                ModifyMoney(obj.Amount);
+                break;
+            }
+        }
+    }
+
+    CompleteQuest(quest_id);
 }
 
 void Player::CompleteQuest(uint32 quest_id)
@@ -27721,12 +27786,16 @@ void Player::DeleteGarrison(GarrisonType type)
 
 void Player::AddGarrisonFollower(uint32 garrFollowerId)
 {
-    GarrFollowerEntry const* followerEntry = sGarrFollowerStore.LookupEntry(garrFollowerId);
+    if (GarrFollowerEntry const* followerEntry = sGarrFollowerStore.LookupEntry(garrFollowerId))
+        if (Garrison* garrison = GetGarrison((GarrisonType)followerEntry->GarrTypeID))
+            garrison->AddFollower(garrFollowerId);
+}
 
-    if (!followerEntry)
-        return;
-
-    GetGarrison((GarrisonType)followerEntry->GarrTypeID)->AddFollower(garrFollowerId);
+void Player::AddGarrisonMission(uint32 garrMissionId)
+{
+    if (GarrMissionEntry const* missionEntry = sGarrMissionStore.LookupEntry(garrMissionId))
+        if (Garrison* garrison = GetGarrison((GarrisonType)missionEntry->GarrTypeID))
+            garrison->AddMission(garrMissionId);
 }
 
 void Player::SendGarrisonInfo() const
