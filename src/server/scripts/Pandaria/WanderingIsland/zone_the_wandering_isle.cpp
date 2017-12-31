@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 The Black Empire <https://gitlab.com/The_Black_Empire/TBE/tree/zgn_dev_stable/>
+ * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -15,13 +15,42 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "AreaTriggerAI.h"
 #include "DB2Stores.h"
 #include "GameObject.h"
+#include "GridNotifiers.h"
+#include "Map.h"
 #include "ScriptMgr.h"
 #include "ScriptedCreature.h"
 #include "SpellScript.h"
 #include "Player.h"
 #include "Log.h"
+
+enum CaveOfMeditationSpells
+{
+    SPELL_MEDITATION_TIMER_BAR  = 116421,
+    QUEST_THE_WAY_OF_THE_TUSHUI = 29414
+};
+
+class at_cave_of_meditation : public AreaTriggerScript
+{
+public:
+    at_cave_of_meditation() : AreaTriggerScript("at_cave_of_meditation") { }
+
+    bool OnTrigger(Player* player, AreaTriggerEntry const* /*areaTrigger*/, bool entered) override
+    {
+        if (player->IsAlive() && player->GetQuestStatus(QUEST_THE_WAY_OF_THE_TUSHUI) == QUEST_STATUS_INCOMPLETE)
+        {
+            if (entered && !player->HasAura(SPELL_MEDITATION_TIMER_BAR))
+                player->CastSpell(player, SPELL_MEDITATION_TIMER_BAR, true);
+            else
+                player->RemoveAura(SPELL_MEDITATION_TIMER_BAR);
+
+            return true;
+        }
+        return false;
+    }
+};
 
 class spell_summon_troublemaker : public SpellScriptLoader
 {
@@ -54,9 +83,9 @@ public:
 
             GetHitDest()->Relocate(x, y, z);
 
-            Position const SpawnPosition = { x, y, z, 3.285759f };
+            Position const spawnPosition = { x, y, z, 3.285759f };
 
-            if (TempSummon* summon = GetCaster()->GetMap()->SummonCreature(entry, SpawnPosition, properties, duration, GetCaster()))
+            if (TempSummon* summon = GetCaster()->GetMap()->SummonCreature(entry, spawnPosition, properties, duration, GetCaster()))
                 summon->SetTempSummonType(TEMPSUMMON_CORPSE_TIMED_DESPAWN);
         }
 
@@ -161,7 +190,7 @@ public:
             if (!entry || !properties || !duration)
                 return;
 
-            Position const SpawnPosition[6] =
+            Position const spawnPosition[6] =
             {
                 { 1237.073f, 3697.739f, 93.62743f },
                 { 1230.608f, 3701.063f, 93.94895f },
@@ -171,7 +200,7 @@ public:
                 { 1224.92f, 3727.201f, 92.4472f }
             };
             
-            if (TempSummon* summon = GetCaster()->GetMap()->SummonCreature(entry, SpawnPosition[urand(0, 5)], properties, duration, GetCaster()))
+            if (TempSummon* summon = GetCaster()->GetMap()->SummonCreature(entry, spawnPosition[urand(0, 5)], properties, duration, GetCaster()))
                 summon->SetTempSummonType(TEMPSUMMON_DEAD_DESPAWN);
         }
 
@@ -239,6 +268,29 @@ public:
     AuraScript* GetAuraScript() const override
     {
         return new spell_fan_the_flames_AuraScript();
+    }
+};
+
+enum QuestPassionOfShenZinSuSpells
+{
+    SPELL_DESPAWN_FIRE_SPIRIT               = 109178,
+    SPELL_SUMMON_FIRE_SPIRIT                = 128700,
+    SPELL_SUMMON_FIRE_SPIRIT_AFTER_RELOG    = 102632
+};
+
+class q_passion_of_shenzin_su : public QuestScript
+{
+public:
+    q_passion_of_shenzin_su() : QuestScript("q_passion_of_shenzin_su") { }
+
+    void OnQuestStatusChange(Player* player, Quest const* /*quest*/, QuestStatus /*oldStatus*/, QuestStatus newStatus) override
+    {
+        if (newStatus == QUEST_STATUS_NONE)
+        {
+            player->CastSpell(player, SPELL_DESPAWN_FIRE_SPIRIT, true);
+            player->RemoveAura(SPELL_SUMMON_FIRE_SPIRIT);
+            player->RemoveAura(SPELL_SUMMON_FIRE_SPIRIT_AFTER_RELOG);
+        }
     }
 };
 
@@ -322,110 +374,6 @@ public:
     }
 };
 
-//class npc_cursed_pool_controller : public CreatureScript
-//{
-//public:
-//    npc_cursed_pool_controller() : CreatureScript("npc_cursed_pool_controller") { }
-//
-//    struct npc_cursed_pool_controllerAI : public ScriptedAI
-//    {
-//        npc_cursed_pool_controllerAI(Creature* creature) : ScriptedAI(creature) { }
-//
-//        void SetDataWithTarget(uint32 id, ObjectGuid target)
-//        {
-//            if (std::find(targets.begin(), targets.end(), target) == targets.end())
-//                targets.push_back(target);
-//
-//            switch (id)
-//            {
-//                case DATA_FROG:
-//                    pool = 1;
-//                    break;
-//                case DATA_SKUNK:
-//                    pool = 2;
-//                    break;
-//                case DATA_TURTLE:
-//                    pool = 3;
-//                    break;
-//                case DATA_CRANE:
-//                    pool = 4;
-//                    break;
-//            }
-//        }
-//
-//        void MoveInLineOfSight(Unit* who) override // need to check on greater range. now its around 55y
-//        {
-//            if (who->GetTypeId() == TYPEID_PLAYER)
-//            {
-//                if (std::find(targets.begin(), targets.end(), who->GetGUID()) == targets.end())
-//                {
-//                    targets.push_back(who->GetGUID());
-//
-//                    if (who->HasAura(SPELL_CURSE_OF_THE_FROG))
-//                        pool = 1;
-//                    if (who->HasAura(SPELL_CURSE_OF_THE_SKUNK))
-//                        pool = 2;
-//                    if (who->HasAura(SPELL_CURSE_OF_THE_TURTLE))
-//                        pool = 3;
-//                    if (who->HasAura(SPELL_CURSE_OF_THE_CRANE))
-//                        pool = 4;
-//                }
-//            }
-//        }
-//
-//        void UpdateAI(uint32 /*diff*/) override
-//        {
-//            for (std::list<ObjectGuid>::iterator itr = targets.begin(); itr != targets.end(); ++itr)
-//            {
-//                Player* player = ObjectAccessor::FindPlayer(*itr);
-//                if (!player)
-//                    return;
-//
-//                switch (pool)
-//                {
-//                    case 1: // TODO: check position greather than line between points 980.15, 3275.5 - 1002.5, 3281.31 & 909.96, 3280.91 - 916.8, 3283.37
-//                        if (player->HasAura(SPELL_CURSE_OF_THE_FROG) && player->GetPositionZ() > 118.5f && !player->HasUnitState(UNIT_STATE_JUMPING))
-//                        {
-//                            player->RemoveAura(SPELL_CURSE_OF_THE_FROG);
-//                            targets.erase(itr);
-//                        }
-//                        break;
-//                    case 2:
-//                        if (player->HasAura(SPELL_CURSE_OF_THE_SKUNK) && player->GetPositionZ() > 114.8f && !player->HasUnitState(UNIT_STATE_JUMPING))
-//                        {
-//                            player->RemoveAura(SPELL_CURSE_OF_THE_SKUNK);
-//                            targets.erase(itr);
-//                        }
-//                        break;
-//                    case 3:
-//                        if (player->HasAura(SPELL_CURSE_OF_THE_TURTLE) && player->GetPositionZ() > 106.5f && !player->HasUnitState(UNIT_STATE_JUMPING))
-//                        {
-//                            player->RemoveAura(SPELL_CURSE_OF_THE_TURTLE);
-//                            targets.erase(itr);
-//                        }
-//                        break;
-//                    case 4:
-//                        if (player->HasAura(SPELL_CURSE_OF_THE_CRANE) && player->GetPositionZ() > 80.95f && !player->HasUnitState(UNIT_STATE_JUMPING))
-//                        {
-//                            player->RemoveAura(SPELL_CURSE_OF_THE_CRANE);
-//                            targets.erase(itr);
-//                        }
-//                        break;
-//                }
-//            }
-//        }
-//        
-//    private:
-//        std::list<ObjectGuid> targets;
-//        uint8 pool;
-//    };
-//
-//    CreatureAI* GetAI(Creature* creature) const override
-//    {
-//        return new npc_cursed_pool_controllerAI(creature);
-//    }
-//};
-
 enum BalancePoleEvents
 {
     EVENT_CAST_TRANSFORM                        = 1
@@ -462,20 +410,20 @@ public:
                 _passenger = passenger;
 
                 if (!apply)
-                    events.ScheduleEvent(EVENT_CAST_TRANSFORM, 1000);
+                    _events.ScheduleEvent(EVENT_CAST_TRANSFORM, 1000);
                 else
                 {
                     if (me->GetEntry() == NPC_TRAINING_BELL_BALANCE_POLE)
-                        me->CastSpell(passenger, SPELL_TRAINING_BELL_FORCECAST_RIDE_VEHICLE, true);
+                        DoCast(passenger, SPELL_TRAINING_BELL_FORCECAST_RIDE_VEHICLE, true);
                 }
             }
         }
 
         void UpdateAI(uint32 diff) override
         {
-            events.Update(diff);
+            _events.Update(diff);
 
-            while (uint32 eventId = events.ExecuteEvent())
+            while (uint32 eventId = _events.ExecuteEvent())
             {
                 switch (eventId)
                 {
@@ -497,7 +445,7 @@ public:
         }
 
     private:
-        EventMap events;
+        EventMap _events;
         Unit* _passenger;
     };
 
@@ -542,81 +490,56 @@ public:
 
         void Reset() override
         {
-            events.Reset();
-            events.ScheduleEvent(EVENT_SWITCH_POLE, 0);
+            _events.Reset();
+            _events.ScheduleEvent(EVENT_SWITCH_POLE, 0);
             me->SetReactState(REACT_DEFENSIVE);
         }
 
         void SpellHit(Unit* caster, SpellInfo const* spell) override
         {
             if (spell->Id == SPELL_FORCECAST_RIDE_POLE)
-                me->CastSpell(caster, SPELL_MONK_RIDE_POLE, true);
+                DoCast(caster, SPELL_MONK_RIDE_POLE, true);
         }
 
         void EnterCombat(Unit* /*who*/) override
         {
-            events.ScheduleEvent(EVENT_THROW_ROCK, 0);
+            _events.ScheduleEvent(EVENT_THROW_ROCK, 0);
         }
 
         void DamageTaken(Unit* attacker, uint32& damage) override
         {
-            if (damage >= me->GetHealth() && _invincibility)
+            if (damage >= me->GetHealth())
             {
                 damage = me->GetHealth() - 1;
-                events.Reset();
+                _events.Reset();
                 me->RemoveAllAuras();
                 me->setFaction(35);
                 me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_UNK_15 | UNIT_FLAG_IMMUNE_TO_PC);
                 me->AttackStop();
                 me->_ExitVehicle();
                 attacker->ToPlayer()->KilledMonsterCredit(NPC_MONK_ON_POLE_1);
-                events.ScheduleEvent(EVENT_DESPAWN, 1000);
+                _events.ScheduleEvent(EVENT_DESPAWN, 1000);
             }
         }
 
         void UpdateAI(uint32 diff) override
         {
-            events.Update(diff);
+            _events.Update(diff);
 
-            while (uint32 eventId = events.ExecuteEvent())
+            while (uint32 eventId = _events.ExecuteEvent())
             {
                 switch (eventId)
                 {
                     case EVENT_THROW_ROCK:
                         if (!me->IsWithinMeleeRange(me->GetVictim()))
                             DoCastVictim(SPELL_THROW_ROCK);
-                        events.ScheduleEvent(EVENT_THROW_ROCK, 2500);
+                        _events.ScheduleEvent(EVENT_THROW_ROCK, 2500);
                         break;
                     case EVENT_SWITCH_POLE:
                         if (!me->IsInCombat())
                         {
-                            // This stores objects that are too far away due to big combat reach
-                            me->GetCreatureListWithEntryInGrid(PolesList, NPC_BALANCE_POLE_1, 1.0f);
-                            me->GetCreatureListWithEntryInGrid(PolesList2, NPC_BALANCE_POLE_2, 1.0f);
-                            // Join both lists with possible different NPC entries
-                            PolesList.splice(PolesList.end(), PolesList2);
-                            // Convert list to vector, so we can access iterator to be able to shuffle the list
-                            std::vector<Creature*> BalancePolesList {std::make_move_iterator(std::begin(PolesList)), std::make_move_iterator(std::end(PolesList))};
-                            // Shuffle the list so NPCs won't jump always on the same poles
-                            Trinity::Containers::RandomShuffle(BalancePolesList);
-
-                            for (std::vector<Creature*>::const_iterator itr = BalancePolesList.begin(); itr != BalancePolesList.end(); ++itr)
-                            {
-                                Position offset;
-                                offset.m_positionX = fabsf((*itr)->GetPositionX() - me->GetPositionX());
-                                offset.m_positionY = fabsf((*itr)->GetPositionY() - me->GetPositionY());
-
-                                // Object is too far
-                                if (offset.m_positionX > 5.0f || offset.m_positionY > 5.0f)
-                                    continue;
-
-                                if (!(*itr)->HasAura(SPELL_MONK_RIDE_POLE) && !(*itr)->HasAura(SPELL_RIDE_VEHICLE_POLE))
-                                {
-                                    (*itr)->CastSpell(me, SPELL_FORCECAST_RIDE_POLE, true);
-                                    break;
-                                }
-                            }
-                            events.ScheduleEvent(EVENT_SWITCH_POLE, urand(15000, 30000));
+                            SwitchPole();
+                            _events.ScheduleEvent(EVENT_SWITCH_POLE, urand(15000, 30000));
                         }
                         break;
                     case EVENT_DESPAWN:
@@ -633,10 +556,39 @@ public:
         }
 
     private:
-        std::list<Creature*> PolesList;
-        std::list<Creature*> PolesList2;
-        bool _invincibility = true;
-        EventMap events;
+        EventMap _events;
+
+        void SwitchPole()
+        {
+            std::list<Creature*> polesList;
+            std::list<Creature*> polesList2;
+            // This stores objects that are too far away due to big combat reach
+            me->GetCreatureListWithEntryInGrid(polesList, NPC_BALANCE_POLE_1, 1.0f);
+            me->GetCreatureListWithEntryInGrid(polesList2, NPC_BALANCE_POLE_2, 1.0f);
+            // Join both lists with possible different NPC entries
+            polesList.splice(polesList.end(), polesList2);
+            // Convert list to vector, so we can access iterator to be able to shuffle the list
+            std::vector<Creature*> balancePolesList{ std::make_move_iterator(std::begin(polesList)), std::make_move_iterator(std::end(polesList)) };
+            // Shuffle the list so NPCs won't jump always on the same poles
+            Trinity::Containers::RandomShuffle(balancePolesList);
+
+            for (std::vector<Creature*>::const_iterator itr = balancePolesList.begin(); itr != balancePolesList.end(); ++itr)
+            {
+                Position offset;
+                offset.m_positionX = fabsf((*itr)->GetPositionX() - me->GetPositionX());
+                offset.m_positionY = fabsf((*itr)->GetPositionY() - me->GetPositionY());
+
+                // Object is too far
+                if (offset.m_positionX > 5.0f || offset.m_positionY > 5.0f)
+                    continue;
+
+                if (!(*itr)->HasAura(SPELL_MONK_RIDE_POLE) && !(*itr)->HasAura(SPELL_RIDE_VEHICLE_POLE))
+                {
+                    (*itr)->CastSpell(me, SPELL_FORCECAST_RIDE_POLE, true);
+                    break;
+                }
+            }
+        }
     };
 
     CreatureAI* GetAI(Creature* creature) const override
@@ -866,51 +818,51 @@ public:
 
         void Initialize()
         {
-            positionBefore = 1;
+            _positionBefore = 1;
         }
 
         void Reset() override
         {
-            events.Reset();
+            _events.Reset();
             Initialize();
-            events.ScheduleEvent(EVENT_JUMP_SPELL, 1000);
+            _events.ScheduleEvent(EVENT_JUMP_SPELL, 1000);
         }
 
         void MovementInform(uint32 type, uint32 id) override
         {
             if (type == EFFECT_MOTION_TYPE && id == EVENT_JUMP)
-                events.ScheduleEvent(EVENT_SET_ORIENTATION, 500);
+                _events.ScheduleEvent(EVENT_SET_ORIENTATION, 500);
         }
 
         uint32 GetData(uint32 id) const override
         {
             if (id == DATA_JUMP_POSITION)
-                return jumpPosition;
+                return _jumpPosition;
 
-            return false;
+            return 0;
         }
 
         void UpdateAI(uint32 diff) override
         {
-            events.Update(diff);
+            _events.Update(diff);
 
-            while (uint32 eventId = events.ExecuteEvent())
+            while (uint32 eventId = _events.ExecuteEvent())
             {
                 switch (eventId)
                 {
                     case EVENT_JUMP_SPELL:
-                        jumpPosition = urand(JUMP_POSITION_1, JUMP_POSITION_4);
+                        _jumpPosition = urand(JUMP_POSITION_1, JUMP_POSITION_4);
 
-                        if (jumpPosition == positionBefore)
-                            events.ScheduleEvent(EVENT_SUMMON, 1500);
+                        if (_jumpPosition == _positionBefore)
+                            _events.ScheduleEvent(EVENT_SUMMON, 1500);
                         else
                         {
-                            DoCast(jumpSpells[jumpPosition]);
-                            positionBefore = jumpPosition;
+                            DoCast(_jumpSpells[_jumpPosition]);
+                            _positionBefore = _jumpPosition;
                         }
                         break;
                     case EVENT_SET_ORIENTATION:
-                        switch (jumpPosition)
+                        switch (_jumpPosition)
                         {
                             case JUMP_POSITION_1:
                                 me->SetFacingTo(1.32645f);
@@ -925,22 +877,22 @@ public:
                                 me->SetFacingTo(4.34587f);
                                 break;
                         }
-                        events.ScheduleEvent(EVENT_SUMMON, 1500);
+                        _events.ScheduleEvent(EVENT_SUMMON, 1500);
                         break;
                     case EVENT_SUMMON:
                         DoCast(SPELL_SUMMON_WATER_SPOUT);
                         DoCast(SPELL_WATER_SPOUT);
-                        events.ScheduleEvent(EVENT_JUMP_SPELL, 6000);
+                        _events.ScheduleEvent(EVENT_JUMP_SPELL, 6000);
                         break;
                 }
             }
         }
 
     private:
-        EventMap events;
-        uint32 jumpSpells[4] = { SPELL_JUMP_FRONT_RIGHT, SPELL_JUMP_FRONT_LEFT, SPELL_JUMP_BACK_RIGHT, SPELL_JUMP_BACK_LEFT };
-        uint8 jumpPosition;
-        uint8 positionBefore;
+        EventMap _events;
+        uint32 _jumpSpells[4] = { SPELL_JUMP_FRONT_RIGHT, SPELL_JUMP_FRONT_LEFT, SPELL_JUMP_BACK_RIGHT, SPELL_JUMP_BACK_LEFT };
+        uint8 _jumpPosition;
+        uint8 _positionBefore;
     };
 
     CreatureAI* GetAI(Creature* creature) const override
@@ -968,7 +920,7 @@ public:
             if (!entry || !properties || !duration)
                 return;
 
-            Position const SpawnPosition[4][7] =
+            Position const spawnPosition[4][7] =
             {
                 {
                     { 1117.516f, 2848.437f, 92.14017f },
@@ -1010,7 +962,7 @@ public:
 
             uint32 stone = GetCaster()->ToCreature()->AI()->GetData(DATA_JUMP_POSITION);
             
-            if (TempSummon* summon = GetCaster()->GetMap()->SummonCreature(entry, SpawnPosition[stone][urand(0, 6)], properties, duration, GetCaster()))
+            if (TempSummon* summon = GetCaster()->GetMap()->SummonCreature(entry, spawnPosition[stone][urand(0, 6)], properties, duration, GetCaster()))
                 summon->SetTempSummonType(TEMPSUMMON_MANUAL_DESPAWN);
         }
 
@@ -1077,7 +1029,7 @@ public:
         void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
         {
             if (Unit* target = GetTarget())
-                if (Creature* creature = target->FindNearestCreature(54975, 70.0f, true))
+                if (Creature* creature = target->FindNearestCreature(54975, target->GetVisibilityRange(), true))
                     creature->AI()->Talk(0, target);
         }
 
@@ -1105,7 +1057,7 @@ public:
         void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
         {
             if (Unit* target = GetTarget())
-                if (Creature* creature = target->FindNearestCreature(54975, 70.0f, true))
+                if (Creature* creature = target->FindNearestCreature(54975, target->GetVisibilityRange(), true))
                     creature->AI()->Talk(1, target);
         }
 
@@ -1145,14 +1097,14 @@ public:
 
 enum MonkeyWisdomTexts
 {
-    TEXT_MONKEY_WISDOM = 54073,
-    TEXT_MONKEY_WISDOM_2 = 54074,
-    TEXT_MONKEY_WISDOM_3 = 54075,
-    TEXT_MONKEY_WISDOM_4 = 54076,
-    TEXT_MONKEY_WISDOM_5 = 54077,
-    TEXT_MONKEY_WISDOM_6 = 54078,
-    TEXT_MONKEY_WISDOM_7 = 54079,
-    TEXT_MONKEY_WISDOM_8 = 54080
+    TEXT_MONKEY_WISDOM      = 54073,
+    TEXT_MONKEY_WISDOM_2    = 54074,
+    TEXT_MONKEY_WISDOM_3    = 54075,
+    TEXT_MONKEY_WISDOM_4    = 54076,
+    TEXT_MONKEY_WISDOM_5    = 54077,
+    TEXT_MONKEY_WISDOM_6    = 54078,
+    TEXT_MONKEY_WISDOM_7    = 54079,
+    TEXT_MONKEY_WISDOM_8    = 54080
 };
 
 class spell_monkey_wisdom_text : public SpellScriptLoader
@@ -1198,6 +1150,235 @@ public:
     }
 };
 
+enum RukRukOoksplosions
+{
+	SPELL_OOKSPLOSIONS_TRIGGERED	= 125885
+};
+
+class spell_ruk_ruk_ooksplosions : public SpellScriptLoader
+{
+public:
+	spell_ruk_ruk_ooksplosions() : SpellScriptLoader("spell_ruk_ruk_ooksplosions") { }
+
+	class spell_ruk_ruk_ooksplosions_AuraScript : public AuraScript
+	{
+		PrepareAuraScript(spell_ruk_ruk_ooksplosions_AuraScript);
+
+		void HandleEffectPeriodic(AuraEffect const* /*aurEff*/)
+		{
+			Unit* caster = GetCaster();
+            float x, y, z;
+            caster->GetClosePoint(x, y, z, caster->GetObjectSize() / 2, frand(0, 3), frand(0, 2 * float(M_PI)));
+            caster->CastSpell(x, y, z, SPELL_OOKSPLOSIONS_TRIGGERED, true);
+		}
+
+		void Register() override
+		{
+			OnEffectPeriodic += AuraEffectPeriodicFn(spell_ruk_ruk_ooksplosions_AuraScript::HandleEffectPeriodic, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
+		}
+	};
+
+	AuraScript* GetAuraScript() const override
+	{
+		return new spell_ruk_ruk_ooksplosions_AuraScript();
+	}
+};
+
+enum RukRukEvents
+{
+	EVENT_AIM			= 1,
+	EVENT_OOKSPLOSIONS  = 2
+};
+
+enum RukRukSpells
+{
+	SPELL_AIM			= 125609,
+	SPELL_OOKSPLOSIONS	= 125699,
+	SPELL_AIM_VISUAL	= 26079
+};
+
+class npc_ruk_ruk : public CreatureScript
+{
+public:
+	npc_ruk_ruk() : CreatureScript("npc_ruk_ruk") { }
+
+	struct npc_ruk_rukAI : public ScriptedAI
+	{
+		npc_ruk_rukAI(Creature* creature) : ScriptedAI(creature) { }
+
+        void Reset() override
+        {
+            _events.Reset();
+        }
+
+		void EnterCombat(Unit* /*who*/) override
+		{
+			_events.ScheduleEvent(EVENT_AIM, 10000);
+			_events.ScheduleEvent(EVENT_OOKSPLOSIONS, 30000);
+		}
+
+        Position GetRocketTargetPos() const
+        {
+            return _pos;
+        }
+
+		void UpdateAI(uint32 diff) override
+		{
+            if (!UpdateVictim())
+                return;
+
+			_events.Update(diff);
+
+			while (uint32 eventId = _events.ExecuteEvent())
+			{
+				switch (eventId)
+				{
+					case EVENT_AIM:
+                        if (me->HasUnitState(UNIT_STATE_CASTING))
+                        {
+                            _events.RescheduleEvent(EVENT_AIM, 1000);
+                            break;
+                        }
+						if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM))
+						{
+							me->SetFacingToObject(target);
+                            CalculateSpellVisual(target);
+							DoCast(target, SPELL_AIM);
+							_events.ScheduleEvent(EVENT_AIM, urand(15000, 25000));
+						}
+						break;
+					case EVENT_OOKSPLOSIONS:
+                        if (me->HasUnitState(UNIT_STATE_CASTING))
+                        {
+                            _events.RescheduleEvent(EVENT_OOKSPLOSIONS, 1000);
+                            break;
+                        }
+						DoCast(SPELL_OOKSPLOSIONS);
+						_events.ScheduleEvent(EVENT_OOKSPLOSIONS, urand(25000, 35000));
+						break;
+				}
+			}
+
+			DoMeleeAttackIfReady();
+		}
+
+	private:
+        EventMap _events;
+        Position _pos;
+
+        void CalculateSpellVisual(Unit* target)
+        {
+            float ori = me->GetOrientation();
+            float z = me->GetPositionZ();
+            float targetDist = target->GetExactDist(me->GetPosition());
+
+            for (int radius = 1; ; radius++)
+            {
+                if (radius <= ceilf(targetDist))
+                {
+                    float x = me->GetPositionX() + radius * cos(ori);
+                    float y = me->GetPositionY() + radius * sin(ori);
+                    me->UpdateGroundPositionZ(x, y, z);
+                    _pos = { x, y, z };
+                    me->SendPlaySpellVisual(_pos, 0.0f, SPELL_AIM_VISUAL, 0, 0, 2.0f);
+                }
+                else
+                    break;
+            }
+        }
+	};
+
+	CreatureAI* GetAI(Creature* creature) const override
+	{
+		return new npc_ruk_rukAI(creature);
+	}
+};
+
+typedef npc_ruk_ruk::npc_ruk_rukAI RukRukAI;
+
+enum RukRukRocketEvents
+{
+    EVENT_FIRE              = 1
+};
+
+enum RukRukRocketSpells
+{
+    SPELL_EXPLOSSION_VISUAL = 125612,
+    SPELL_EXPLOSSION_DMG    = 125619
+};
+
+class npc_ruk_ruk_rocket : public CreatureScript
+{
+public:
+    npc_ruk_ruk_rocket() : CreatureScript("npc_ruk_ruk_rocket") { }
+
+    struct npc_ruk_ruk_rocketAI : public ScriptedAI
+    {
+        npc_ruk_ruk_rocketAI(Creature* creature) : ScriptedAI(creature) { }
+
+        void Reset() override
+        {
+            me->SetDisplayId(me->GetCreatureTemplate()->Modelid1);
+            _events.ScheduleEvent(EVENT_FIRE, 500);
+        }
+
+        void IsSummonedBy(Unit* owner) override
+        {
+            if (RukRukAI* rukRukAI = CAST_AI(RukRukAI, owner->GetAI()))
+            {
+                _rocketTargetPos = rukRukAI->GetRocketTargetPos();
+
+                if (me->GetExactDist2d(_rocketTargetPos) > 30)
+                    RecalculateTargetPos();
+            }
+        }
+
+        void MovementInform(uint32 /*type*/, uint32 id) override
+        {
+            if (id == 1)
+            {
+                DoCast(SPELL_EXPLOSSION_VISUAL);
+                DoCast(SPELL_EXPLOSSION_DMG);
+                me->DespawnOrUnsummon(1000);
+            }
+        }
+
+        void UpdateAI(uint32 diff) override
+        {
+            _events.Update(diff);
+
+            while (uint32 eventId = _events.ExecuteEvent())
+            {
+                switch (eventId)
+                {
+                    case EVENT_FIRE:
+                        me->GetMotionMaster()->MovePoint(1, _rocketTargetPos);
+                        break;
+                }
+            }
+        }
+
+    private:
+        EventMap _events;
+        Position _rocketTargetPos;
+
+        void RecalculateTargetPos()
+        {
+            float ori = me->GetOrientation();
+            float x = me->GetPositionX() + 30 * cos(ori);
+            float y = me->GetPositionY() + 30 * sin(ori);
+            float z = me->GetPositionZ();
+            me->UpdateGroundPositionZ(x, y, z);
+            _rocketTargetPos = { x, y, z };
+        }
+    };
+
+    CreatureAI* GetAI(Creature* creature) const override
+    {
+        return new npc_ruk_ruk_rocketAI(creature);
+    }
+};
+
 enum ZhaorenEvents
 {
     EVENT_LIGHTNING                 = 1,
@@ -1213,7 +1394,15 @@ enum ZhaorenSpells
     SPELL_STUNNED_BY_FIREWORKS      = 125992,
     SPELL_SERPENT_SWEEP             = 125990,
     SPELL_FORCECAST_SUMMON_SHANG    = 128808,
-    SPELL_OVERPACKED_FIREWORK       = 104855
+    SPELL_OVERPACKED_FIREWORK       = 104855,
+    SPELL_FIREWORK_INACTIVE         = 125964
+};
+
+enum ZhaorenPhases
+{
+    PHASE_FLYING                    = 1,
+    PHASE_GROUNDED                  = 2,
+    PHASE_STAY_IN_CENTER            = 3
 };
 
 enum ZhaorenMisc
@@ -1222,11 +1411,13 @@ enum ZhaorenMisc
     NPC_JI_FIREPAW                  = 64505,
     NPC_AYSA_CLOUDSINGER            = 64506,
     NPC_DAFENG                      = 64532,
+    NPC_FIREWORK                    = 64507,
     DATA_1                          = 1,
-    DATA_2                          = 2,
-    DATA_3                          = 3,
+    DATA_COMBAT                     = 2,
+    DATA_AYSA_TALK_3                = 3,
     DATA_PHASE_OOC                  = 4,
-    DATA_DEATH                      = 5
+    DATA_ZHAOREN_DEATH              = 5,
+    DATA_EVADE                      = 6
 };
 
 class npc_zhaoren : public CreatureScript
@@ -1236,165 +1427,181 @@ public:
 
     struct npc_zhaorenAI : public ScriptedAI
     {
-        npc_zhaorenAI(Creature* creature) : ScriptedAI(creature)
-        {
-            me->SetReactState(REACT_PASSIVE);
-            me->setActive(true);
-            Initialize();
-        }
+        npc_zhaorenAI(Creature* creature) : ScriptedAI(creature) { }
 
         Position const pos = { 723.163f, 4163.8f, 204.999f };
 
         void Initialize()
         {
-            phase = 0;
-            inCombat = false;
-            lightningPhase = true;
-            isInCenter = false;
-            sweepScheduled = false;
+            _phase = 0;
+            _sweepScheduled = false;
+        }
+
+        void Reset() override
+        {
+            _events.Reset();
+            me->SetReactState(REACT_PASSIVE);
+            me->setActive(true);
+            Initialize();
+
+            if (Creature* creature = me->FindNearestCreature(NPC_JI_FIREPAW, me->GetVisibilityRange(), true))
+                creature->AI()->SetData(DATA_EVADE, DATA_EVADE);
+
+            std::list<Creature*> fireworks;
+            me->GetCreatureListWithEntryInGrid(fireworks, NPC_FIREWORK, me->GetVisibilityRange());
+            for (std::list<Creature*>::iterator itr = fireworks.begin(); itr != fireworks.end(); ++itr)
+            {
+                (*itr)->RemoveAura(SPELL_FIREWORK_INACTIVE);
+                (*itr)->AI()->SetData(DATA_1, DATA_1);
+            }
         }
 
         void EnterCombat(Unit* /*who*/) override
         {
             me->GetMotionMaster()->MovePath(ZHAOREN_PATH, true);
-            events.ScheduleEvent(EVENT_LIGHTNING, 5000);
+            _events.SetPhase(PHASE_FLYING);
+            _events.ScheduleEvent(EVENT_LIGHTNING, 5000);
         }
 
         void SpellHit(Unit* caster, SpellInfo const* spell) override
         {
             if (spell->Id == SPELL_OVERPACKED_FIREWORK)
             {
-                if (!inCombat)
-                {
+                if (!me->IsInCombat())
                     me->CombatStart(caster);
-                    inCombat = true;
-                }
             }
         }
 
         void MovementInform(uint32 type, uint32 id) override
         {
             if (type == POINT_MOTION_TYPE && id == EVENT_MOVE_CENTER)
+                _events.ScheduleEvent(EVENT_STUN, 0);
+        }
+
+        void KilledUnit(Unit* who) override
+        {
+            if (who->GetTypeId() == TYPEID_PLAYER)
             {
-                if (!isInCenter)
-                {
-                    events.ScheduleEvent(EVENT_STUN, 0);
-                    isInCenter = true;
-                }
+                if (me->getThreatManager().getThreatList().empty())
+                    me->DespawnOrUnsummon(0, Seconds(10));
+            }
+        }
+
+        // TODO remove when TARGET_UNK_123 is fixed and uncomment in JustDied method
+        void DamageTaken(Unit* /*attacker*/, uint32& damage) override
+        {
+            if (damage >= me->GetHealth())
+            {
+                _threatList = me->getThreatManager().getThreatList();
+                for (std::list<HostileReference*>::const_iterator itr = _threatList.begin(); itr != _threatList.end(); ++itr)
+                    if (Player* target = (*itr)->getTarget()->ToPlayer())
+                        target->CastSpell(target, 126040, true);
             }
         }
 
         void JustDied(Unit* /*killer*/) override
         {
-            me->CastSpell(me, SPELL_FORCECAST_SUMMON_SHANG, true);
+            //DoCastAOE(SPELL_FORCECAST_SUMMON_SHANG, true);
 
-            if (Creature* creature = me->FindNearestCreature(NPC_JI_FIREPAW, 100.0f, true))
-                creature->AI()->SetData(DATA_DEATH, DATA_DEATH);
-            if (Creature* creature = me->FindNearestCreature(NPC_AYSA_CLOUDSINGER, 100.0f, true))
-                creature->AI()->SetData(DATA_DEATH, DATA_DEATH);
-            if (Creature* creature = me->FindNearestCreature(NPC_DAFENG, 100.0f, true))
-                creature->AI()->SetData(DATA_DEATH, DATA_DEATH);
+            if (Creature* creature = me->FindNearestCreature(NPC_JI_FIREPAW, me->GetVisibilityRange(), true))
+                creature->AI()->SetData(DATA_ZHAOREN_DEATH, DATA_ZHAOREN_DEATH);
+            if (Creature* creature = me->FindNearestCreature(NPC_AYSA_CLOUDSINGER, me->GetVisibilityRange(), true))
+                creature->AI()->SetData(DATA_ZHAOREN_DEATH, DATA_ZHAOREN_DEATH);
+            if (Creature* creature = me->FindNearestCreature(NPC_DAFENG, me->GetVisibilityRange(), true))
+                creature->AI()->SetData(DATA_ZHAOREN_DEATH, DATA_ZHAOREN_DEATH);
+
+            me->DespawnOrUnsummon(10000, Seconds(10));
         }
 
         void UpdateAI(uint32 diff) override
         {
-            events.Update(diff);
+            _events.Update(diff);
 
-            if (phase == 0 && HealthBelowPct(85))
+            if (_phase == 0 && HealthBelowPct(85))
             {
-                phase++;
-                if (Creature* creature = me->FindNearestCreature(NPC_AYSA_CLOUDSINGER, 100.0f, true))
+                _phase++;
+                if (Creature* creature = me->FindNearestCreature(NPC_AYSA_CLOUDSINGER, me->GetVisibilityRange(), true))
                     creature->AI()->SetData(DATA_1, DATA_1);
             }
 
-            if (phase == 1 && HealthBelowPct(75))
+            if (_phase == 1 && HealthBelowPct(75))
             {
-                phase++;
-                events.ScheduleEvent(EVENT_MOVE_CENTER, 0);
+                _phase++;
+                _events.SetPhase(PHASE_GROUNDED);
+                _events.CancelEvent(EVENT_LIGHTNING);
+                _events.ScheduleEvent(EVENT_MOVE_CENTER, 0);
             }
 
-            if (phase == 2 && HealthBelowPct(25))
+            if (_phase == 2 && HealthBelowPct(25))
             {
-                phase++;
-                events.ScheduleEvent(EVENT_MOVE_CENTER, 0);
+                _phase++;
+                _events.SetPhase(PHASE_STAY_IN_CENTER);
+                _events.CancelEvent(EVENT_LIGHTNING);
+                _events.ScheduleEvent(EVENT_MOVE_CENTER, 0);
             }
 
-            while (uint32 eventId = events.ExecuteEvent())
+            while (uint32 eventId = _events.ExecuteEvent())
             {
                 switch (eventId)
                 {
                     case EVENT_LIGHTNING:
-                        if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0, 80.0f, true))
+                        _threatList = me->getThreatManager().getThreatList();
+                        if (!_threatList.empty())
                         {
-                            if (phase < 3 && lightningPhase)
+                            for (std::list<HostileReference*>::const_iterator itr = _threatList.begin(); itr != _threatList.end(); ++itr)
+                                if ((*itr)->getTarget()->GetTypeId() == TYPEID_PLAYER)
+                                    DoCast((*itr)->getTarget(), SPELL_LIGHTNING_POOL);
+                            _events.ScheduleEvent(EVENT_LIGHTNING, 5000, 0, PHASE_FLYING);
+                            _events.ScheduleEvent(EVENT_LIGHTNING, 3500, 0, PHASE_STAY_IN_CENTER);
+                            if (!_sweepScheduled && _events.IsInPhase(PHASE_STAY_IN_CENTER))
                             {
-                                DoCast(target, SPELL_LIGHTNING_POOL);
-                                events.ScheduleEvent(EVENT_LIGHTNING, 5000);
-                            }
-                            if (phase == 3 && lightningPhase)
-                            {
-                                DoCast(target, SPELL_LIGHTNING_POOL);
-                                events.ScheduleEvent(EVENT_LIGHTNING, 3500);
-                                if (!sweepScheduled)
-                                {
-                                    events.ScheduleEvent(EVENT_SWEEP, 15000);
-                                    sweepScheduled = true;
-                                }
+                                _events.ScheduleEvent(EVENT_SWEEP, 15000, 0, PHASE_STAY_IN_CENTER);
+                                _sweepScheduled = true;
                             }
                         }
+                        else
+                            me->DespawnOrUnsummon(0, Seconds(10));
                         break;
                     case EVENT_MOVE_CENTER:
-                        lightningPhase = false;
                         me->GetMotionMaster()->MovePoint(EVENT_MOVE_CENTER, pos);
                         break;
                     case EVENT_STUN:
                         DoCast(SPELL_STUNNED_BY_FIREWORKS);
-                        events.ScheduleEvent(EVENT_SWEEP, 12000);
-                        if (Creature* creature = me->FindNearestCreature(NPC_AYSA_CLOUDSINGER, 100.0f, true))
+                        _events.ScheduleEvent(EVENT_SWEEP, 12000);
+                        if (Creature* creature = me->FindNearestCreature(NPC_AYSA_CLOUDSINGER, me->GetVisibilityRange(), true))
                         {
-                            if (phase == 2)
-                                creature->AI()->SetData(DATA_2, DATA_2);
-                            else if (phase == 3)
-                                creature->AI()->SetData(DATA_3, DATA_3);
+                            if (_phase == 2)
+                                creature->AI()->SetData(DATA_COMBAT, DATA_COMBAT);
+                            else if (_phase == 3)
+                                creature->AI()->SetData(DATA_AYSA_TALK_3, DATA_AYSA_TALK_3);
                         }
-                        if (Creature* creature = me->FindNearestCreature(NPC_JI_FIREPAW, 100.0f, true))
-                            creature->AI()->SetData(DATA_1, DATA_1);
+                        if (Creature* creature = me->FindNearestCreature(NPC_JI_FIREPAW, me->GetVisibilityRange(), true))
+                            creature->AI()->SetData(DATA_COMBAT, DATA_COMBAT);
                         break;
                     case EVENT_SWEEP:
+                        _events.CancelEvent(EVENT_LIGHTNING);
                         DoCast(SPELL_SERPENT_SWEEP);
-                        if (phase == 3)
-                        {
-                            sweepScheduled = false;
-                            if (!lightningPhase)
-                                events.ScheduleEvent(EVENT_LIGHTNING, 3500);
-                            lightningPhase = true;
-                        }
-                        if (phase < 3)
-                        {
-                            if (Creature* creature = me->FindNearestCreature(NPC_AYSA_CLOUDSINGER, 100.0f, true))
+                        _sweepScheduled = false;
+                        _events.ScheduleEvent(EVENT_LIGHTNING, 3500, 0, PHASE_STAY_IN_CENTER);
+                        _events.ScheduleEvent(EVENT_RESUME_WP, 5000, 0, PHASE_GROUNDED);
+                        if (_events.IsInPhase(PHASE_GROUNDED))
+                            if (Creature* creature = me->FindNearestCreature(NPC_JI_FIREPAW, me->GetVisibilityRange(), true))
                                 creature->AI()->SetData(DATA_PHASE_OOC, DATA_PHASE_OOC);
-                            if (Creature* creature = me->FindNearestCreature(NPC_JI_FIREPAW, 100.0f, true))
-                                creature->AI()->SetData(DATA_PHASE_OOC, DATA_PHASE_OOC);
-                            events.ScheduleEvent(EVENT_RESUME_WP, 5000);
-                        }
                         break;
                     case EVENT_RESUME_WP:
-                        lightningPhase = true;
                         me->GetMotionMaster()->MovePath(ZHAOREN_PATH, true);
-                        isInCenter = false;
-                        events.ScheduleEvent(EVENT_LIGHTNING, 5000);
+                        _events.SetPhase(PHASE_FLYING);
+                        _events.ScheduleEvent(EVENT_LIGHTNING, 5000);
                         break;
                 }
             }
         }
 
     private:
-        EventMap events;
-        uint8 phase;
-        bool inCombat;
-        bool lightningPhase;
-        bool isInCenter;
-        bool sweepScheduled;
+        EventMap _events;
+        uint8 _phase;
+        bool _sweepScheduled;
+        std::list<HostileReference*> _threatList;
     };
 
     CreatureAI* GetAI(Creature* creature) const override
@@ -1415,7 +1622,7 @@ public:
         void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
         {
             if (Unit* target = GetTarget())
-                if (Creature* creature = target->FindNearestCreature(55672, 70.0f, true))
+                if (Creature* creature = target->FindNearestCreature(55672, target->GetVisibilityRange(), true))
                     creature->AI()->Talk(0, target);
         }
 
@@ -1456,8 +1663,16 @@ public:
 
     struct npc_shen_zin_shu_bunnyAI : public ScriptedAI
     {
-        npc_shen_zin_shu_bunnyAI(Creature* creature) : ScriptedAI(creature)
+        npc_shen_zin_shu_bunnyAI(Creature* creature) : ScriptedAI(creature) { }
+
+        void Initialize()
         {
+            _hitCount = 0;
+        }
+
+        void Reset() override
+        {
+            Initialize();
             me->setActive(true);
         }
 
@@ -1474,23 +1689,23 @@ public:
                     me->PlayDirectSound(27823, caster->ToPlayer());
                     break;
                 case SPELL_TRIGGER_WITH_ANIM_1:
-                    if (hitCount == 0)
+                    if (_hitCount == 0)
                     {
                         me->Talk(TEXT_3, CHAT_MSG_MONSTER_SAY, 300.0f, caster);
                         me->PlayDirectSound(27824, caster->ToPlayer());
-                        hitCount++;
+                        _hitCount++;
                     }
-                    else if (hitCount == 1)
+                    else if (_hitCount == 1)
                     {
                         me->Talk(TEXT_4, CHAT_MSG_MONSTER_SAY, 300.0f, caster);
                         me->PlayDirectSound(27825, caster->ToPlayer());
-                        hitCount++;
+                        _hitCount++;
                     }
-                    else if (hitCount == 2)
+                    else if (_hitCount == 2)
                     {
                         me->Talk(TEXT_6, CHAT_MSG_MONSTER_SAY, 350.0f, caster);
                         me->PlayDirectSound(27827, caster->ToPlayer());
-                        hitCount = 0;
+                        _hitCount = 0;
                     }
                     break;
                 case SPELL_TRIGGER_WITH_TURN:
@@ -1501,7 +1716,7 @@ public:
         }
 
     private:
-        uint8 hitCount = 0;
+        uint8 _hitCount;
     };
 
     CreatureAI* GetAI(Creature* creature) const override
@@ -1618,6 +1833,365 @@ public:
     }
 };
 
+enum AysaVordrakaFightEvents
+{
+    EVENT_TEMPERED_FURY         = 1,
+    EVENT_COMBAT_ROLL           = 2,
+    EVENT_UPDATE_PHASES         = 3
+};
+
+enum AysaVordrakaFightSpells
+{
+    SPELL_TEMPERED_FURY         = 117275,
+    SPELL_COMBAT_ROLL           = 117312,
+    SPELL_FORCECAST_SUMMON_AYSA = 117499,
+    SPELL_DEEP_SEA_SMASH        = 117287
+};
+
+enum AysaVordrakaFightData
+{
+    DATA_AYSA_TALK_INTRO        = 1,
+    DATA_AYSA_TALK_SMASH        = 2,
+    DATA_SUMMON_AGGRESSORS      = 3,
+    DATA_VORDRAKA_DEATH         = 4,
+};
+
+enum AysaVordrakaFightTexts
+{
+    TEXT_INTRO                  = 0,
+    TEXT_SMASH                  = 1,
+    TEXT_REINFORCEMENTS         = 2,
+    TEXT_LOW_HP                 = 3,
+    TEXT_DEATH                  = 4
+};
+
+enum AysaVordrakaFightMisc
+{
+    QUEST_AN_ANCIENT_EVIL       = 29798,
+    QUEST_RISKING_IT_ALL        = 30767,
+    NPC_VORDRAKA                = 56009,
+    DB_PHASE_FIGHT              = 543,
+    DB_PHASE_AFTER_FIGHT        = 993
+};
+
+class npc_aysa_vordraka_fight : public CreatureScript
+{
+public:
+    npc_aysa_vordraka_fight() : CreatureScript("npc_aysa_vordraka_fight") { }
+
+    struct npc_aysa_vordraka_fightAI : public ScriptedAI
+    {
+        npc_aysa_vordraka_fightAI(Creature* creature) : ScriptedAI(creature) {
+            me->SetReactState(REACT_DEFENSIVE);
+        }
+
+        void MoveInLineOfSight(Unit* who) override
+        {
+            if (who->IsPlayer())
+                if (Creature* creature = me->FindNearestCreature(NPC_VORDRAKA, me->GetVisibilityRange(), true))
+                    AttackStart(creature);
+        }
+
+        void EnterCombat(Unit* who) override
+        {
+            who->GetAI()->AttackStart(me);
+            _events.ScheduleEvent(EVENT_TEMPERED_FURY, urand(2000, 4000));
+        }
+
+        void DamageTaken(Unit* /*attacker*/, uint32& damage) override
+        {
+            if (HealthAbovePct(85))
+                damage = urand(1, 2);
+            else
+                me->SetHealth(me->GetMaxHealth() * 0.85f);
+        }
+
+        void SpellHit(Unit* /*caster*/, SpellInfo const* spell) override
+        {
+            if (spell->Id == SPELL_DEEP_SEA_SMASH)
+            {
+                _events.CancelEvent(EVENT_TEMPERED_FURY);
+                _events.ScheduleEvent(EVENT_COMBAT_ROLL, 1000);
+            }
+        }
+
+        void SetData(uint32 id, uint32 /*value*/) override
+        {
+            switch (id)
+            {
+                case DATA_AYSA_TALK_INTRO:
+                    Talk(TEXT_INTRO);
+                    break;
+                case DATA_AYSA_TALK_SMASH:
+                    Talk(TEXT_SMASH);
+                    break;
+                case DATA_SUMMON_AGGRESSORS:
+                    Talk(TEXT_REINFORCEMENTS);
+                    break;
+                case DATA_VORDRAKA_DEATH:
+                    Talk(TEXT_DEATH);
+                    EnterEvadeMode();
+                    _events.CancelEvent(EVENT_TEMPERED_FURY);
+                    break;
+            }
+        }
+
+        void JustReachedHome() override
+        {
+            _events.ScheduleEvent(EVENT_UPDATE_PHASES, 5000);
+        }
+
+        void sQuestAccept(Player* player, Quest const* quest) override
+        {
+            if (quest->GetQuestId() == QUEST_RISKING_IT_ALL)
+                DoCast(player, SPELL_FORCECAST_SUMMON_AYSA, true);
+        }
+
+        void UpdateAI(uint32 diff) override
+        {
+            _events.Update(diff);
+
+            while (uint32 eventId = _events.ExecuteEvent())
+            {
+                switch (eventId)
+                {
+                    case EVENT_TEMPERED_FURY:
+                        DoCastVictim(SPELL_TEMPERED_FURY);
+                        _events.ScheduleEvent(EVENT_TEMPERED_FURY, urand(2000, 4000));
+                        break;
+                    case EVENT_COMBAT_ROLL:
+                        // todo: cast combat roll only if it won't kick Vordraka outside of ship boundaries
+                        DoCastVictim(SPELL_COMBAT_ROLL);
+                        _events.ScheduleEvent(EVENT_TEMPERED_FURY, urand(5000, 7000));
+                        break;
+                    case EVENT_UPDATE_PHASES:
+                        std::list<Player*> players;
+                        me->GetPlayerListInGrid(players, me->GetVisibilityRange());
+                        for (std::list<Player*>::const_iterator itr = players.begin(); itr != players.end(); ++itr)
+                        {
+                            if ((*itr)->ToPlayer()->GetQuestStatus(QUEST_AN_ANCIENT_EVIL) == QUEST_STATUS_COMPLETE)
+                            {
+                                (*itr)->SetInPhase(DB_PHASE_AFTER_FIGHT, true, true);
+                                (*itr)->SetInPhase(DB_PHASE_FIGHT, true, false);
+                            }
+                        }
+                        break;
+                }
+            }
+
+            DoMeleeAttackIfReady();
+        }
+
+    private:
+        EventMap _events;
+    };
+
+    CreatureAI* GetAI(Creature* creature) const override
+    {
+        return new npc_aysa_vordraka_fightAI(creature);
+    }
+};
+
+class spell_tempered_fury : public SpellScriptLoader
+{
+public:
+    spell_tempered_fury() : SpellScriptLoader("spell_tempered_fury") { }
+
+    class spell_tempered_fury_SpellScript : public SpellScript
+    {
+        PrepareSpellScript(spell_tempered_fury_SpellScript);
+
+        void HandleJumpDest(SpellEffIndex effIndex)
+        {
+            PreventHitDefaultEffect(effIndex);
+            Position const jumpPos = GetHitDest()->GetPosition();
+            GetCaster()->GetMotionMaster()->MoveJump(jumpPos, 20, 0);
+        }
+
+        void Register() override
+        {
+            OnEffectLaunch += SpellEffectFn(spell_tempered_fury_SpellScript::HandleJumpDest, EFFECT_0, SPELL_EFFECT_JUMP_DEST);
+        }
+    };
+
+    SpellScript* GetSpellScript() const override
+    {
+        return new spell_tempered_fury_SpellScript();
+    }
+};
+
+enum VordrakaEvents
+{
+    EVENT_SMASH                     = 1,
+    EVENT_RUPTURE                   = 2,
+    EVENT_SUMMON_AGGRESSOR          = 3
+};
+
+enum VordrakaSpells
+{
+    SPELL_DEEP_SEA_RUPTURE          = 117456,
+    SPELL_FORCECAST_AGGRESSOR       = 117403,
+    SPELL_DEATH_INVIS               = 117555,
+    SPELL_SEE_DEATH_INVIS           = 117491
+};
+
+enum VordrakaMisc
+{
+    NPC_AYSA_CLOUDSINGER_VORDRAKA   = 56416,
+    NPC_DEEPSCALE_AGGRESSOR         = 60685
+};
+
+class npc_vordraka : public CreatureScript
+{
+public:
+    npc_vordraka() : CreatureScript("npc_vordraka") { }
+
+    struct npc_vordrakaAI : public ScriptedAI
+    {
+        npc_vordrakaAI(Creature* creature) : ScriptedAI(creature) { }
+
+        void Initialize()
+        {
+            _playerParticipating = false;
+            _secondSmash = false;
+            _smashAnnounced = false;
+            _aggressorSummoned = 0;
+        }
+
+        void Reset() override
+        {
+            _events.Reset();
+            Initialize();
+            me->setActive(true);
+            me->SetReactState(REACT_PASSIVE);
+            me->SetInPhase(543, true, true);
+        }
+
+        void EnterCombat(Unit* /*who*/) override
+        {
+            _events.ScheduleEvent(EVENT_SMASH, 8000);
+            _events.ScheduleEvent(EVENT_RUPTURE, urand(12000, 16000));
+        }
+
+        void DamageTaken(Unit* attacker, uint32& damage) override
+        {
+            if (HealthAbovePct(85) && attacker->IsCreature())
+                if (attacker->GetEntry() == NPC_AYSA_CLOUDSINGER_VORDRAKA)
+                    damage = urand(1, 2);
+
+            if (HealthBelowPct(85) && attacker->IsCreature())
+                if (attacker->GetEntry() == NPC_AYSA_CLOUDSINGER_VORDRAKA)
+                    me->SetHealth(me->GetHealth() + damage);
+
+            if (!_playerParticipating && attacker->ToPlayer())
+            {
+                if (Creature* creature = me->FindNearestCreature(NPC_AYSA_CLOUDSINGER_VORDRAKA, me->GetVisibilityRange(), true))
+                {
+                    creature->AI()->SetData(DATA_AYSA_TALK_INTRO, DATA_AYSA_TALK_INTRO);
+                    _playerParticipating = true;
+                }
+            }
+
+            if (damage >= me->GetHealth())
+            {
+                std::list<HostileReference*> threatList;
+                threatList = me->getThreatManager().getThreatList();
+                for (std::list<HostileReference*>::const_iterator itr = threatList.begin(); itr != threatList.end(); ++itr)
+                    if (Player* target = (*itr)->getTarget()->ToPlayer())
+                        if (target->GetQuestStatus(QUEST_AN_ANCIENT_EVIL) == QUEST_STATUS_INCOMPLETE)
+                            target->KilledMonsterCredit(me->GetEntry());
+            }
+        }
+
+        void JustDied(Unit* /*killer*/) override
+        {
+            std::list<Creature*> summonedAggressors;
+            me->GetCreatureListWithEntryInGrid(summonedAggressors, NPC_DEEPSCALE_AGGRESSOR, me->GetVisibilityRange());
+            for (std::list<Creature*>::const_iterator itr = summonedAggressors.begin(); itr != summonedAggressors.end(); ++itr)
+                (*itr)->ToCreature()->DespawnOrUnsummon(0);
+
+            if (Creature* creature = me->FindNearestCreature(NPC_AYSA_CLOUDSINGER_VORDRAKA, me->GetVisibilityRange(), true))
+                creature->AI()->SetData(DATA_VORDRAKA_DEATH, DATA_VORDRAKA_DEATH);
+
+            std::list<Player*> playersVisibility;
+            me->GetPlayerListInGrid(playersVisibility, me->GetVisibilityRange());
+            for (std::list<Player*>::const_iterator itr = playersVisibility.begin(); itr != playersVisibility.end(); ++itr)
+                (*itr)->CastSpell((*itr), SPELL_SEE_DEATH_INVIS, true);
+
+            DoCastSelf(SPELL_DEATH_INVIS, true);
+            me->DespawnOrUnsummon(20000, Seconds(1));
+        }
+
+        void UpdateAI(uint32 diff) override
+        {
+            _events.Update(diff);
+
+            if (!UpdateVictim())
+                return;
+
+            if (_aggressorSummoned == 0 && HealthBelowPct(60))
+            {
+                _events.ScheduleEvent(EVENT_SUMMON_AGGRESSOR, 0);
+                _events.ScheduleEvent(EVENT_SUMMON_AGGRESSOR, 0);
+            }
+
+            if (_aggressorSummoned == 2 && HealthBelowPct(30))
+            {
+                _events.ScheduleEvent(EVENT_SUMMON_AGGRESSOR, 0);
+                _events.ScheduleEvent(EVENT_SUMMON_AGGRESSOR, urand(1000, 5000));
+            }
+
+            while (uint32 eventId = _events.ExecuteEvent())
+            {
+                switch (eventId)
+                {
+                    case EVENT_SMASH:
+                        DoCastVictim(SPELL_DEEP_SEA_SMASH);
+                        _events.ScheduleEvent(EVENT_SMASH, 12000);
+                        if (_playerParticipating && !_smashAnnounced)
+                        {
+                            if (_secondSmash)
+                            {
+                                if (Creature* creature = me->FindNearestCreature(NPC_AYSA_CLOUDSINGER_VORDRAKA, me->GetVisibilityRange(), true))
+                                {
+                                    creature->AI()->SetData(DATA_AYSA_TALK_SMASH, DATA_AYSA_TALK_SMASH);
+                                    _smashAnnounced = true;
+                                }
+                            }
+                            _secondSmash = true;
+                        }
+                        break;
+                    case EVENT_RUPTURE:
+                        DoCast(SelectTarget(SELECT_TARGET_RANDOM, 1), SPELL_DEEP_SEA_RUPTURE);
+                        _events.ScheduleEvent(EVENT_RUPTURE, urand(12000, 16000));
+                        break;
+                    case EVENT_SUMMON_AGGRESSOR:
+                        DoCast(me, SPELL_FORCECAST_AGGRESSOR, true);
+                        if (_aggressorSummoned == 0)
+                            if (Creature* creature = me->FindNearestCreature(NPC_AYSA_CLOUDSINGER_VORDRAKA, me->GetVisibilityRange(), true))
+                                creature->AI()->SetData(DATA_SUMMON_AGGRESSORS, DATA_SUMMON_AGGRESSORS);
+                        _aggressorSummoned++;
+                        break;
+                }
+            }
+
+            DoMeleeAttackIfReady();
+        }
+
+    private:
+        EventMap _events;
+        bool _playerParticipating;
+        bool _secondSmash;
+        bool _smashAnnounced;
+        uint8 _aggressorSummoned;
+    };
+
+    CreatureAI* GetAI(Creature* creature) const override
+    {
+        return new npc_vordrakaAI(creature);
+    }
+};
+
 class spell_summon_deep_sea_aggressor : public SpellScriptLoader
 {
 public:
@@ -1637,7 +2211,7 @@ public:
             if (!entry || !properties || !duration)
                 return;
 
-            Position const SpawnPosition[15] =
+            Position const spawnPosition[15] =
             {
                 { 313.9983f, 3973.418f, 86.55342f },
                 { 249.4063f, 3972.389f, 75.72471f },
@@ -1656,7 +2230,7 @@ public:
                 { 301.6267f, 3923.195f, 87.80573f }
             };
 
-            if (TempSummon* summon = GetCaster()->GetMap()->SummonCreature(entry, SpawnPosition[urand(0, 14)], properties, duration, GetCaster()))
+            if (TempSummon* summon = GetCaster()->GetMap()->SummonCreature(entry, spawnPosition[urand(0, 14)], properties, duration, GetCaster()))
                 summon->SetTempSummonType(TEMPSUMMON_CORPSE_TIMED_DESPAWN);
         }
 
@@ -1672,15 +2246,305 @@ public:
     }
 };
 
-void AddSC_the_wandering_isle_TBE()
+class areatrigger_healing_sphere : public AreaTriggerEntityScript
 {
+public:
+    areatrigger_healing_sphere() : AreaTriggerEntityScript("areatrigger_healing_sphere") { }
+
+    struct areatrigger_healing_sphereAI : AreaTriggerAI
+    {
+        areatrigger_healing_sphereAI(AreaTrigger* areatrigger) : AreaTriggerAI(areatrigger) { }
+
+        void OnUnitEnter(Unit* /*unit*/) override
+        {
+            at->SetDuration(0);
+        }
+    };
+
+    AreaTriggerAI* GetAI(AreaTrigger* areatrigger) const override
+    {
+        return new areatrigger_healing_sphereAI(areatrigger);
+    }
+};
+
+enum NpcHealersActive
+{
+    DATA_HEALER_ACTIVE          = 1,
+    DATA_HEALER_DIED            = 2,
+    AREA_WRECK_OF_THE_SKYSEEKER = 5833,
+    WORLD_STATE_HEALERS_ACTIVE  = 6488
+};
+
+class npc_healers_active_bunny : public CreatureScript
+{
+public:
+    npc_healers_active_bunny() : CreatureScript("npc_healers_active_bunny") { }
+
+    struct npc_healers_active_bunnyAI : public ScriptedAI
+    {
+        npc_healers_active_bunnyAI(Creature* creature) : ScriptedAI(creature) { }
+
+        void Reset()
+        {
+            _healersActive = 0;
+        }
+
+        void SetData(uint32 id, uint32 value)
+        {
+            if (id == DATA_HEALER_ACTIVE)
+            {
+                if (_healersActive < 12)
+                    _healersActive += value;
+            }
+            else if (id == DATA_HEALER_DIED)
+            {
+                if (_healersActive > 0)
+                    _healersActive -= value;
+            }
+
+            Map::PlayerList const& playerList = me->GetMap()->GetPlayers();
+            if (playerList.isEmpty())
+                return;
+
+            for (Map::PlayerList::const_iterator itr = playerList.begin(); itr != playerList.end(); ++itr)
+                if (Player* player = itr->GetSource())
+                    if (player->GetAreaId() == AREA_WRECK_OF_THE_SKYSEEKER)
+                        player->SendUpdateWorldState(WORLD_STATE_HEALERS_ACTIVE, _healersActive);
+        }
+
+        uint32 GetData(uint32 id) const
+        {
+            if (id == DATA_HEALER_ACTIVE)
+                return _healersActive;
+
+            return 0;
+        }
+
+    private:
+        uint8 _healersActive;
+    };
+
+    CreatureAI* GetAI(Creature* creature) const override
+    {
+        return new npc_healers_active_bunnyAI(creature);
+    }
+};
+
+enum HealingShenzinSuSpells
+{
+    SPELL_HEALING_SHENZIN_SU_CREDIT = 108898
+};
+
+class spell_healing_shenzin_su : public SpellScriptLoader
+{
+public:
+    spell_healing_shenzin_su() : SpellScriptLoader("spell_healing_shenzin_su") { }
+
+    class spell_healing_shenzin_su_AuraScript : public AuraScript
+    {
+        PrepareAuraScript(spell_healing_shenzin_su_AuraScript);
+
+        void HandleEffectPeriodic(AuraEffect const* /*aurEff*/)
+        {
+            if (Unit* target = GetTarget())
+            {
+                // somehow get worldstate value, so the alternate power bar can fill based on active healers
+                target->ModifyPower(POWER_ALTERNATE_POWER, 700);
+
+                if (target->GetPowerPct(POWER_ALTERNATE_POWER) == 100)
+                {
+                    target->CastSpell(GetTarget(), SPELL_HEALING_SHENZIN_SU_CREDIT, true);
+                    target->RemoveAura(GetId());
+                }
+            }
+        }
+
+        void Register() override
+        {
+            OnEffectPeriodic += AuraEffectPeriodicFn(spell_healing_shenzin_su_AuraScript::HandleEffectPeriodic, EFFECT_1, SPELL_AURA_PERIODIC_DUMMY);
+        }
+    };
+
+    AuraScript* GetAuraScript() const override
+    {
+        return new spell_healing_shenzin_su_AuraScript();
+    }
+};
+
+enum TurtleHealedPhaseTimerSpells
+{
+    SPELL_TURTLE_HEALED_PHASE_UPDATE    = 118232
+};
+
+class spell_turtle_healed_phase_timer : public SpellScriptLoader
+{
+public:
+    spell_turtle_healed_phase_timer() : SpellScriptLoader("spell_turtle_healed_phase_timer") { }
+
+    class spell_turtle_healed_phase_timer_AuraScript : public AuraScript
+    {
+        PrepareAuraScript(spell_turtle_healed_phase_timer_AuraScript);
+
+        void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+        {
+            if (Unit* target = GetTarget())
+                if (target->IsPlayer())
+                    target->CastSpell(GetTarget(), SPELL_TURTLE_HEALED_PHASE_UPDATE, true);
+        }
+
+        void Register() override
+        {
+            AfterEffectRemove += AuraEffectRemoveFn(spell_turtle_healed_phase_timer_AuraScript::OnRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        }
+    };
+
+    AuraScript* GetAuraScript() const override
+    {
+        return new spell_turtle_healed_phase_timer_AuraScript();
+    }
+};
+
+enum AllyHordeArgumentNPCs
+{
+    NPC_KORGA_STRONGMANE    = 60888,
+    NPC_DELORA_LIONHEART    = 60889
+};
+
+class spell_ally_horde_argument : public SpellScriptLoader
+{
+public:
+    spell_ally_horde_argument() : SpellScriptLoader("spell_ally_horde_argument") { }
+
+    class spell_ally_horde_argument_AuraScript : public AuraScript
+    {
+        PrepareAuraScript(spell_ally_horde_argument_AuraScript);
+
+        void OnApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+        {
+            if (Unit* target = GetTarget())
+                if (Creature* creature = target->FindNearestCreature(NPC_KORGA_STRONGMANE, 40.0f, true))
+                    creature->AI()->Talk(0, target);
+        }
+
+        void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+        {
+            if (Unit* target = GetTarget())
+                if (Creature* creature = target->FindNearestCreature(NPC_DELORA_LIONHEART, 40.0f, true))
+                    creature->AI()->Talk(0, target);
+        }
+
+        void Register() override
+        {
+            OnEffectApply += AuraEffectApplyFn(spell_ally_horde_argument_AuraScript::OnApply, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+            OnEffectRemove += AuraEffectRemoveFn(spell_ally_horde_argument_AuraScript::OnRemove, EFFECT_1, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        }
+    };
+
+    AuraScript* GetAuraScript() const override
+    {
+        return new spell_ally_horde_argument_AuraScript();
+    }
+};
+
+class spell_pandaren_faction_choice : public SpellScriptLoader
+{
+public:
+    spell_pandaren_faction_choice() : SpellScriptLoader("spell_pandaren_faction_choice") { }
+
+    class spell_pandaren_faction_choice_SpellScript : public SpellScript
+    {
+        PrepareSpellScript(spell_pandaren_faction_choice_SpellScript);
+
+        void HandleScriptEffect(SpellEffIndex /*effIndex*/)
+        {
+            if (Unit* caster = GetCaster())
+                if (caster->IsPlayer())
+                    caster->ToPlayer()->ShowNeutralPlayerFactionSelectUI();
+        }
+
+        void Register() override
+        {
+            OnEffectHit += SpellEffectFn(spell_pandaren_faction_choice_SpellScript::HandleScriptEffect, EFFECT_0, SPELL_EFFECT_SCRIPT_EFFECT);
+        }
+    };
+
+    SpellScript* GetSpellScript() const override
+    {
+        return new spell_pandaren_faction_choice_SpellScript();
+    }
+};
+
+class spell_faction_choice_trigger : public SpellScriptLoader
+{
+public:
+    spell_faction_choice_trigger() : SpellScriptLoader("spell_faction_choice_trigger") { }
+
+    class spell_faction_choice_trigger_AuraScript : public AuraScript
+    {
+        PrepareAuraScript(spell_faction_choice_trigger_AuraScript);
+
+        void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+        {
+            if (Unit* target = GetTarget())
+                if (target->IsPlayer())
+                    target->CastSpell(target, GetSpellInfo()->GetEffect(EFFECT_0)->BasePoints, true);
+        }
+
+        void Register() override
+        {
+            OnEffectRemove += AuraEffectRemoveFn(spell_faction_choice_trigger_AuraScript::OnRemove, EFFECT_0, SPELL_AURA_SCREEN_EFFECT, AURA_EFFECT_HANDLE_REAL);
+        }
+    };
+
+    AuraScript* GetAuraScript() const override
+    {
+        return new spell_faction_choice_trigger_AuraScript();
+    }
+};
+
+enum BalloonExitTimerSpells
+{
+    SPELL_BALOON_EXIT_MOVIE = 132212
+};
+
+class spell_balloon_exit_timer : public SpellScriptLoader
+{
+public:
+    spell_balloon_exit_timer() : SpellScriptLoader("spell_balloon_exit_timer") { }
+
+    class spell_balloon_exit_timer_AuraScript : public AuraScript
+    {
+        PrepareAuraScript(spell_balloon_exit_timer_AuraScript);
+
+        void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+        {
+            if (Unit* target = GetTarget())
+                if (target->IsPlayer())
+                    target->CastSpell(target, SPELL_BALOON_EXIT_MOVIE, true);
+        }
+
+        void Register() override
+        {
+            OnEffectRemove += AuraEffectRemoveFn(spell_balloon_exit_timer_AuraScript::OnRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
+        }
+    };
+
+    AuraScript* GetAuraScript() const override
+    {
+        return new spell_balloon_exit_timer_AuraScript();
+    }
+};
+
+void AddSC_the_wandering_isle()
+{
+    new at_cave_of_meditation();
     new spell_summon_troublemaker();
     new spell_meditation_timer_bar();
     new spell_cave_of_scrolls_comp_timer_aura();
     new spell_summon_living_air();
     new spell_fan_the_flames();
+    new q_passion_of_shenzin_su();
     new at_singing_pools_transform();
-    //new npc_cursed_pool_controller();
     new npc_balance_pole();
     new npc_tushui_monk_on_pole();
     new at_singing_pools_training_bell();
@@ -1696,11 +2560,25 @@ void AddSC_the_wandering_isle_TBE()
     new spell_aysa_congrats_trigger_aura();
     new at_temple_of_five_dawns_summon_zhaoren();
     new spell_monkey_wisdom_text();
+    new spell_ruk_ruk_ooksplosions();
+    new npc_ruk_ruk();
+    new npc_ruk_ruk_rocket();
     new npc_zhaoren();
     new spell_master_shang_final_escort_say();
     new npc_shen_zin_shu_bunny();
     new spell_injured_sailor_feign_death();
     new spell_rescue_injured_sailor();
     new at_wreck_of_the_skyseeker_injured_sailor();
+    new npc_aysa_vordraka_fight();
+    new spell_tempered_fury();
+    new npc_vordraka();
     new spell_summon_deep_sea_aggressor();
+    new areatrigger_healing_sphere();
+    new npc_healers_active_bunny();
+    new spell_healing_shenzin_su();
+    new spell_turtle_healed_phase_timer();
+    new spell_ally_horde_argument();
+    new spell_pandaren_faction_choice();
+    new spell_faction_choice_trigger();
+    new spell_balloon_exit_timer();
 }

@@ -67,7 +67,7 @@ void AddSC_boss_xuen();
 void AddSC_boss_yu_lon();
 
 // Wandering Island
-void AddSC_the_wandering_isle_TBE();
+void AddSC_the_wandering_isle();
 
 // Zones
 void AddSC_dread_wastes();
@@ -132,7 +132,7 @@ void AddPandariaScripts()
     AddSC_boss_yu_lon();
 
     // Wandering Island
-    AddSC_the_wandering_isle_TBE();
+    AddSC_the_wandering_isle();
 
     // Zones
     AddSC_dread_wastes();
