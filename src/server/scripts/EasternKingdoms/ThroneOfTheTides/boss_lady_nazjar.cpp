@@ -143,7 +143,7 @@ public:
             }
         }
 
-        void JustSummoned(Creature * pcreat)
+        void JustSummoned(Creature* pcreat) override
         {
             if (pcreat->GetEntry() == NPC_SUMMONED_WATERSPOUT)
             {
@@ -156,7 +156,7 @@ public:
             }
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -171,7 +171,7 @@ public:
                 WaterSpoutPhaseTimer = 60000;
 
                 if (IsHeroic())
-                    DoTeleportTo(192.056f, 802.527f, 807.638f, 3.13f);
+                    me->NearTeleportTo(192.056f, 802.527f, 807.638f, 3.13f);
 
                 // Stop movement
                 SetCombatMovement(false);

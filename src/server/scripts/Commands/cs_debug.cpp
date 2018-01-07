@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -72,7 +72,7 @@ public:
             { "sellerror",     rbac::RBAC_PERM_COMMAND_DEBUG_SEND_SELLERROR,     false, &HandleDebugSendSellErrorCommand,       "" },
             { "setphaseshift", rbac::RBAC_PERM_COMMAND_DEBUG_SEND_SETPHASESHIFT, false, &HandleDebugSendSetPhaseShiftCommand,   "" },
             { "spellfail",     rbac::RBAC_PERM_COMMAND_DEBUG_SEND_SPELLFAIL,     false, &HandleDebugSendSpellFailCommand,       "" },
-            { "playerchoice",  rbac::RBAC_PERM_COMMAND_DEBUG_SEND_SPELLFAIL,     false, &HandleDebugSendPlayerChoiceCommand,    "" },
+            { "playerchoice",  rbac::RBAC_PERM_COMMAND_DEBUG_SEND_PLAYER_CHOICE, false, &HandleDebugSendPlayerChoiceCommand,    "" },
         };
         static std::vector<ChatCommand> debugMovementForceCommandTable =
         {
@@ -115,6 +115,7 @@ public:
             { "conversation" , rbac::RBAC_PERM_COMMAND_DEBUG_CONVERSATION,  false, &HandleDebugConversationCommand,     "" },
             { "criteria",      rbac::RBAC_PERM_COMMAND_DEBUG,               false, &HandleDebugCriteriaCommand,         "" },
             { "movementforce", rbac::RBAC_PERM_COMMAND_DEBUG_MOVEMENT_FORCE,false, nullptr,                             "", debugMovementForceCommandTable },
+            { "playercondition",rbac::RBAC_PERM_COMMAND_DEBUG,              false, &HandleDebugPlayerConditionCommand,  "" },
         };
         static std::vector<ChatCommand> commandTable =
         {
@@ -1659,6 +1660,26 @@ public:
         }
 
         unit->RemoveMovementForce(handler->GetSession()->GetPlayer()->GetGUID());
+        return true;
+    }
+
+    static bool HandleDebugPlayerConditionCommand(ChatHandler* handler, char const* args)
+    {
+        if (!args)
+            return false;
+
+        uint32 conditionId = atoi(args);
+        Player* player = handler->getSelectedPlayerOrSelf();
+
+        PlayerConditionEntry const* playerCondition = sPlayerConditionStore.LookupEntry(conditionId);
+        if (!playerCondition)
+            return false;
+
+        if (sConditionMgr->IsPlayerMeetingCondition(player, playerCondition))
+            handler->PSendSysMessage("True");
+        else
+            handler->PSendSysMessage("False");
+
         return true;
     }
 };

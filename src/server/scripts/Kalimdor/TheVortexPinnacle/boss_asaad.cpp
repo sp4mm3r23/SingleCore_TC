@@ -19,7 +19,7 @@
  * You should have received a copy of the GNU General Public License along
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
- 
+
  #include "InstanceScript.h"
 #include "ScriptMgr.h"
 #include "ScriptedCreature.h"
@@ -138,7 +138,7 @@ class boss_asaad : public CreatureScript
                 _JustDied();
             }
 
-            void JustReachedHome()
+            void JustReachedHome() override
             {
                 if (Creature *c = ObjectAccessor::GetCreature(*me, stormTargetGUID))
                     me->Kill(c);
@@ -203,13 +203,13 @@ class boss_asaad : public CreatureScript
                 }
             }
 
-            void SpellHitTarget(Unit* target, SpellInfo const* spell)
+            void SpellHitTarget(Unit* target, SpellInfo const* spell) override
             {
                 if (spell->Id == SPELL_STATIC_CLING && IsHeroic())
                     failedAchievementGUIDs.push_back(target->GetGUID());
             }
 
-            void UpdateAI(uint32 const diff) override
+            void UpdateAI(uint32 diff) override
             {
                 if (!UpdateVictim())
                     return;
@@ -370,7 +370,7 @@ class npc_asaad_grounding_field_trigger : public CreatureScript
                 summons.DespawnAll();
             }
 
-            void UpdateAI(uint32 const diff) override
+            void UpdateAI(uint32 diff) override
             {
                 if (pointId == 4 || isMoving)
                     return;
@@ -436,7 +436,7 @@ public:
             _events.ScheduleEvent(EVENT_ARCANE_BARRAGE, urand(3000, 10000));
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -558,7 +558,7 @@ public:
     {
         PrepareSpellScript(script_impl);
 
-        bool Load()
+        bool Load() override
         {
             return true;
         }
@@ -590,10 +590,9 @@ public :
     {
         PrepareSpellScript(spell_asaad_supremacy_entry_SpellScript);
 
-        Targets _targets;
         Position position[3];
 
-        bool Load()
+        bool Load() override
         {
             return true;
         }
@@ -636,10 +635,9 @@ public :
     {
         PrepareSpellScript(spell_asaad_supremacy_dummy_SpellScript);
 
-        Targets _targets;
         Position position[3];
 
-        bool Load()
+        bool Load() override
         {
             return true;
         }

@@ -88,7 +88,7 @@ class MurozondLandEvent : public BasicEvent
 class MurozondStartAttack : public BasicEvent
 {
     public:
-        MurozondStartAttack(Creature& owner, Position const& dest) : _owner(owner), _dest(dest) { }
+        MurozondStartAttack(Creature& owner) : _owner(owner) { }
 
         bool Execute(uint64 /*eventTime*/, uint32 /*updateTime*/) override
         {
@@ -98,7 +98,6 @@ class MurozondStartAttack : public BasicEvent
 
     private:
         Creature& _owner;
-        Position const& _dest;
 };
 
 class boss_murozond : public CreatureScript
@@ -146,11 +145,12 @@ class boss_murozond : public CreatureScript
                     DoAction(ACTION_MUROZOND_START);
                 }
 
-                if (Rewardchest = GetClosestGameObjectWithEntry(me, 209547, 500.0f))
+                Rewardchest = GetClosestGameObjectWithEntry(me, 209547, 500.0f);
+                if (Rewardchest != nullptr)
                     Rewardchest->SetPhaseMask(2, true);
             }
 
-            void JustReachedHome()
+            void JustReachedHome() override
             {
                 DoAction(ACTION_MUROZOND_REMOVE_TEMPORAL_BOMB);
             }
@@ -235,7 +235,7 @@ class boss_murozond : public CreatureScript
                 Summons.Summon(summon);
             }
 
-            void DoAction(int32 action)
+            void DoAction(int32 action) override
             {
                 switch (action)
                 {
@@ -255,7 +255,7 @@ class boss_murozond : public CreatureScript
                     me->SetReactState(REACT_PASSIVE);
                     float moveTime = me->GetExactDist(&MurozondFlyPos) / (me->GetSpeed(MOVE_FLIGHT) * 0.001f);
                     me->m_Events.AddEvent(new MurozondLandEvent(*me, MurozondLandPos), me->m_Events.CalculateTime(uint64(moveTime) + 250));
-                    me->m_Events.AddEvent(new MurozondStartAttack(*me, MurozondLandPos), me->m_Events.CalculateTime(uint64(moveTime) + 5250));
+                    me->m_Events.AddEvent(new MurozondStartAttack(*me), me->m_Events.CalculateTime(uint64(moveTime) + 5250));
                     me->GetMotionMaster()->MovePoint(POINT_MUROZOND_FLY_IN, MurozondFlyPos);
                     break;
                 }
@@ -435,7 +435,7 @@ public:
                             player->RemoveAura(80354);      // Time Warp
                             player->RemoveAura(102381);     // Temporal Blast
                             player->ToPlayer()->SetFullHealth();
-                            player->ToPlayer()->SetPower(player->getPowerType(), player->GetMaxPower(player->getPowerType()));
+                            player->ToPlayer()->SetFullPower(player->GetPowerType());
                         }
                     }
                 }

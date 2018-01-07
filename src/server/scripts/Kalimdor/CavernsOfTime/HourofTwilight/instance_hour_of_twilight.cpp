@@ -62,7 +62,7 @@ public:
         uint32 totalTrash;
         char msg[500];
 
-        void Initialize()
+        void Initialize() override
         {
             totalTrash = 0;
 
@@ -70,7 +70,7 @@ public:
                 uiEncounter[i] = NOT_STARTED;
         }
 
-        bool IsEncounterInProgress() const
+        bool IsEncounterInProgress() const override 
         {
             for (uint8 i = 0; i < ENCOUNTERS; ++i)
             {
@@ -80,7 +80,7 @@ public:
             return false;
         }
 
-        void OnPlayerEnter(Player* player)
+        void OnPlayerEnter(Player* player) override
         {
             if (!uiTeamInInstance)
                 uiTeamInInstance = player->GetTeam();
@@ -88,8 +88,6 @@ public:
 
         void OnCreatureCreate(Creature* pCreature) override
         {
-            Map::PlayerList const &players = instance->GetPlayers();
-
             switch (pCreature->GetEntry())
             {
                 case BOSS_ARCURION:
@@ -173,14 +171,14 @@ public:
                 case DATA_ARCURION:
                     uiEncounter[0] = data;
 
-                    if(uiEncounter[0] == IN_PROGRESS)
+                    /*if(uiEncounter[0] == IN_PROGRESS)
                     {
                         if (Creature* thrall = instance->GetCreature(uiThrall))
                         {
                             //thrall->AI()->DoAction(ACTION_START_ARCURION);
                         }
                     }
-                    else if(uiEncounter[0] == DONE)
+                    else */if(uiEncounter[0] == DONE)
                     {
                         if (Creature* thrall = instance->GetCreature(uiThrall))
                         {

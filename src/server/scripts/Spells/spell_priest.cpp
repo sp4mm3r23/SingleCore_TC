@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2017-2018 AshamaneProject <https://github.com/AshamaneProject>
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -396,7 +396,7 @@ class PowerCheck
         bool operator()(WorldObject* obj) const
         {
             if (Unit* target = obj->ToUnit())
-                return target->getPowerType() != _power;
+                return target->GetPowerType() != _power;
 
             return true;
         }

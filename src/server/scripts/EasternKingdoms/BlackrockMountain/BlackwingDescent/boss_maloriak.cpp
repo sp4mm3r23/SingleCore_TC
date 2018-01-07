@@ -231,7 +231,7 @@ public:
             events.ScheduleEvent(EVENT_BERSERK, me->GetMap()->IsHeroic() ? 720000 : 420000);
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim() || me->HasUnitState(UNIT_STATE_CASTING))
                 return;
@@ -691,7 +691,7 @@ public:
         Unit* target;
         uint32 timerChecktarget;
 
-        void IsSummonedBy(Unit* summoner)
+        void IsSummonedBy(Unit* summoner) override
         {
             target = summoner;
             timerChecktarget = 500;
@@ -702,7 +702,7 @@ public:
             me->AddAura(SPELL_FLASH_FREEZE_VISUAL, me);
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (timerChecktarget <= diff)
             {
@@ -750,7 +750,7 @@ public:
             events.ScheduleEvent(EVENT_ZERO_TRANSFORM, 500);
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
             if(!UpdateVictim())
                 return;
@@ -802,17 +802,17 @@ public:
     {
         PrepareSpellScript(spell_release_abberationsSpellScript);
 
-        bool Validate(SpellInfo const* /*spell*/)
+        bool Validate(SpellInfo const* /*spell*/) override
         {
             return true;
         }
 
-        bool Load()
+        bool Load() override
         {
             return true;
         }
 
-        void HandleDummy(SpellEffIndex effIndex)
+        void HandleDummy(SpellEffIndex /*effIndex*/)
         {
             if(Unit* caster = GetCaster())
                     for (uint8 i = 0; i<=2; i++)
@@ -825,7 +825,7 @@ public:
         }
     };
 
-    SpellScript *GetSpellScript() const
+    SpellScript* GetSpellScript() const override
     {
         return new spell_release_abberationsSpellScript();
     }
@@ -840,17 +840,17 @@ public:
     {
         PrepareSpellScript(spell_release_all_abberationsSpellScript);
 
-        bool Validate(SpellInfo const* /*spell*/)
+        bool Validate(SpellInfo const* /*spell*/) override
         {
             return true;
         }
 
-        bool Load()
+        bool Load() override
         {
             return true;
         }
 
-        void HandleDummy(SpellEffIndex effIndex)
+        void HandleDummy(SpellEffIndex /*effIndex*/)
         {
             if(Unit* caster = GetCaster())
                 for (uint8 i = 0; i < 2; i++)
@@ -863,7 +863,7 @@ public:
         }
     };
 
-    SpellScript *GetSpellScript() const
+    SpellScript* GetSpellScript() const override
     {
         return new spell_release_all_abberationsSpellScript();
     }

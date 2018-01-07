@@ -34,7 +34,7 @@ class npc_slipstream : public CreatureScript
 public:
     npc_slipstream() : CreatureScript("npc_slipstream") { }
 
-    bool OnGossipSelect(Player* player, Creature* creature, uint32 Sender, uint32 action) override
+    bool OnGossipSelect(Player* player, Creature* /*creature*/, uint32 Sender, uint32 action) override
     {
         player->PlayerTalkClass->ClearMenus();
 
@@ -54,7 +54,7 @@ public:
 
     bool OnGossipHello(Player* player, Creature* creature) override
     {
-        InstanceScript* instance = creature->GetInstanceScript();
+        //InstanceScript* instance = creature->GetInstanceScript();
 
         //if (instance && instance->GetData(DATA_GRAND_VIZIER_ERTAN)==DONE)
             AddGossipItemFor(player, GOSSIP_ICON_CHAT, "Teleport me to the first platform", GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+1);
@@ -69,7 +69,7 @@ class npc_slipstream_two : public CreatureScript
 public:
     npc_slipstream_two() : CreatureScript("npc_slipstream_two") { }
 
-    bool OnGossipSelect(Player* player, Creature* creature, uint32 Sender, uint32 action) override
+    bool OnGossipSelect(Player* player, Creature* /*creature*/, uint32 Sender, uint32 action) override
     {
         player->PlayerTalkClass->ClearMenus();
 
@@ -92,7 +92,7 @@ public:
 
     bool OnGossipHello(Player* player, Creature* creature) override
     {
-        InstanceScript* instance = creature->GetInstanceScript();
+        //InstanceScript* instance = creature->GetInstanceScript();
 
         //if (instance && instance->GetData(DATA_ALTAIRUS)==DONE)
             AddGossipItemFor(player, GOSSIP_ICON_CHAT, "Teleport me to the second platform", GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+1);
@@ -107,7 +107,7 @@ class mob_vortex_wind_rotation_manager : public CreatureScript
 public:
     mob_vortex_wind_rotation_manager() : CreatureScript("mob_vortex_wind_rotation_manager") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new mob_vortex_wind_rotation_managerAI(pCreature);
     }
@@ -142,14 +142,13 @@ public:
             Summons.DespawnAll();
         }
 
-        void DamageTaken(Unit* pDone_by, uint32& uiDamage) override
+        void DamageTaken(Unit* /*pDone_by*/, uint32& uiDamage) override
         {
             uiDamage = 0;
         }
 
-        void AttackStart(Unit *who)
+        void AttackStart(Unit* /*who*/) override
         {
-            return;
         }
 
         void JustSummoned(Creature* summoned) override
@@ -184,7 +183,7 @@ public:
                 start = true;
         }
 
-        void UpdateAI(uint32 const uiDiff) override
+        void UpdateAI(uint32 uiDiff) override
         {
             if (!start)
                 return;
@@ -230,7 +229,7 @@ class mob_wild_vortex : public CreatureScript
 public:
     mob_wild_vortex() : CreatureScript("mob_wild_vortex") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new mob_wild_vortexAI(pCreature);
     }
@@ -249,7 +248,7 @@ public:
             m_timer2 = 4000;
         }
 
-        void UpdateAI(uint32 const uiDiff) override
+        void UpdateAI(uint32 uiDiff) override
         {
             if (!UpdateVictim() || me->HasUnitState(UNIT_STATE_CASTING))
                 return;
@@ -294,7 +293,7 @@ class mob_golden_orb : public CreatureScript
 public:
     mob_golden_orb() : CreatureScript("mob_golden_orb") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new mob_golden_orbAI(pCreature);
     }
@@ -320,7 +319,7 @@ public:
             updateAch = true;
         }
 
-        void UpdateAI(uint32 const uiDiff) override
+        void UpdateAI(uint32 /*uiDiff*/) override
         {
         }
 

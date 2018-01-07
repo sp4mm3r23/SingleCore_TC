@@ -159,7 +159,7 @@ public:
             summon->SetInCombatWithZone();
         }
 
-        void JustDied(Unit * /*victim*/)
+        void JustDied(Unit* /*victim*/) override
         {
             events.Reset();
             summons.DespawnAll();
@@ -213,7 +213,7 @@ public:
             }
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim() || me->HasUnitState(UNIT_STATE_CASTING))
                 return;
@@ -293,9 +293,9 @@ public:
             dragahGUID = ObjectGuid::Empty;
         }
 
-        void EnterCombat(Unit* /*pWho*/) {}
+        void EnterCombat(Unit* /*pWho*/) override { }
 
-        void DamageTaken(Unit* done_by, uint32&damage) override
+        void DamageTaken(Unit* /*done_by*/, uint32& /*damage*/) override
         {
             if (!HealthAbovePct(20))
             {
@@ -318,13 +318,13 @@ public:
                 summon->AI()->DoZoneInCombat();
         }
 
-        void IsSummonedBy(Unit* summoner)
+        void IsSummonedBy(Unit* summoner) override
         {
             dragahGUID = summoner->GetGUID();
             me->SetReactState(REACT_PASSIVE);
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim() || me-> HasUnitState(UNIT_STATE_CASTING))
                 return;
@@ -463,10 +463,10 @@ public:
             checkTargetTimer = 1000;
         }
 
-        void IsSummonedBy(Unit* summoner)
+        void IsSummonedBy(Unit* /*summoner*/) override
         {
             DoZoneInCombat();
-            if (Player *player = me->SelectNearestPlayer(100))
+            if (Player* player = me->SelectNearestPlayer(100))
             {
                 me->SetReactState(REACT_PASSIVE);
                 me->CastSpell(player, SPELL_CONCENTRATE_FIRE_AURA, true);
@@ -476,7 +476,7 @@ public:
             }
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return ;
@@ -497,7 +497,6 @@ public:
     private :
         ObjectGuid targetGUID;
         uint32 checkTargetTimer;
-        bool first;
     };
 };
 

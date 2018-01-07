@@ -60,7 +60,7 @@ public:
         return new npc_ZapnozzleAI(creature);
     }
 
-    bool OnQuestReward(Player* player, Creature* creature, const Quest *_Quest, uint32 ) override
+    bool OnQuestReward(Player* /*player*/, Creature* creature, const Quest *_Quest, uint32 ) override
     {
         if (_Quest->GetQuestId() == 14239)
             creature->AI()->DoAction(1);
@@ -87,7 +87,7 @@ public:
                 isEventInProgress = true;
         }
 
-        void SpellHit(Unit* caster, const SpellInfo* spell) override
+        void SpellHit(Unit* /*caster*/, const SpellInfo* /*spell*/) override
         {
         }
 
@@ -96,19 +96,13 @@ public:
 
         }
 
-        void WaypointReached(uint32)
-        {
-
-        }
-
-
         void MovementInform(uint32 /*type*/, uint32 id) override
         {
             if (id == 1)
                 me->DespawnOrUnsummon();
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!isEventInProgress)
             {
@@ -208,7 +202,7 @@ class npc_Mechumide : public CreatureScript
 public:
     npc_Mechumide() : CreatureScript("npc_Mechumide") { }
 
-    bool OnQuestAccept(Player* player, Creature* creature, Quest const*_Quest) override
+    bool OnQuestAccept(Player* player, Creature* /*creature*/, Quest const*_Quest) override
     {
         if (_Quest->GetQuestId() == 14021)
         {
@@ -301,7 +295,7 @@ public:
         {
             if (m_ui_attack <= diff)
             {
-                if (Creature *cb = me->FindNearestCreature(35812, 10, true))
+                if (me->FindNearestCreature(35812, 10, true))
                     SetHoldState(true);
                 else
                     SetHoldState(false);
@@ -314,9 +308,6 @@ public:
 
     private :
         uint32 m_ui_attack;
-        uint32 krennansay;
-        bool AfterJump;
-
   };
 
   CreatureAI* GetAI(Creature* creature) const override
@@ -337,7 +328,7 @@ public:
     {
         PrepareSpellScript(spell_68281SpellScript);
 
-        bool Validate(SpellInfo const* spellEntry) override
+        bool Validate(SpellInfo const* /*spellEntry*/) override
         {
             st = false;
             st2 = false;
@@ -367,7 +358,7 @@ public:
             st = true;
         }
 
-        void Unload()
+        void Unload() override
         {
             if (GetCastItem())
                 if (Unit* caster = GetCastItem()->GetOwner())
@@ -384,7 +375,7 @@ public:
         }
     };
 
-    SpellScript *GetSpellScript() const
+    SpellScript* GetSpellScript() const override
     {
         return new spell_68281SpellScript();
     }
@@ -407,14 +398,14 @@ public:
             isRandomMoving = false;
         }
 
-        void DoAction(const int32 param) override
+        void DoAction(const int32 /*param*/) override
         {
             isActive = false;
             canCastRocket = false;
             me->CastSpell(me, 67919, true);
         }
 
-        void SpellHit(Unit* caster, const SpellInfo* spell) override
+        void SpellHit(Unit* /*caster*/, const SpellInfo* spell) override
         {
             if (spell->Id == 67917)
             {
@@ -447,7 +438,7 @@ public:
                 me->CastSpell(me, 8858, true);
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!isActive)
                 return;
@@ -542,7 +533,7 @@ public:
                 c->ToCreature()->AI()->Talk(irand(0, 7));
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 /*diff*/) override
         {
         }
     };
@@ -553,7 +544,7 @@ class npc_killag_sangrecroc : public CreatureScript
 public:
     npc_killag_sangrecroc() : CreatureScript("npc_killag_sangrecroc") { }
 
-    bool OnQuestAccept(Player* player, Creature* creature, const Quest *_Quest) override
+    bool OnQuestAccept(Player* player, Creature* /*creature*/, const Quest *_Quest) override
     {
         if (_Quest->GetQuestId() == 14240)
         {
@@ -575,7 +566,7 @@ public:
         return true;
     }
 
-    bool OnQuestReward(Player* player, Creature* creature, const Quest *_Quest, uint32 ) override
+    bool OnQuestReward(Player* player, Creature* /*creature*/, const Quest *_Quest, uint32 ) override
     {
         if (_Quest->GetQuestId() == 14238)
         {
@@ -606,7 +597,7 @@ public:
         {
         }
 
-        void PassengerBoarded(Unit* who, int8 /*seatId*/, bool apply) override
+        void PassengerBoarded(Unit* who, int8 /*seatId*/, bool /*apply*/) override
         {
             if (who->GetTypeId() == TYPEID_PLAYER)
                 Start(false, true, who->GetGUID());
@@ -633,7 +624,7 @@ public:
         {
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
             npc_escortAI::UpdateAI(diff);
         }
@@ -696,7 +687,7 @@ public:
             isBoarded = false;
         }
 
-        void PassengerBoarded(Unit* who, int8 /*seatId*/, bool apply) override
+        void PassengerBoarded(Unit* /*who*/, int8 /*seatId*/, bool /*apply*/) override
         {
             me->SetCanFly(true);
             me->SetSpeed(MOVE_FLIGHT, 3.0f);
@@ -707,12 +698,12 @@ public:
             me->SetCanFly(true);
             switch(i)
             {
-            case 19:
-                me->GetVehicleKit()->RemoveAllPassengers();
-                me->DespawnOrUnsummon();
-                break;
-            default:
-                break;
+                case 19:
+                    me->GetVehicleKit()->RemoveAllPassengers();
+                    me->DespawnOrUnsummon();
+                    break;
+                default:
+                    break;
             }
         }
 
@@ -725,12 +716,12 @@ public:
         {
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
             npc_escortAI::UpdateAI(diff);
         }
 
-        void UpdateEscortAI(const uint32 diff) override
+        void UpdateEscortAI(const uint32 /*diff*/) override
         {
         }
 
@@ -781,7 +772,7 @@ public:
                 me->RemoveAura(68436);
         }
 
-        void WaypointReached(uint32 i) override
+        void WaypointReached(uint32 /*i*/) override
         {
             me->SetCanFly(true);
         }
@@ -794,7 +785,7 @@ public:
         {
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
             npc_escortAI::UpdateAI(diff);
         }
@@ -914,7 +905,7 @@ public:
         {
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
             npc_escortAI::UpdateAI(diff);
         }
@@ -971,11 +962,11 @@ public:
             cnt = 6;
         }
 
-        void DoAction(const int32 param) override
+        void DoAction(const int32 /*param*/) override
         {
         }
 
-        void SpellHit(Unit* caster, const SpellInfo* spell) override
+        void SpellHit(Unit* /*caster*/, const SpellInfo* /*spell*/) override
         {
         }
 
@@ -984,17 +975,11 @@ public:
 
         }
 
-        void WaypointReached(uint32)
-        {
-
-        }
-
-
-        void MovementInform(uint32 /*type*/, uint32 id) override
+        void MovementInform(uint32 /*type*/, uint32 /*id*/) override
         {
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (mui_talk <= diff)
             {
@@ -1037,12 +1022,12 @@ public:
             me->GetMotionMaster()->MoveRandom(10.0f);
         }
 
-        void DoAction(const int32 param) override
+        void DoAction(const int32 /*param*/) override
         {
             me->CastSpell(me, 67919, true);
         }
 
-        void SpellHit(Unit* caster, const SpellInfo* spell) override
+        void SpellHit(Unit* /*caster*/, const SpellInfo* spell) override
         {
             if (spell->Id == 67917)
             {
@@ -1058,7 +1043,7 @@ public:
             }
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 /*diff*/) override
         {
         }
     };
@@ -1080,7 +1065,7 @@ public:
     {
         PrepareSpellScript(spell_egg_gobSpellScript);
 
-        bool Validate(SpellInfo const* spellEntry) override
+        bool Validate(SpellInfo const* /*spellEntry*/) override
         {
             return true;
         }
@@ -1100,7 +1085,7 @@ public:
         }
 
 
-        void HandleActivateGameobject(SpellEffIndex effIndex)
+        void HandleActivateGameobject(SpellEffIndex /*effIndex*/)
         {
 
         }
@@ -1112,7 +1097,7 @@ public:
         }
     };
 
-    SpellScript *GetSpellScript() const
+    SpellScript* GetSpellScript() const override
     {
         return new spell_egg_gobSpellScript();
     }
@@ -1152,7 +1137,7 @@ public:
         {
             if (param == 1)
             {
-                if (go = me->FindNearestGameObject(GO_PIEGE, 25))
+                if (GameObject* go = me->FindNearestGameObject(GO_PIEGE, 25))
                 {
                     start = false;
                     me->CastSpell(me, 66726, true);
@@ -1161,15 +1146,13 @@ public:
             }
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 /*diff*/) override
         {
             DoMeleeAttackIfReady();
         }
 
     private :
         bool start;
-        GameObject* go;
-
     };
 };
 
@@ -1251,7 +1234,7 @@ public:
             me->GetMotionMaster()->MoveRandom(5);
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (ui_findPlayer <= diff)
             {
@@ -1342,7 +1325,7 @@ class npc_megs_isle_gob : public CreatureScript
 public:
     npc_megs_isle_gob() : CreatureScript("npc_megs_isle_gob") { }
 
-    bool OnQuestAccept(Player* player, Creature* creature, const Quest *_Quest) override
+    bool OnQuestAccept(Player* player, Creature* /*creature*/, const Quest *_Quest) override
     {
         if (_Quest->GetQuestId() == 24868)
             player->SummonCreature(NPC_CRACK, player->GetPositionX(), player->GetPositionY(),  player->GetPositionZ(),  player->GetOrientation(), TEMPSUMMON_MANUAL_DESPAWN);
@@ -1411,7 +1394,7 @@ public:
             event_p = 0;
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!start)
             {
@@ -1419,10 +1402,11 @@ public:
                 {
                     if (Creature *zone = me->FindNearestCreature(38450, 3))
                     {
-                        if (Player *player =  ObjectAccessor::GetPlayer(*me, playerGUID))
+                        if (Player* player =  ObjectAccessor::GetPlayer(*me, playerGUID))
                         {
                             me->Say(CRACK_PROVOC, LANG_UNIVERSAL, player);
-                            if (naga = player->SummonCreature(38448, zone->GetPositionX(), zone->GetPositionY(), zone->GetPositionZ() + 2, zone->GetOrientation(), TEMPSUMMON_CORPSE_TIMED_DESPAWN, 60*IN_MILLISECONDS))
+                            naga = player->SummonCreature(38448, zone->GetPositionX(), zone->GetPositionY(), zone->GetPositionZ() + 2, zone->GetOrientation(), TEMPSUMMON_CORPSE_TIMED_DESPAWN, 60 * IN_MILLISECONDS);
+                            if (naga)
                                 naga->setFaction(35);
                         }
                         zone->DespawnOrUnsummon();
@@ -1524,11 +1508,11 @@ public:
         {
             damage = 0;
         }
-        void PassengerBoarded(Unit* who, int8 /*seatId*/, bool apply) override
+        void PassengerBoarded(Unit* /*who*/, int8 /*seatId*/, bool /*apply*/) override
         {
         }
 
-        void WaypointReached(uint32 i) override
+        void WaypointReached(uint32 /*i*/) override
         {
         }
 
@@ -1540,7 +1524,7 @@ public:
         {
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
             npc_escortAI::UpdateAI(diff);
         }
@@ -1609,14 +1593,6 @@ public:
             if (spell->Id == 72207)
                 caster->Kill(me);
         }
-
-        void UpdateAI(const uint32 diff) override
-        {
-            if (!UpdateVictim())
-                return ;
-            DoMeleeAttackIfReady();
-        }
-
     };
 };
 
@@ -1625,7 +1601,7 @@ class npc_ceint : public CreatureScript
 public:
     npc_ceint() : CreatureScript("npc_ceint") { }
 
-    bool OnQuestReward(Player* player, Creature* creature, const Quest *_Quest, uint32 ) override
+    bool OnQuestReward(Player* player, Creature* /*creature*/, const Quest *_Quest, uint32 ) override
     {
         if (_Quest->GetQuestId() == 24942)
         {
@@ -1650,7 +1626,7 @@ public:
     {
         PrepareSpellScript(spell_boot_gobSpellScript);
 
-        bool Validate(SpellInfo const* spellEntry) override
+        bool Validate(SpellInfo const* /*spellEntry*/) override
         {
             st = false;
             return true;
@@ -1678,7 +1654,7 @@ public:
         }
     };
 
-    SpellScript *GetSpellScript() const
+    SpellScript* GetSpellScript() const override
     {
         return new spell_boot_gobSpellScript();
     }
@@ -1750,8 +1726,9 @@ public:
                     chipie->Say("WE BURN !!", LANG_UNIVERSAL, 0);
                     break;
                 case 17 :
-                    Creature *chipie;
-                    Player *player;
+                {
+                    Creature* chipie = nullptr;
+                    Player* player = nullptr;
                     if (Unit *unit = me->GetVehicleKit()->GetPassenger(0))
                         chipie = unit->ToCreature();
                     if (Unit *unit = me->GetVehicleKit()->GetPassenger(1))
@@ -1765,12 +1742,15 @@ public:
                     }
                     chipie->Say("Climb in the back. We're going. I know where are our old friends the orcs", LANG_UNIVERSAL, 0);
                     break;
+                }
                 case 26 :
+                {
                     me->GetVehicleKit()->RemoveAllPassengers();
                     if (Creature *chip = me->FindNearestCreature(38869, 5, true))
-                     chip->DespawnOrUnsummon();
+                        chip->DespawnOrUnsummon();
                     me->DespawnOrUnsummon();
                     break;
+                }
                 default:
                     break;
             }
@@ -1784,7 +1764,7 @@ public:
         {
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
             npc_escortAI::UpdateAI(diff);
         }
@@ -1815,11 +1795,11 @@ public:
             mui_soufle = 2000;
         }
 
-        void JustDied(Unit* killer) override
+        void JustDied(Unit* /*killer*/) override
         {
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (mui_soufle <= diff)
             {
@@ -1867,7 +1847,7 @@ public:
 
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (_a <= diff)
             {
@@ -1914,11 +1894,11 @@ public:
             mui_soufle = urand(1100, 2000);
         }
 
-        void JustDied(Unit* killer) override
+        void JustDied(Unit* /*killer*/) override
         {
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (mui_soufle <= diff)
             {
@@ -1947,7 +1927,7 @@ class npc_killag_2 : public CreatureScript
 public:
     npc_killag_2() : CreatureScript("npc_killag_2") { }
 
-    bool OnQuestAccept(Player* player, Creature* creature, const Quest *_Quest) override
+    bool OnQuestAccept(Player* player, Creature* /*creature*/, const Quest *_Quest) override
     {
         if (_Quest->GetQuestId() == 25100)
         {
@@ -2040,7 +2020,7 @@ public:
         {
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
             npc_escortAI::UpdateAI(diff);
         }
@@ -2096,7 +2076,7 @@ class npc_grilly_2 : public CreatureScript
 public:
     npc_grilly_2() : CreatureScript("npc_grilly_2") { }
 
-    bool OnQuestAccept(Player* player, Creature* creature, const Quest *_Quest) override
+    bool OnQuestAccept(Player* player, Creature* /*creature*/, const Quest *_Quest) override
     {
         if (_Quest->GetQuestId() == 25213)
         {
@@ -2176,7 +2156,7 @@ public:
             }
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!isEventInProgress)
                 return;
@@ -2187,39 +2167,39 @@ public:
                     mui_talk = 10000;
                     switch (eventTalk)
                     {
-                    case 0 :
-                        //          Talk(-1039590, me);
-                        break;
-                    case 1 :
-                        if (Creature *c = me->FindNearestCreature(39594, 30))
-                        {
-                            //              Talk(-1039591, c);
-                        }
-                        break;
-                    case 2 :
-                        //          Talk(-1039589, me);
-                        break;
-                    case 3 :
-                        if (Creature *c = me->FindNearestCreature(39594, 30))
-                        {
-                            //              Talk(-1039592, c);
-                        }
-                        break;
-                    case 4 :
-                        if (Creature *c = me->FindNearestCreature(39594, 30))
-                        {
-                            //              Talk(-1039593, c);
-                        }
-                        break;
-                    case 5 :
-                        me->DespawnOrUnsummon();
-                        if (Creature *c = me->FindNearestCreature(39594, 30))
-                        {
-                            c->DespawnOrUnsummon();
-                        }
-                        break;
-                    default :
-                        break;
+                        case 0 :
+                            //          Talk(-1039590, me);
+                            break;
+                        case 1 :
+                            /*if (Creature *c = me->FindNearestCreature(39594, 30))
+                            {
+                                //              Talk(-1039591, c);
+                            }*/
+                            break;
+                        case 2 :
+                            //          Talk(-1039589, me);
+                            break;
+                        case 3 :
+                            /*if (Creature *c = me->FindNearestCreature(39594, 30))
+                            {
+                                //              Talk(-1039592, c);
+                            }*/
+                            break;
+                        case 4 :
+                            /*if (Creature *c = me->FindNearestCreature(39594, 30))
+                            {
+                                //              Talk(-1039593, c);
+                            }*/
+                            break;
+                        case 5 :
+                            me->DespawnOrUnsummon();
+                            if (Creature *c = me->FindNearestCreature(39594, 30))
+                            {
+                                c->DespawnOrUnsummon();
+                            }
+                            break;
+                        default :
+                            break;
                     }
                     eventTalk++;
                 }
@@ -2269,7 +2249,6 @@ public:
         bool isEventInProgress, start, end;
         uint32 mui_talk, mui_talk2, mui1, mui2, mui3, mui4, mui5;
         unsigned int eventTalk, eventTalk2;
-        Player *player;
     };
 };
 
@@ -2279,7 +2258,7 @@ class npc_boot : public CreatureScript
 public:
   npc_boot() : CreatureScript("npc_boot") { }
 
-  bool OnQuestAccept(Player* player, Creature* creature, const Quest *_Quest) override
+  bool OnQuestAccept(Player* player, Creature* /*creature*/, const Quest *_Quest) override
   {
     if (_Quest->GetQuestId() == 25265)
     {

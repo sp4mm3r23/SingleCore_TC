@@ -90,7 +90,7 @@ class boss_commander_springvale : public CreatureScript
             Talk(RAND(SAY_KILL_1, SAY_KILL_2));
         }
 
-        void SpellHit(Unit* hitter, const SpellInfo* spell)
+        void SpellHit(Unit* hitter, const SpellInfo* spell) override
         {
             if (!hitter || !spell)
                 return;
@@ -112,7 +112,7 @@ class boss_commander_springvale : public CreatureScript
                 events.ScheduleEvent(EVENT_SUMMONS, 40000);
         }
 
-        void JustSummoned(Creature* pSummon)
+        void JustSummoned(Creature* pSummon) override
         {
             if (Unit* pTarget = SelectTarget(SELECT_TARGET_RANDOM,0))
                 pSummon->AI()->AttackStart(pTarget);
@@ -133,7 +133,7 @@ class boss_commander_springvale : public CreatureScript
             SummonList.clear();
         }
 
-        void JustDied(Unit * /*killer*/)
+        void JustDied(Unit* /*killer*/) override
         {
             Talk(SAY_DEATH);
             RemoveSummons();
@@ -143,7 +143,7 @@ class boss_commander_springvale : public CreatureScript
                 instance->DoCompleteAchievement(ACHIEVEMENT_TO_THE_GROUND);
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if(!UpdateVictim())
                 return;
@@ -199,7 +199,7 @@ class boss_commander_springvale : public CreatureScript
 public:
     boss_commander_springvale() : CreatureScript("boss_commander_springvale") {}
 
-    CreatureAI * GetAI(Creature * creature) const
+    CreatureAI* GetAI(Creature* creature) const override
     {
         return new boss_commander_springvaleAI(creature);
     }
@@ -214,7 +214,7 @@ public:
     {
         PrepareAuraScript(spell_springvale_forsaken_ability_AuraScript);
 
-        void HandleEffectPeriodic(AuraEffect const* aurEff)
+        void HandleEffectPeriodic(AuraEffect const* /*aurEff*/)
         {
             if (!GetCaster() || !GetTarget())
                 return;

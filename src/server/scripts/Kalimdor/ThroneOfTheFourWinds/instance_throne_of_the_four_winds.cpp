@@ -92,7 +92,7 @@ public:
         uint8 AlakirFlightData;
 
 
-        void Initialize()
+        void Initialize() override
         {
             for (uint8 i = 0; i < ENCOUNTERS; ++i)
                 Encounter[i] = NOT_STARTED;
@@ -102,10 +102,9 @@ public:
             AlakirFlightData = 0;
         }
 
-        void Update(uint32 diff) { }
+        void Update(uint32 /*diff*/) override { }
 
-
-        void OnPlayerEnter(Player* player)
+        void OnPlayerEnter(Player* player) override
         {
             if (GetData(DATA_ALAKIR_EVENT) == DONE)
             {
@@ -114,7 +113,7 @@ public:
             }
         }
 
-        bool IsEncounterInProgress() const
+        bool IsEncounterInProgress() const override 
         {
             for (uint8 i = 0; i < ENCOUNTERS; ++i)
             {
@@ -326,12 +325,15 @@ public:
                 case DATA_ALAKIR_FLIGHT_PHASE:
                     if (data == NOT_STARTED)
                     {
-                        if (GameObject* go = instance->GetGameObject(AnshalPlatform))
-                        if (GameObject* go = instance->GetGameObject(NezirPlatform))
-                        if (GameObject* go = instance->GetGameObject(RohashPlatform))
-                        if (GameObject* go = instance->GetGameObject(SkyWallRaid))
+                        if (GameObject* go1 = instance->GetGameObject(AnshalPlatform))
+                        if (GameObject* go2 = instance->GetGameObject(NezirPlatform))
+                        if (GameObject* go3 = instance->GetGameObject(RohashPlatform))
+                        if (GameObject* go4 = instance->GetGameObject(SkyWallRaid))
                         {
-                            go->SetGoState(GO_STATE_READY);
+                            go1->SetGoState(GO_STATE_READY);
+                            go2->SetGoState(GO_STATE_READY);
+                            go3->SetGoState(GO_STATE_READY);
+                            go4->SetGoState(GO_STATE_READY);
                         }
                     }
 
@@ -395,7 +397,7 @@ public:
             return true;
         }
 
-        uint32 GetData(uint32 type) const
+        uint32 GetData(uint32 type) const override 
         {
             switch (type)
             {
@@ -449,6 +451,8 @@ public:
                     return SPELL_WIND_CHILL_10H;
                 case DIFFICULTY_25_HC:
                     return SPELL_WIND_CHILL_25H;
+                default:
+                    break;
             }
             return 0;
         }

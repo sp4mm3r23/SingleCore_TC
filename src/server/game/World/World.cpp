@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -1613,9 +1613,6 @@ void World::SetInitialWorldSettings()
     TC_LOG_INFO("server.loading", "Loading SpellInfo custom attributes...");
     sSpellMgr->LoadSpellInfoCustomAttributes();
 
-    TC_LOG_INFO("server.loading", "Loading SpellInfo SpellSpecific and AuraState...");
-    sSpellMgr->LoadSpellInfoSpellSpecificAndAuraState();
-
     TC_LOG_INFO("server.loading", "Loading SpellInfo diminishing infos...");
     sSpellMgr->LoadSpellInfoDiminishing();
 
@@ -1682,6 +1679,9 @@ void World::SetInitialWorldSettings()
 
     TC_LOG_INFO("server.loading", "Loading Spell Learn Skills...");
     sSpellMgr->LoadSpellLearnSkills();                           // must be after LoadSpellRanks
+
+    TC_LOG_INFO("server.loading", "Loading SpellInfo SpellSpecific and AuraState...");
+    sSpellMgr->LoadSpellInfoSpellSpecificAndAuraState();         // must be after LoadSpellRanks
 
     TC_LOG_INFO("server.loading", "Loading Spell Learn Spells...");
     sSpellMgr->LoadSpellLearnSpells();
@@ -1877,6 +1877,9 @@ void World::SetInitialWorldSettings()
 
     TC_LOG_INFO("server.loading", "Loading Player Choices...");
     sObjectMgr->LoadPlayerChoices();
+
+    TC_LOG_INFO("server.loading", "Loading Player Choices Locales...");
+    sObjectMgr->LoadPlayerChoicesLocale();
 
     CharacterDatabaseCleaner::CleanDatabase();
 
@@ -2110,7 +2113,7 @@ void World::SetInitialWorldSettings()
 
     m_timers[WUPDATE_BLACKMARKET].SetInterval(10 * IN_MILLISECONDS);
 
-    m_timers[WUPDATE_WORLD_QUEST].SetInterval(0);
+    m_timers[WUPDATE_WORLD_QUEST].SetInterval(1 * MINUTE * IN_MILLISECONDS);
 
     blackmarket_timer = 0;
 
@@ -2220,8 +2223,8 @@ void World::SetInitialWorldSettings()
     TC_LOG_INFO("server.loading", "Loading scenario poi data");
     sScenarioMgr->LoadScenarioPOI();
 
-    TC_LOG_INFO("server.loading", "Loading world quests status...");
-    sWorldQuestMgr->LoadQuestsStatus();
+    TC_LOG_INFO("server.loading", "Loading active world quests...");
+    sWorldQuestMgr->LoadActiveWorldQuests();
 
     // Preload all cells, if required for the base maps
     if (sWorld->getBoolConfig(CONFIG_BASEMAP_LOAD_GRIDS))
@@ -2410,9 +2413,7 @@ void World::Update(uint32 diff)
 
     if (m_timers[WUPDATE_WORLD_QUEST].Passed())
     {
-        uint32 interval = MINUTE * IN_MILLISECONDS;
-        sWorldQuestMgr->Update(interval);
-        m_timers[WUPDATE_WORLD_QUEST].SetInterval(interval);
+        sWorldQuestMgr->Update();
         m_timers[WUPDATE_WORLD_QUEST].Reset();
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -310,6 +310,7 @@ struct TC_GAME_API CreatureTemplate
     std::string  Name;
     std::string FemaleName;
     std::string  SubName;
+    std::string  TitleAlt;
     std::string  IconName;
     uint32  GossipMenuId;
     int16   minlevel;

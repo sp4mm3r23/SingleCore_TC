@@ -152,11 +152,11 @@ class npc_trall_vs_ultraxion : public CreatureScript
             void MoveInLineOfSight(Unit* who) override
             {
                 if (!phase && me->GetExactDist(who) < 10.0f)
-                    if (Player* player = who->ToPlayer())
+                    if (who->IsPlayer())
                         phase = 1;
             }
 
-            void DoAction(int32 action)
+            void DoAction(int32 action) override
             {
                 switch (action)
                 {
@@ -180,7 +180,6 @@ class npc_trall_vs_ultraxion : public CreatureScript
                     Creature* kalec = me->FindNearestCreature(NPC_KALECGOS, 50.0f, true);
                     Creature* alexs = me->FindNearestCreature(NPC_ALEXTRASZA_THE_LIFE_BINDER, 50.0f, true);
                     Creature* ysera = me->FindNearestCreature(NPC_YSERA_THE_AWAKENED, 50.0f, true);
-                    Creature* noz = me->FindNearestCreature(NPC_NOZDORMU_THE_TIMELESS_ONE, 50.0f, true);
                     Creature* portal = me->FindNearestCreature(NPC_TRAVEL_TO_EYE_OF_ETERNITY, 50.0f);
                     Creature* soul = me->FindNearestCreature(NPC_THE_DRAGON_SOUL, 50.0f);
                     switch (phase)
@@ -235,13 +234,11 @@ class npc_trall_vs_ultraxion : public CreatureScript
                 InstanceScript* instance;
                 int8 phase;
                 uint32 timer;
-                bool prehagara;
-
         };
 
         bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 /*action*/) override
         {
-            if (Creature* deathwing = creature->FindNearestCreature(NPC_DEATHWING_PREULTRAXION, 1000.0f, true))
+            if (creature->FindNearestCreature(NPC_DEATHWING_PREULTRAXION, 1000.0f, true))
             {
                 player->PlayerTalkClass->ClearMenus();
                 CloseGossipMenuFor(player);
@@ -306,12 +303,12 @@ class npc_ysera : public CreatureScript
             void MoveInLineOfSight(Unit* who) override
             {
                 if (!phase && me->GetExactDist(who) < 5.0f)
-                    if (Player* player = who->ToPlayer())
+                    if (who->IsPlayer())
                         if (instance->GetBossState(DATA_HAGARA) == DONE)
                             phase = 1;
             }
 
-            void DoAction(int32 action)
+            void DoAction(int32 action) override
             {
                 switch (action)
                 {
@@ -340,7 +337,6 @@ class npc_ysera : public CreatureScript
                     Creature* alexs = me->FindNearestCreature(NPC_ALEXTRASZA_THE_LIFE_BINDER, 50.0f, true);
                     Creature* thrall = me->FindNearestCreature(NPC_THRALL_1, 50.0f, true);
                     Creature* noz = me->FindNearestCreature(NPC_NOZDORMU_THE_TIMELESS_ONE, 50.0f, true);
-                    Creature* portal = me->FindNearestCreature(NPC_TRAVEL_TO_EYE_OF_ETERNITY, 50.0f);
                     Creature* soul = me->FindNearestCreature(NPC_THE_DRAGON_SOUL, 50.0f);
                     switch (phase)
                     {
@@ -414,7 +410,7 @@ public:
             _drakenum = 0;
         }
 
-        void DoAction(int32 action)
+        void DoAction(int32 action) override
         {
             switch (action)
             {
@@ -429,21 +425,19 @@ public:
         }
 
         void UpdateAI(uint32 diff) override
-
         {
-
             events.Update(diff);
 
             if (uint32 eventId = events.ExecuteEvent())
             {
                 switch (eventId)
                 {
-                case EVENT_TWILIGHT_DRAKE:
+                    case EVENT_TWILIGHT_DRAKE:
                     {
                         _drakenum++;
                         if (_drakenum <= 15)
                         {
-                            angle = urand(1.77f, 4.82f);
+                            angle = frand(1.77f, 4.82f);
                             me->SummonCreature(NPC_TWILIGHT_ASSAULTER, me->GetPositionX()+ 20*cos(angle), me->GetPositionY()+ 20*cos(angle), me->GetPositionZ()+ 13, 0, TEMPSUMMON_DEAD_DESPAWN);
                             events.ScheduleEvent(EVENT_TWILIGHT_DRAKE, 15333);
                         }
@@ -475,7 +469,6 @@ public:
         }
     private:
         EventMap events;
-        InstanceScript* instance;
         uint8 _drakenum;
         float angle;
     };
@@ -495,7 +488,7 @@ public:
     {
         npc_nozdormuAI(Creature* creature) : ScriptedAI(creature){}
 
-        void DoAction(int32 action)
+        void DoAction(int32 action) override
         {
             switch (action)
             {
@@ -510,7 +503,6 @@ public:
     private:
 
         EventMap events;
-        InstanceScript* instance;
     };
 
     CreatureAI* GetAI(Creature* creature) const override
@@ -537,7 +529,7 @@ public:
             phase = 0;
         }
 
-        void DoAction(int32 action)
+        void DoAction(int32 action) override
         {
             switch (action)
             {
@@ -553,7 +545,7 @@ public:
         void MoveInLineOfSight(Unit* who) override
         {
             if (!phase && me->GetExactDist(who) < 10.0f)
-                if (Player* player = who->ToPlayer())
+                if (who->IsPlayer())
                     if (instance->GetBossState(DATA_ULTRAXION) == DONE)
                         phase = 1;
         }
@@ -625,7 +617,7 @@ class npc_dragonsoul_dragons : public CreatureScript
 public:
     npc_dragonsoul_dragons() : CreatureScript("npc_dragonsoul_dragons") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_dragonsoul_dragonsAI (pCreature);
     }
@@ -704,7 +696,7 @@ public:
             events.ScheduleEvent(EVENT_PATH, 15000);
         }
 
-        void DoAction(int32 action)
+        void DoAction(int32 action) override
         {
             switch (action)
             {
@@ -789,7 +781,7 @@ public:
 
     };
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_deathwing_preultraxionAI (pCreature);
     }
@@ -804,7 +796,7 @@ public:
     {
         npc_ds_Twilight_siege_breakerAI(Creature* creature) : ScriptedAI(creature) {}
 
-        void IsSummonedBy(Unit* summoner)
+        void IsSummonedBy(Unit* /*summoner*/) override
         {
             if (Creature* stalker = me->FindNearestCreature(57261, 500.0f, true))
                 me->GetMotionMaster()->MoveChase(stalker);
@@ -838,10 +830,9 @@ public:
                     me->SetVisible(false);
             }
 
-            void UpdateAI(uint32 diff) override
-
+            void UpdateAI(uint32 /*diff*/) override
             {
-                if (Creature* morchok = me->FindNearestCreature(NPC_MORCHOK, 500.0f, false))
+                if (me->FindNearestCreature(NPC_MORCHOK, 500.0f, false))
                     me->SetVisible(true);
             }
     };
@@ -861,7 +852,7 @@ public:
     {
         npc_ds_lord_afrasastraszAI(Creature* creature) : ScriptedAI(creature) {}
 
-        void IsSummonedBy(Unit* /*owner*/)
+        void IsSummonedBy(Unit* /*owner*/) override
         {
             Talk(SAY_AFRA_1);
             me->SetSpeed(MOVE_WALK, 1.5f);
@@ -905,7 +896,7 @@ public:
     {
         npc_ds_lifebinderAI(Creature* creature) : ScriptedAI(creature) {}
 
-        void IsSummonedBy(Unit* /*owner*/)
+        void IsSummonedBy(Unit* /*owner*/) override
         {
             if (Creature* tyr = me->FindNearestCreature(NPC_TYRYGOSA, 5.0f, true))
                 me->CastSpell(tyr, SPELL_LIFEBINDING);
@@ -927,7 +918,7 @@ public:
     {
         npc_ds_tyrygosaAI(Creature* creature) : ScriptedAI(creature) {}
 
-        void SpellHit(Unit* /*who*/, const SpellInfo* spellInfo)
+        void SpellHit(Unit* /*who*/, const SpellInfo* spellInfo) override
         {
             if (spellInfo->Id == SPELL_LIFEBINDING)
             {

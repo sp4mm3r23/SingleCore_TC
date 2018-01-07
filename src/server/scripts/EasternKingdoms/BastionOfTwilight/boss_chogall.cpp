@@ -129,7 +129,7 @@ public:
             }
         }
 
-        void DamageTaken(Unit* who, uint32&damage) override
+        void DamageTaken(Unit* /*who*/, uint32& /*damage*/) override
         {
             if (me->GetHealthPct() <= 25.0f && phase == 0)
             {
@@ -516,7 +516,7 @@ class spell_depravity : public SpellScriptLoader
             }
         };
 
-        SpellScript *GetSpellScript() const
+        SpellScript* GetSpellScript() const override
         {
             return new spell_depravity_SpellScript();
         }
@@ -544,7 +544,7 @@ class spell_sprayed_corruption : public SpellScriptLoader
             }
         };
 
-        SpellScript *GetSpellScript() const
+        SpellScript* GetSpellScript() const override
         {
             return new spell_sprayed_corruption_SpellScript();
         }
@@ -572,7 +572,7 @@ class spell_spilled_blood_of_the_old_god : public SpellScriptLoader
             }
         };
 
-        SpellScript *GetSpellScript() const
+        SpellScript* GetSpellScript() const override
         {
             return new spell_spilled_blood_of_the_old_god_SpellScript();
         }
@@ -600,7 +600,7 @@ class spell_corrupting_crash : public SpellScriptLoader
             }
         };
 
-        SpellScript *GetSpellScript() const
+        SpellScript* GetSpellScript() const override
         {
             return new spell_corrupting_crash_SpellScript();
         }
@@ -629,7 +629,7 @@ class spell_corruption_of_the_old_god : public SpellScriptLoader
             }
         };
 
-        SpellScript *GetSpellScript() const
+        SpellScript* GetSpellScript() const override
         {
             return new spell_corruption_of_the_old_god_SpellScript();
         }
@@ -658,7 +658,7 @@ class spell_corruption_sickness : public SpellScriptLoader
             }
         };
 
-        SpellScript *GetSpellScript() const
+        SpellScript* GetSpellScript() const override
         {
             return new spell_corruption_sickness_SpellScript();
         }
@@ -721,7 +721,7 @@ class npc_darkened_creation : public CreatureScript
                 events.Reset();
             }
 
-            void EnterCombat(Unit* victim) override
+            void EnterCombat(Unit* /*victim*/) override
             {
                 events.ScheduleEvent(EVENT_DEBILITATING_BEAM, urand(3000, 5000));
                 DoZoneInCombat(me);
@@ -755,7 +755,7 @@ class npc_darkened_creation : public CreatureScript
             }
         };
 
-        CreatureAI* GetAI(Creature* pCreature) const
+        CreatureAI* GetAI(Creature* pCreature) const override
         {
             return new npc_darkened_creationAI(pCreature);
         }
@@ -782,7 +782,7 @@ class npc_spiked_tentacle : public CreatureScript
                 events.Reset();
             }
 
-            void EnterCombat(Unit* victim) override
+            void EnterCombat(Unit* /*victim*/) override
             {
                 DoZoneInCombat(me);
             }
@@ -805,7 +805,7 @@ class npc_spiked_tentacle : public CreatureScript
             }
         };
 
-        CreatureAI* GetAI(Creature* pCreature) const
+        CreatureAI* GetAI(Creature* pCreature) const override
         {
             return new npc_spiked_tentacleAI(pCreature);
         }
@@ -820,7 +820,7 @@ public:
     {
         PrepareAuraScript(spell_debilitating_beam_AuraScript);
 
-        void PeriodicTick(AuraEffect const* aurEff)
+        void PeriodicTick(AuraEffect const* /*aurEff*/)
         {
             if (!GetTarget())
                 return;

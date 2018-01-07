@@ -137,7 +137,7 @@ class boss_magmaw : public CreatureScript
             _Reset();
         }
 
-        void PassengerBoarded(Unit* who, int8 seatId, bool apply) override
+        void PassengerBoarded(Unit* /*who*/, int8 seatId, bool apply) override
         {
             if(seatId == 2 && apply)
             {
@@ -145,7 +145,7 @@ class boss_magmaw : public CreatureScript
             }
         }
 
-        void JustDied(Unit * /*killer*/)
+        void JustDied(Unit* /*killer*/) override
         {
             me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
             me->SetFlag(OBJECT_DYNAMIC_FLAGS, UNIT_DYNFLAG_LOOTABLE);
@@ -198,7 +198,7 @@ class boss_magmaw : public CreatureScript
             }
         }
 
-        void JustSummoned(Creature * summon)
+        void JustSummoned(Creature* summon) override
         {
             switch(summon->GetEntry())
             {
@@ -243,9 +243,9 @@ class boss_magmaw : public CreatureScript
             BossAI::EnterCombat(who);
         }
 
-        void MoveInLineOfSight(Unit * /*who*/) {}
+        void MoveInLineOfSight(Unit* /*who*/) override {}
 
-        void AttackStart(Unit * target)
+        void AttackStart(Unit* target) override
         {
             if (me->Attack(target, true))
                 DoStartNoMovement(target);
@@ -285,7 +285,7 @@ class boss_magmaw : public CreatureScript
             }
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
             if(!UpdateVictim())
                 return;
@@ -419,7 +419,7 @@ class boss_magmaw : public CreatureScript
 public:
     boss_magmaw() : CreatureScript("boss_magmaw") {}
 
-    CreatureAI * GetAI(Creature * creature) const
+    CreatureAI* GetAI(Creature* creature) const override
     {
         return new boss_magmawAI(creature);
     }
@@ -431,7 +431,7 @@ class npc_spike_stalker : public CreatureScript
     {
         npc_spike_stalkerAI(Creature * creature) : ScriptedAI(creature) {}
 
-        void SpellHit(Unit * /*caster*/, const SpellInfo * spell)
+        void SpellHit(Unit* /*caster*/, const SpellInfo* spell) override
         {
             if((spell->Id == SPELL_LAUNCH_HOOK_R && me->HasAura(SPELL_LAUNCH_HOOK_L)) ||
                 (spell->Id == SPELL_LAUNCH_HOOK_L && me->HasAura(SPELL_LAUNCH_HOOK_R)))
@@ -445,7 +445,7 @@ class npc_spike_stalker : public CreatureScript
             }
         }
 
-        void UpdateAI(uint32 const /*diff*/) override
+        void UpdateAI(uint32 /*diff*/) override
         {
         }
     };
@@ -453,7 +453,7 @@ class npc_spike_stalker : public CreatureScript
 public:
     npc_spike_stalker() : CreatureScript("npc_spike_stalker") {}
 
-    CreatureAI * GetAI(Creature * creature) const
+    CreatureAI* GetAI(Creature* creature) const override
     {
         return new npc_spike_stalkerAI(creature);
     }
@@ -472,7 +472,7 @@ class npc_pillar_of_flame : public CreatureScript
             actionTimer = 3000;
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
             if(!done)
             {
@@ -492,7 +492,7 @@ class npc_pillar_of_flame : public CreatureScript
 public:
     npc_pillar_of_flame() : CreatureScript("npc_pillar_of_flame") {}
 
-    CreatureAI * GetAI(Creature * creature) const
+    CreatureAI* GetAI(Creature* creature) const override
     {
         return new npc_pillar_of_flameAI(creature);
     }
@@ -514,14 +514,14 @@ class npc_lava_parasite : public CreatureScript
             checkTimer = 3000;
         }
 
-        void IsSummonedBy(Unit * /*summoner*/)
+        void IsSummonedBy(Unit* /*summoner*/) override
         {
             DoZoneInCombat();
             if(Creature * magmaw = me->FindNearestCreature(BOSS_MAGMAW, 200.0f))
                 magmaw->AI()->JustSummoned(me);
         }
 
-        void SpellHitTarget(Unit * target, const SpellInfo * spell)
+        void SpellHitTarget(Unit* target, const SpellInfo* spell) override
         {
             if(spell->Id == SPELL_PARASITIC_INFECTION)
             {
@@ -540,7 +540,7 @@ class npc_lava_parasite : public CreatureScript
 public:
     npc_lava_parasite() : CreatureScript("npc_lava_parasite") {}
 
-    CreatureAI * GetAI(Creature * creature) const
+    CreatureAI* GetAI(Creature* creature) const override
     {
         return new npc_lava_parasiteAI(creature);
     }
@@ -562,7 +562,7 @@ class npc_drakonid_drudge : public CreatureScript
             whirlwind = false;
         }
 
-        void JustDied(Unit * /*killer*/)
+        void JustDied(Unit* /*killer*/) override
         {
             if (Unit * drudge = me->FindNearestCreature(me->GetEntry(), 100.0f))
                 me->CastSpell(drudge, SPELL_VENGEFUL_RAGE, true);
@@ -574,7 +574,7 @@ class npc_drakonid_drudge : public CreatureScript
             }
         }
 
-        void EnterCombat(Unit * who)
+        void EnterCombat(Unit* who) override
         {
             me->SetUInt32Value(UNIT_NPC_EMOTESTATE, 0);
             if(Unit * magmaw = me->FindNearestCreature(BOSS_MAGMAW, 100.0f))
@@ -582,7 +582,7 @@ class npc_drakonid_drudge : public CreatureScript
             DoStartMovement(who);
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
             if(!UpdateVictim())
                 return;
@@ -628,7 +628,7 @@ class npc_drakonid_drudge : public CreatureScript
 public:
     npc_drakonid_drudge() : CreatureScript("npc_drakonid_drudge") {}
 
-    CreatureAI * GetAI(Creature * creature) const
+    CreatureAI* GetAI(Creature* creature) const override
     {
         return new npc_drakonid_drudgeAI(creature);
     }
@@ -639,7 +639,7 @@ class npc_magmaws_pincer : public VehicleScript
 public:
     npc_magmaws_pincer() : VehicleScript("npc_magmaws_pincer") { }
 
-    void OnAddPassenger(Vehicle* veh, Unit* /*passenger*/, int8 /*seatId*/)
+    void OnAddPassenger(Vehicle* veh, Unit* /*passenger*/, int8 /*seatId*/) override
     {
         if (Unit* unit = veh->GetBase())
         {
@@ -663,7 +663,7 @@ class npc_blazing_bone_construct : public CreatureScript
             summonTimer = 5000;
         }
 
-        void IsSummonedBy(Unit * /*summoner*/)
+        void IsSummonedBy(Unit* /*summoner*/) override
         {
             if(Creature * magmaw = me->FindNearestCreature(BOSS_MAGMAW, 200.0f))
                 magmaw->AI()->JustSummoned(me);
@@ -675,7 +675,7 @@ class npc_blazing_bone_construct : public CreatureScript
             }
         }
 
-        void JustSummoned(Creature * summon)
+        void JustSummoned(Creature* summon) override
         {
             if(summon->GetEntry() == NPC_IGNITION_TRIGGER)
             {
@@ -697,7 +697,7 @@ class npc_blazing_bone_construct : public CreatureScript
             }
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
             if(!UpdateVictim() || me->HasUnitState(UNIT_STATE_CASTING))
                 return;
@@ -725,7 +725,7 @@ class npc_blazing_bone_construct : public CreatureScript
 public:
     npc_blazing_bone_construct() : CreatureScript("npc_blazing_bone_construct") {}
 
-    CreatureAI * GetAI(Creature * creature) const
+    CreatureAI* GetAI(Creature* creature) const override
     {
         return new npc_blazing_bone_constructAI(creature);
     }
@@ -745,12 +745,12 @@ public:
             return true;
         }*/
 
-        bool Load()
+        bool Load() override
         {
             return true;
         }
 
-        void HandleDummy(SpellEffIndex effIndex)
+        void HandleDummy(SpellEffIndex /*effIndex*/)
         {
             if (Unit* caster = GetCaster())
                 caster->CastSpell(caster, SPELL_MASSIVE_CRASH_DMG, true);
@@ -762,7 +762,7 @@ public:
         }
     };
 
-    SpellScript *GetSpellScript() const
+    SpellScript* GetSpellScript() const override
     {
         return new spell_magmaw_massive_crashSpellScript();
     }

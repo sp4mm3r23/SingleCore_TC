@@ -192,7 +192,7 @@ class boss_halfus_wyrmbreaker : public CreatureScript
                 events.ScheduleEvent(EVENT_ENRAGE, 360000);
             }
 
-            void JustDied(Unit* killer) override
+            void JustDied(Unit* /*killer*/) override
             {
                 if (instance)
                 {
@@ -202,13 +202,13 @@ class boss_halfus_wyrmbreaker : public CreatureScript
                 }
             }
 
-            void KilledUnit(Unit* victim) override
+            void KilledUnit(Unit* /*victim*/) override
             {
                 me->Yell("The burden of the damned falls upon you!", LANG_UNIVERSAL, 0);
                 DoPlaySoundToSet(me, 20188);
             }
 
-            void DamageTaken(Unit* who, uint32&damage) override
+            void DamageTaken(Unit* /*who*/, uint32& damage) override
             {
                 if (damage > 0)
                 {
@@ -343,9 +343,10 @@ class npc_halfus_dragon : public CreatureScript
                 }
             }
 
-            void JustDied(Unit* killer) override
+            void JustDied(Unit* /*killer*/) override
             {
                 if (Creature* halfus = pInstance->GetCreature(DATA_WYRMBREAKER))
+                {
                     if (halfus->HasAura(SPELL_DRAGONS_VEGEANCE))
                     {
                         if (Aura* vengeance = halfus->GetAura(SPELL_DRAGONS_VEGEANCE))
@@ -354,11 +355,13 @@ class npc_halfus_dragon : public CreatureScript
                             stacks++;
                             halfus->SetAuraStack(SPELL_DRAGONS_VEGEANCE, halfus, stacks);
                         }
-                    }else
+                    }
+                    else
                         me->AddAura(SPELL_DRAGONS_VEGEANCE, halfus);
+                }
             }
 
-            void UpdateAI(uint32 uiDiff) override
+            void UpdateAI(uint32 /*uiDiff*/) override
             {
                 if (me->HasFlag(UNIT_FIELD_FLAGS,UNIT_FLAG_NON_ATTACKABLE))
                 {
@@ -424,7 +427,7 @@ class npc_halfus_dragon : public CreatureScript
             return true;
         }
 
-        bool OnGossipSelect(Player* pPlayer, Creature* creature, uint32 /*uiSender*/, uint32 uiAction) override
+        bool OnGossipSelect(Player* /*pPlayer*/, Creature* /*creature*/, uint32 /*uiSender*/, uint32 /*uiAction*/) override
         {
             return true;
         }

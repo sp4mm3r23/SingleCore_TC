@@ -1,20 +1,20 @@
 /*
-* Copyright (C) 2017-2018 AshamaneProject <https://github.com/AshamaneProject>
-* Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
-*
-* This program is free software; you can redistribute it and/or modify it
-* under the terms of the GNU General Public License as published by the
-* Free Software Foundation; either version 2 of the License, or (at your
-* option) any later version.
-*
-* This program is distributed in the hope that it will be useful, but WITHOUT
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-* FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
-* more details.
-*
-* You should have received a copy of the GNU General Public License along
-* with this program. If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2017-2018 AshamaneProject <https://github.com/AshamaneProject>
+ * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
 
 /*
  * Scripts for spells with SPELLFAMILY_MAGE and SPELLFAMILY_GENERIC spells used by mage players.
@@ -110,6 +110,7 @@ enum MageSpells
     SPELL_MAGE_COMET_STORM                       = 153595,
     SPELL_MAGE_COMET_STORM_DAMAGE                = 153596,
     SPELL_MAGE_COMET_STORM_VISUAL                = 242210,
+    SPELL_BLAZING_BARRIER_TRIGGER                = 235314
 };
 
 enum TemporalDisplacementSpells
@@ -1986,6 +1987,51 @@ public:
     }
 };
 
+// 7.3.2 Blazing Barrier - 235313
+class spell_mage_blazing_barrier : public SpellScriptLoader
+{
+public:
+    spell_mage_blazing_barrier() : SpellScriptLoader("spell_mage_blazing_barrier") { }
+
+    class spell_mage_blazing_barrier_AuraScript : public AuraScript
+    {
+        PrepareAuraScript(spell_mage_blazing_barrier_AuraScript);
+
+        bool Validate(SpellInfo const* /*spell*/) override
+        {
+            return ValidateSpellInfo({ SPELL_BLAZING_BARRIER_TRIGGER });
+        }
+
+        void CalculateAmount(AuraEffect const* /*aurEff*/, int32& amount, bool& canBeRecalculated)
+        {
+            canBeRecalculated = false;
+            if (Unit* caster = GetCaster())
+                amount += int32(caster->SpellBaseHealingBonusDone(GetSpellInfo()->GetSchoolMask()) * 7.0f);
+        }
+
+        void HandleProc(AuraEffect const* /*aurEff*/, ProcEventInfo& eventInfo)
+        {
+            PreventDefaultAction();
+            Unit* caster = eventInfo.GetDamageInfo()->GetVictim();
+            Unit* target = eventInfo.GetDamageInfo()->GetAttacker();
+
+            if (caster && target)
+                caster->CastSpell(target, SPELL_BLAZING_BARRIER_TRIGGER, true);
+        }
+
+        void Register() override
+        {
+            DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_mage_blazing_barrier_AuraScript::CalculateAmount, EFFECT_0, SPELL_AURA_SCHOOL_ABSORB);
+            OnEffectProc += AuraEffectProcFn(spell_mage_blazing_barrier_AuraScript::HandleProc, EFFECT_1, SPELL_AURA_PROC_TRIGGER_SPELL);
+        }
+    };
+
+    AuraScript* GetAuraScript() const override
+    {
+        return new spell_mage_blazing_barrier_AuraScript();
+    }
+};
+
 // Meteor - 177345
 // AreaTriggerID - 3467
 class at_mage_meteor_timer : public AreaTriggerEntityScript
@@ -2347,8 +2393,8 @@ class npc_mirror_image : public CreatureScript
                     me->GetMotionMaster()->MoveFollow(owner, PET_FOLLOW_DIST, me->GetFollowAngle(), MovementSlot::MOTION_SLOT_ACTIVE);
                 }
 
-                me->SetMaxPower(me->getPowerType(), owner->GetMaxPower(me->getPowerType()));
-                me->SetPower(me->getPowerType(), owner->GetPower(me->getPowerType()));
+                me->SetMaxPower(me->GetPowerType(), owner->GetMaxPower(me->GetPowerType()));
+                me->SetFullPower(me->GetPowerType());
                 me->SetMaxHealth(owner->GetMaxHealth());
                 me->SetHealth(owner->GetHealth());
                 me->SetReactState(ReactStates::REACT_DEFENSIVE);
@@ -2422,7 +2468,7 @@ class npc_mirror_image : public CreatureScript
                 return target && !target->HasAuraType(SPELL_AURA_MOD_CONFUSE);
             }
 
-            void UpdateAI(const uint32 diff) override
+            void UpdateAI(uint32 diff) override
             {
                 events.Update(diff);
 
@@ -2522,6 +2568,7 @@ void AddSC_mage_spell_scripts()
     new spell_mage_chilled();
     new spell_mage_ice_floes();
     new spell_mage_comet_storm();
+    new spell_mage_blazing_barrier();
 
     // Spell Pet scripts
     new spell_mage_pet_freeze();

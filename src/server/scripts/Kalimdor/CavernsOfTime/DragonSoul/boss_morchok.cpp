@@ -111,7 +111,7 @@ class boss_morchok : public CreatureScript
 public:
     boss_morchok() : CreatureScript("boss_morchok") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new boss_morchokAI(pCreature);
     }
@@ -158,7 +158,7 @@ public:
             bFirstCrystal = false;
         }
 
-        void EnterCombat(Unit* who) override
+        void EnterCombat(Unit* /*who*/) override
         {
             Talk(SAY_AGGRO);
 
@@ -219,7 +219,7 @@ public:
             }
         }
 
-        void SetGUID(ObjectGuid guid, int32 type)
+        void SetGUID(ObjectGuid guid, int32 type) override
         {
             if (type == DATA_GUID_1)
                 _stompGUID1 = guid;
@@ -227,7 +227,7 @@ public:
                 _stompGUID2 = guid;
         }
 
-        ObjectGuid GetGUID(int32 type) const
+        ObjectGuid GetGUID(int32 type) const override
         {
             if (type == DATA_GUID_1)
                 return _stompGUID1;
@@ -257,7 +257,7 @@ public:
             return bAchieve;
         }
 
-        uint32 GetData(uint32 type) const
+        uint32 GetData(uint32 type) const override 
         {
             if (type == DATA_KOHCROM_DONE)
                 return uint32(bKohcrom);
@@ -445,7 +445,7 @@ class npc_morchok_kohcrom : public CreatureScript
 public:
     npc_morchok_kohcrom() : CreatureScript("npc_morchok_kohcrom") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_morchok_kohcromAI(pCreature);
     }
@@ -489,7 +489,7 @@ public:
             instance->SendEncounterUnit(ENCOUNTER_FRAME_DISENGAGE, me);
         }
 
-        void SetGUID(ObjectGuid guid, int32 type)
+        void SetGUID(ObjectGuid guid, int32 type) override
         {
             if (type == DATA_GUID_1)
                 _stompGUID1 = guid;
@@ -497,7 +497,7 @@ public:
                 _stompGUID2 = guid;
         }
 
-        ObjectGuid GetGUID(int32 type) const
+        ObjectGuid GetGUID(int32 type) const override
         {
             if (type == DATA_GUID_1)
                 return _stompGUID1;
@@ -507,13 +507,13 @@ public:
             return ObjectGuid::Empty;
         }
 
-        void IsSummonedBy(Unit* /*owner*/)
+        void IsSummonedBy(Unit* /*owner*/) override
         {
             DoCast(me, SPELL_MORCHOK_JUMP, true);
             events.ScheduleEvent(EVENT_CONTINUE, 5000);
         }
 
-        void DoAction(int32 action)
+        void DoAction(int32 action) override
         {
             switch (action)
             {
@@ -618,7 +618,7 @@ class npc_morchok_resonating_crystal : public CreatureScript
 public:
     npc_morchok_resonating_crystal() : CreatureScript("npc_morchok_resonating_crystal") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_morchok_resonating_crystalAI(pCreature);
     }
@@ -634,7 +634,7 @@ public:
 
         void Reset() override { }
 
-        void IsSummonedBy(Unit* /*owner*/)
+        void IsSummonedBy(Unit* /*owner*/) override
         {
             DoCast(SPELL_RESONATING_CRYSTAL_AURA);
             events.ScheduleEvent(EVENT_EXPLODE, 12000);
@@ -1032,7 +1032,7 @@ class achievement_dont_stay_so_close_to_me : public AchievementCriteriaScript
 public:
     achievement_dont_stay_so_close_to_me() : AchievementCriteriaScript("achievement_dont_stay_so_close_to_me") { }
 
-    bool OnCheck(Player* source, Unit* target) override
+    bool OnCheck(Player* /*source*/, Unit* target) override
     {
         if (!target)
             return false;
@@ -1055,7 +1055,7 @@ public:
 
         int32 amount;
 
-        bool Load()
+        bool Load() override
         {
             amount = 200;
             return true;

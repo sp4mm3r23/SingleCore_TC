@@ -153,7 +153,7 @@ public:
             Slipstream->SetUInt32Value(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -166,7 +166,7 @@ public:
             DoSpellAttackIfReady(SPELL_LIGHTING_BOLT);
         }
 
-        void ExecuteEvent(uint32 const eventId)
+        void ExecuteEvent(uint32 const eventId) override
         {
             switch (eventId)
             {
@@ -242,7 +242,7 @@ public:
             }
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             events.Update(diff);
 
@@ -295,12 +295,12 @@ public:
         uint32 Boo;
         ObjectGuid BossGUID;
 
-        void IsSummonedBy(Unit* summoner)
+        void IsSummonedBy(Unit* /*summoner*/) override
         {
             me->RemoveAllAuras();
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (Boo <= diff)
             {
@@ -392,7 +392,7 @@ public:
             targets.remove_if(isInsideStormsEdgeLarge());
         }
 
-        void EffectScriptEffect(SpellEffIndex effIndex)
+        void EffectScriptEffect(SpellEffIndex /*effIndex*/)
         {
             GetHitUnit()->CastSpell((Unit*)NULL, SPELL_STORMS_EDGE, true);
         }
@@ -462,7 +462,7 @@ public:
             targets.remove_if(isOutsideStormsEdgeSmall());
         }
 
-        void HandleScript(SpellEffIndex effIndex)
+        void HandleScript(SpellEffIndex /*effIndex*/)
         {
             GetHitUnit()->CastSpell((Unit*)NULL, SPELL_STORMS_EDGE, true);
         }
@@ -489,7 +489,7 @@ public:
     {
         PrepareSpellScript(spell_storms_edgeSpellScript);
 
-        void HandleScript(SpellEffIndex effIndex)
+        void HandleScript(SpellEffIndex /*effIndex*/)
         {
             GetHitUnit()->CastSpell(GetCaster(), SPELL_STORMS_EDGE_DAMAGE, true);
         }

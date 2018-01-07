@@ -166,7 +166,7 @@ public:
             instance->DoRemoveAurasDueToSpellOnPlayers(SPELL_EYE_OF_THE_STORM_TRIGGERED); // Remove just on Reset
         }
 
-        void EnterEvadeMode(EvadeReason /*why*/)
+        void EnterEvadeMode(EvadeReason /*why*/) override
         {
             _EnterEvadeMode();
             summons.DespawnAll();
@@ -178,7 +178,7 @@ public:
             Reset();
         }
 
-        void EnterCombat(Unit*)
+        void EnterCombat(Unit*) override
         {
             _EnterCombat();
             Talk(0);
@@ -197,7 +197,7 @@ public:
             instance->SetData(DATA_ALAKIR_EVENT, IN_PROGRESS);
         }
 
-        void JustDied(Unit* killer) override
+        void JustDied(Unit* /*killer*/) override
         {
             _JustDied();
             Talk(7);
@@ -212,7 +212,7 @@ public:
             summons.Summon(summoned);
         }
 
-        void DamageTaken(Unit* /*damageDealer*/, uint32& damage) override
+        void DamageTaken(Unit* /*damageDealer*/, uint32& /*damage*/) override
         {
             if (!HealthAbovePct(80) && phase == PHASE_ICE_STORM)
             {
@@ -348,7 +348,7 @@ public:
             }
         }
 
-        void SetData(uint32 uiI, uint32 uiValue) override
+        void SetData(uint32 /*uiI*/, uint32 uiValue) override
         {
             if (uiValue == DATA_ALAKIR_BUFF)
             {
@@ -356,7 +356,7 @@ public:
             }
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -535,7 +535,7 @@ public:
             me->ApplySpellImmune(0, IMMUNITY_MECHANIC, MECHANIC_INTERRUPT, false);
         }
 
-        void IsSummonedBy(Unit* /*summoner*/)
+        void IsSummonedBy(Unit* /*summoner*/) override
         {
             if (!me->GetVehicleKit())
                 return;
@@ -581,7 +581,7 @@ public:
             }
         }
 
-        void Reset() {}
+        void Reset() override {}
     };
 };
 
@@ -613,7 +613,7 @@ public:
             DebuffRemoveTimer = 6000;
         }
 
-        void PassengerBoarded(Unit* who, int8 /*seatId*/, bool apply) override
+        void PassengerBoarded(Unit* /*who*/, int8 /*seatId*/, bool apply) override
         {
             if (!me)
                 return;
@@ -624,7 +624,7 @@ public:
             }
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (mounted)
             {
@@ -683,7 +683,7 @@ public:
             me->DespawnOrUnsummon(20000);
         }
 
-        void UpdateAI(uint32 const diff) override { }
+        void UpdateAI(uint32 /*diff*/) override { }
     };
 };
 
@@ -749,7 +749,7 @@ public:
             }
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (changeAngelRainTimer <= diff)
             {
@@ -800,7 +800,7 @@ public:
             me->CastSpell(me, SPELL_STORMLING_PRE_AURA, true);
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (summonTimmer <= diff)
             {
@@ -846,7 +846,7 @@ public:
             }
         }
 
-        void IsSummonedBy(Unit* /*summoner*/)
+        void IsSummonedBy(Unit* /*summoner*/) override
         {
             if (Unit *target = SelectTarget(SELECT_TARGET_RANDOM, 0, 100.0f, true))
             {
@@ -854,7 +854,7 @@ public:
             }
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 /*diff*/) override
         {
             if (!me->GetVictim())
                 return;
@@ -956,13 +956,13 @@ public:
             playerReturnTimer = 13000;
         }
 
-        void IsSummonedBy(Unit* summoner)
+        void IsSummonedBy(Unit* summoner) override
         {
             if (summoner->GetTypeId() == TYPEID_PLAYER)
                 playerGUID = summoner->GetGUID();
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (playerReturnTimer <= diff)
             {
@@ -1068,7 +1068,7 @@ public:
             readyDealDamageTimer = 4000;
         }
 
-        void SetData(uint32 uiI, uint32 uiValue) override
+        void SetData(uint32 /*uiI*/, uint32 uiValue) override
         {
             if (uiValue == DATA_CLOUDS_DEAL_DMG)
             {
@@ -1076,7 +1076,7 @@ public:
             }
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (lightningVisual <= diff)
             {
@@ -1158,7 +1158,7 @@ public:
             }
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (changeAngelTimer <= diff)
             {

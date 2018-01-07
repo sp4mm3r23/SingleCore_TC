@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -20,9 +20,8 @@
 
 #include "Packet.h"
 #include "ItemPacketsCommon.h"
-#include "QuestDef.h"
 #include "ObjectGuid.h"
-#include "ObjectMgr.h"
+#include "QuestDef.h"
 
 namespace WorldPackets
 {
@@ -670,6 +669,39 @@ namespace WorldPackets
             std::vector<ItemReward> ItemRewards;
         };
 
+        struct PlayerChoiceResponseRewardEntry
+        {
+            WorldPackets::Item::ItemInstance Item;
+            int32 Quantity = 0;
+        };
+
+        struct PlayerChoiceResponseReward
+        {
+            int32 TitleID = 0;
+            int32 PackageID = 0;
+            int32 SkillLineID = 0;
+            uint32 SkillPointCount = 0;
+            uint32 ArenaPointCount = 0;
+            uint32 HonorPointCount = 0;
+            uint64 Money = 0;
+            uint32 Xp = 0;
+            std::vector<PlayerChoiceResponseRewardEntry> Items;
+            std::vector<PlayerChoiceResponseRewardEntry> Currencies;
+            std::vector<PlayerChoiceResponseRewardEntry> Factions;
+            std::vector<PlayerChoiceResponseRewardEntry> ItemChoices;
+        };
+
+        struct PlayerChoiceResponse
+        {
+            int32 ResponseID = 0;
+            int32 ChoiceArtFileID = 0;
+            std::string Answer;
+            std::string Header;
+            std::string Description;
+            std::string Confirmation;
+            Optional<PlayerChoiceResponseReward> Reward;
+        };
+
         class DisplayPlayerChoice final : public ServerPacket
         {
         public:
@@ -678,24 +710,24 @@ namespace WorldPackets
             WorldPacket const* Write() override;
 
             ObjectGuid SenderGUID;
-            PlayerChoice Choice;
+            int32 ChoiceID = 0;
+            std::string Question;
+            std::vector<PlayerChoiceResponse> Responses;
+            bool CloseChoiceFrame = false;
         };
 
-        class PlayerChoiceResponse final : public ClientPacket
+        class ChoiceResponse final : public ClientPacket
         {
         public:
-            PlayerChoiceResponse(WorldPacket&& packet) : ClientPacket(CMSG_CHOICE_RESPONSE, std::move(packet)) { }
+            ChoiceResponse(WorldPacket&& packet) : ClientPacket(CMSG_CHOICE_RESPONSE, std::move(packet)) { }
 
             void Read() override;
 
-            int32 ChoiceID;
-            int32 ResponseID;
+            int32 ChoiceID = 0;
+            int32 ResponseID = 0;
         };
     }
 }
-
-ByteBuffer& operator<<(ByteBuffer& data, PlayerChoiceResponse const& response);
-ByteBuffer& operator<<(ByteBuffer& data, PlayerChoiceResponseReward const& reward);
 
 ByteBuffer& operator<<(ByteBuffer& data, WorldPackets::Quest::QuestRewards const& questRewards);
 ByteBuffer& operator<<(ByteBuffer& data, WorldPackets::Quest::QuestGiverOfferReward const& offer);

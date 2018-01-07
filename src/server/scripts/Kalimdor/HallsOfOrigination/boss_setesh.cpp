@@ -73,13 +73,13 @@ class boss_setesh : public CreatureScript
             ResetPortals();
         }
 
-        void KilledUnit(Unit * victim)
+        void KilledUnit(Unit* victim) override
         {
             if(victim->GetTypeId() == TYPEID_PLAYER)
                 Talk(SAY_SLAY);
         }
 
-        void JustDied(Unit * /*killer*/)
+        void JustDied(Unit* /*killer*/) override
         {
             Talk(SAY_DEATH);
             ResetPortals();
@@ -109,7 +109,7 @@ class boss_setesh : public CreatureScript
             }
         }
 
-        void SpellHitTarget(Unit* victim, const SpellInfo* spell)
+        void SpellHitTarget(Unit* victim, const SpellInfo* spell) override
         {
             if (spell->Id == SPELL_CHAOS_BLAST_MISSILE)
             {
@@ -140,7 +140,7 @@ class boss_setesh : public CreatureScript
             Talk(SAY_AGGRO);
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -313,11 +313,11 @@ class npc_chaos_portal : public CreatureScript
             summons.Summon(summon);
         }
 
-        void JustDied(Unit * )
+        void JustDied(Unit* ) override
         {
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             events.Update(diff);
 
@@ -359,7 +359,6 @@ class npc_chaos_portal : public CreatureScript
         EventMap events;
         SummonList summons;
         bool done;
-        Unit* setesh;
     };
 
 public:

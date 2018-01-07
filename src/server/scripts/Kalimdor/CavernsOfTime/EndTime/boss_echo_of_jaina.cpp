@@ -220,7 +220,7 @@ class spell_flarecore : public SpellScriptLoader
         {
             PrepareSpellScript(spell_flarecore_SpellScript);
 
-            void HandleOnHit(SpellEffIndex effIndex)
+            void HandleOnHit(SpellEffIndex /*effIndex*/)
             {
                 if(Unit* caster = GetCaster())
                 {
@@ -240,7 +240,7 @@ class spell_flarecore : public SpellScriptLoader
             }
         };
 
-        SpellScript * GetSpellScript() const
+        SpellScript* GetSpellScript() const override
         {
             return new spell_flarecore_SpellScript();
         }

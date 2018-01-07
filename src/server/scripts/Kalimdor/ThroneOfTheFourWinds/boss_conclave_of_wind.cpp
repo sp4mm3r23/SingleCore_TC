@@ -132,7 +132,7 @@ public:
         {
             //instance = creature->GetInstanceScript();
 
-            creature->setPowerType(POWER_ENERGY);
+            creature->SetPowerType(POWER_ENERGY);
             creature->SetMaxPower(POWER_ENERGY, 90);
         }
 
@@ -181,14 +181,14 @@ public:
                 (*iter)->DespawnOrUnsummon();
         }
 
-        void EnterEvadeMode(EvadeReason /*why*/)
+        void EnterEvadeMode(EvadeReason /*why*/) override
         {
             instance->SetData(DATA_CONCLAVE_OF_WIND_EVENT, FAIL);
             instance->SetData(DATA_GATHERING_STRENGTH, 0);
             _EnterEvadeMode();
         }
 
-        void EnterCombat(Unit* who) override
+        void EnterCombat(Unit* /*who*/) override
         {
             _EnterCombat();
             instance->SetData(DATA_CONCLAVE_OF_WIND_EVENT, IN_PROGRESS);
@@ -201,7 +201,7 @@ public:
             me->SetReactState(REACT_AGGRESSIVE);
         }
 
-        void SpellHit(Unit* hitter, const SpellInfo* spell)
+        void SpellHit(Unit* hitter, const SpellInfo* spell) override
         {
             if (!hitter || !spell)
                 return;
@@ -237,7 +237,7 @@ public:
             }
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!instance)
                 return;
@@ -367,7 +367,7 @@ public:
             summon->AI()->DoZoneInCombat();
         }
 
-        void JustDied(Unit* killer) override
+        void JustDied(Unit* /*killer*/) override
         {
             _JustDied();
             instance->SetData(DATA_CONCLAVE_OF_WIND_EVENT, DONE);
@@ -436,7 +436,7 @@ public:
             uiCheckAgroo = 5000;
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -481,7 +481,7 @@ public:
         {
             //instance = creature->GetInstanceScript();
 
-            creature->setPowerType(POWER_ENERGY);
+            creature->SetPowerType(POWER_ENERGY);
             creature->SetMaxPower(POWER_ENERGY, 90);
         }
 
@@ -514,14 +514,14 @@ public:
             CastingHeal = false;
         }
 
-        void EnterEvadeMode(EvadeReason /*why*/)
+        void EnterEvadeMode(EvadeReason /*why*/) override
         {
             instance->SetData(DATA_CONCLAVE_OF_WIND_EVENT, FAIL);
             instance->SetData(DATA_GATHERING_STRENGTH, 0);
             _EnterEvadeMode();
         }
 
-        void EnterCombat(Unit* who) override
+        void EnterCombat(Unit* /*who*/) override
         {
             _EnterCombat();
             instance->SetData(DATA_CONCLAVE_OF_WIND_EVENT, IN_PROGRESS);
@@ -536,7 +536,7 @@ public:
             me->SetReactState(REACT_AGGRESSIVE);
         }
 
-        void SpellHit(Unit* hitter, const SpellInfo* spell)
+        void SpellHit(Unit* hitter, const SpellInfo* spell) override
         {
             if (!hitter || !spell)
                 return;
@@ -572,7 +572,7 @@ public:
             }
         }
 
-        void JustDied(Unit* killer) override
+        void JustDied(Unit* /*killer*/) override
         {
             _JustDied();
             instance->SetData(DATA_CONCLAVE_OF_WIND_EVENT, DONE);
@@ -582,7 +582,7 @@ public:
             //Talk(RAND(SAY_DEATH_1, SAY_DEATH_2));
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!instance)
                 return;
@@ -733,7 +733,7 @@ public:
 
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (DespawnTimer <= diff)
             {
@@ -772,7 +772,7 @@ public:
 
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (DespawnTimer <= diff)
             {
@@ -808,7 +808,7 @@ public:
             uiPathTimer = 2000;
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (uiPathTimer <= diff)
             {
@@ -833,7 +833,7 @@ public:
     {
         boss_rohashAI(Creature* creature) : BossAI(creature, DATA_CONCLAVE_OF_WIND_EVENT)
         {
-            creature->setPowerType(POWER_ENERGY);
+            creature->SetPowerType(POWER_ENERGY);
             creature->SetMaxPower(POWER_ENERGY, 90);
             me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_REMOVE_CLIENT_CONTROL);
             me->ApplySpellImmune(0, IMMUNITY_ID, 85483, true);
@@ -883,14 +883,14 @@ public:
             summons.DespawnAll();
         }
 
-        void EnterEvadeMode(EvadeReason /*why*/)
+        void EnterEvadeMode(EvadeReason /*why*/) override
         {
             instance->SetData(DATA_CONCLAVE_OF_WIND_EVENT, FAIL);
             instance->SetData(DATA_GATHERING_STRENGTH, 0);
             _EnterEvadeMode();
         }
 
-        void EnterCombat(Unit* who) override
+        void EnterCombat(Unit* /*who*/) override
         {
             _EnterCombat();
             instance->SetData(DATA_CONCLAVE_OF_WIND_EVENT, IN_PROGRESS);
@@ -904,7 +904,7 @@ public:
             me->SetReactState(REACT_AGGRESSIVE);
         }
 
-        void JustSummoned(Creature* pSummon)
+        void JustSummoned(Creature* pSummon) override
         {
             switch (pSummon->GetEntry())
             {
@@ -916,7 +916,7 @@ public:
             }
         }
 
-        void SpellHit(Unit* hitter, const SpellInfo* spell)
+        void SpellHit(Unit* hitter, const SpellInfo* spell) override
         {
             if (!hitter || !spell)
                 return;
@@ -952,7 +952,7 @@ public:
             }
         }
 
-        void JustDied(Unit* killer) override
+        void JustDied(Unit* /*killer*/) override
         {
             _JustDied();
             instance->SetData(DATA_CONCLAVE_OF_WIND_EVENT, DONE);
@@ -997,7 +997,7 @@ public:
                 me->SetTarget(temp->GetGUID());
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!instance)
                 return;
@@ -1165,12 +1165,12 @@ public:
     {
         PrepareAuraScript(spell_nurture_aura_AuraScript);
 
-        void HandleEffectCalcPeriodic(AuraEffect const * /*aurEff*/, bool & isPeriodic, int32 & amplitude)
+        void HandleEffectCalcPeriodic(AuraEffect const* /*aurEff*/, bool& isPeriodic, int32& /*amplitude*/)
         {
             isPeriodic = true;
         }
 
-        void HandlePeriodic(AuraEffect const* aurEff)
+        void HandlePeriodic(AuraEffect const* /*aurEff*/)
         {
             if (Unit* caster = GetCaster())
                 caster->CastSpell(caster, SPELL_NURTURE_CREEPER_SUMMON, true);

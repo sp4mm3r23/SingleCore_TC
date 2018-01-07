@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -1788,6 +1788,22 @@ struct GemPropertiesLoadInfo
             { false, FT_SHORT, "MinItemLevel" },
         };
         static DB2LoadInfo const loadInfo(&fields[0], std::extent<decltype(fields)>::value, GemPropertiesMeta::Instance(), HOTFIX_SEL_GEM_PROPERTIES);
+        return &loadInfo;
+    }
+};
+
+struct GlobalStringsLoadInfo
+{
+    static DB2LoadInfo const* Instance()
+    {
+        static DB2FieldMeta const fields[] =
+        {
+            { false, FT_INT, "ID" },
+            { false, FT_STRING_NOT_LOCALIZED, "StringName" },
+            { false, FT_STRING, "StringValue" },
+            { false, FT_INT, "Unknown" },
+        };
+        static DB2LoadInfo const loadInfo(&fields[0], std::extent<decltype(fields)>::value, GlobalStringsMeta::Instance(), HOTFIX_SEL_GLOBAL_STRINGS);
         return &loadInfo;
     }
 };

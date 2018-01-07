@@ -151,7 +151,7 @@ class boss_warlord_zonozz : public CreatureScript
 public:
     boss_warlord_zonozz() : CreatureScript("boss_warlord_zonozz") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new boss_warlord_zonozzAI(pCreature);
     }
@@ -216,7 +216,7 @@ public:
             instance->SetBossState(DATA_ZONOZZ, IN_PROGRESS);
         }
 
-        void SpellHit(Unit* /*who*/, const SpellInfo* spellInfo)
+        void SpellHit(Unit* /*who*/, const SpellInfo* spellInfo) override
         {
             if (spellInfo->Id == SPELL_VOID_DIFFUSION_DMG) // When the ball hits the boss he will trigger the black phase
             {
@@ -381,7 +381,7 @@ class npc_void_of_the_unmaking : public CreatureScript
 public:
     npc_void_of_the_unmaking() : CreatureScript("npc_void_of_the_unmaking") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_void_of_the_unmakingAI(pCreature);
     }
@@ -410,13 +410,13 @@ public:
             events.Reset();
         }
 
-        void IsSummonedBy(Unit* /*owner*/)
+        void IsSummonedBy(Unit* /*owner*/) override
         {
             dir = me->GetOrientation();
             DoCast(me, SPELL_VOID_OF_THE_UNMAKING_VISUAL);
         }
 
-        void SpellHit(Unit* /*who*/, const SpellInfo* spellInfo)
+        void SpellHit(Unit* /*who*/, const SpellInfo* spellInfo) override
         {
             if (spellInfo->Id == SPELL_VOID_OF_THE_UNMAKING_VISUAL)
             {
@@ -451,7 +451,7 @@ public:
                     break;
 
                 case EVENT_PONG:
-                    if (Unit* target = SelectTarget(SELECT_TARGET_NEAREST, 0, 3.0f, true))
+                    if (SelectTarget(SELECT_TARGET_NEAREST, 0, 3.0f, true))
                     {
                         ori = me->GetOrientation();
                         me->StopMoving();
@@ -501,7 +501,7 @@ class npc_eye_of_gorath : public CreatureScript
 public:
     npc_eye_of_gorath() : CreatureScript("npc_eye_of_gorath") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_eye_of_gorathAI(pCreature);
     }
@@ -522,7 +522,7 @@ public:
             events.Reset();
         }
 
-        void IsSummonedBy(Unit* /*owner*/)
+        void IsSummonedBy(Unit* /*owner*/) override
         {
             me->SetReactState(REACT_AGGRESSIVE);
             me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_REMOVE_CLIENT_CONTROL);
@@ -581,7 +581,7 @@ class npc_flail_of_gorath : public CreatureScript
 public:
     npc_flail_of_gorath() : CreatureScript("npc_flail_of_gorath") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_flail_of_gorathAI(pCreature);
     }
@@ -602,7 +602,7 @@ public:
             events.Reset();
         }
 
-        void IsSummonedBy(Unit* /*owner*/)
+        void IsSummonedBy(Unit* /*owner*/) override
         {
             me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_REMOVE_CLIENT_CONTROL);
             events.ScheduleEvent(EVENT_SLUDGE_SPEW, 6000);
@@ -660,7 +660,7 @@ class npc_claw_of_gorath : public CreatureScript
 public:
     npc_claw_of_gorath() : CreatureScript("npc_claw_of_gorath") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_claw_of_gorathAI(pCreature);
     }
@@ -698,7 +698,7 @@ public:
             }
         }
 
-        void IsSummonedBy(Unit* /*owner*/)
+        void IsSummonedBy(Unit* /*owner*/) override
         {
             me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_REMOVE_CLIENT_CONTROL);
             events.ScheduleEvent(EVENT_MELEE_CHECK, 5000);
@@ -833,7 +833,7 @@ class spell_disrupting_shadows : public SpellScriptLoader
         {
             PrepareAuraScript(spell_disrupting_shadows_AuraScript);
 
-            void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+            void HandleRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
             {
                 if(Unit* owner = GetUnitOwner())
                     if (GetTargetApplication()->GetRemoveMode() == AURA_REMOVE_BY_ENEMY_SPELL)

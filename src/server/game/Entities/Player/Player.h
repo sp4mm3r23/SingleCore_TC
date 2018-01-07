@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -39,6 +39,7 @@ struct AccessRequirement;
 struct AchievementEntry;
 struct AreaTableEntry;
 struct AreaTriggerEntry;
+struct AreaTriggerTeleportStruct;
 struct ArtifactPowerRankEntry;
 struct BarberShopStyleEntry;
 struct CharTitlesEntry;
@@ -1065,6 +1066,7 @@ class TC_GAME_API Player : public Unit, public GridObject<Player>
         bool TeleportTo(uint32 mapid, float x, float y, float z, float orientation, uint32 options = 0);
         bool TeleportTo(uint32 mapid, Position const &pos, uint32 options = 0);
         bool TeleportTo(WorldLocation const &loc, uint32 options = 0);
+        bool TeleportTo(AreaTriggerTeleportStruct const* at);
         bool SeamlessTeleportToMap(uint32 mapid, uint32 options = 0);
         bool TeleportToBGEntryPoint();
 
@@ -1381,6 +1383,7 @@ class TC_GAME_API Player : public Unit, public GridObject<Player>
         uint32 GetQuestMoneyReward(Quest const* quest) const;
         uint32 GetQuestXPReward(Quest const* quest);
         bool CanSelectQuestPackageItem(QuestPackageItemEntry const* questPackageItem) const;
+        void RewardQuestPackage(uint32 questPackageId, uint32 onlyItemId = 0);
         void RewardQuest(Quest const* quest, uint32 reward, Object* questGiver, bool announce = true);
         void SetRewardedQuest(uint32 quest_id);
         void FailQuest(uint32 quest_id);
@@ -1879,7 +1882,8 @@ class TC_GAME_API Player : public Unit, public GridObject<Player>
         bool UpdatePosition(const Position &pos, bool teleport = false) override { return UpdatePosition(pos.GetPositionX(), pos.GetPositionY(), pos.GetPositionZ(), pos.GetOrientation(), teleport); }
         void UpdateUnderwaterState(Map* m, float x, float y, float z) override;
 
-        bool HasWorldQuestEnabled() const { return GetQuestStatus(43341) == QUEST_STATUS_REWARDED; } // Uniting the Isles
+        bool MeetPlayerCondition(uint32 conditionId) const;
+        bool HasWorldQuestEnabled() const;
         void UpdateWorldQuestPosition(float x, float y);
 
         void SendMessageToSet(WorldPacket const* data, bool self) const override { SendMessageToSetInRange(data, GetVisibilityRange(), self); }
@@ -2387,6 +2391,10 @@ class TC_GAME_API Player : public Unit, public GridObject<Player>
         PlayerGarrisonMap& GetGarrisons() { return _garrisons; }
         Garrison* GetGarrison(GarrisonType type) const { auto garItr = _garrisons.find(type); return (garItr != _garrisons.end()) ? garItr->second.get() : nullptr; }
 
+        GarrisonType GetCurrentGarrison() const;
+        void SetCurrentGarrison(GarrisonType type);
+        bool IsInGarrison() const;
+
         void AddGarrisonFollower(uint32 garrFollowerId);
         void AddGarrisonMission(uint32 garrMissionId);
 
@@ -2421,7 +2429,7 @@ class TC_GAME_API Player : public Unit, public GridObject<Player>
             MovieDelayedTeleports.push_back(data);
         }
 
-        void SendPlayerChoice(ObjectGuid sender, uint32 choiceID);
+        void SendPlayerChoice(ObjectGuid sender, int32 choiceId);
 
     protected:
         // Gamemaster whisper whitelist
@@ -2763,6 +2771,7 @@ class TC_GAME_API Player : public Unit, public GridObject<Player>
         uint32 _activeCheats;
 
         PlayerGarrisonMap _garrisons;
+        GarrisonType _insideGarrisonType;
 
         bool _advancedCombatLoggingEnabled;
 

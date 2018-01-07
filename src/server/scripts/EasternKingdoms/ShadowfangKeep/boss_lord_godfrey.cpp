@@ -75,10 +75,10 @@ class boss_lord_godfrey : public CreatureScript
             instance->HandleGameObject(instance->GetGuidData(GO_LORD_GODFREY_DOOR), true);
         }
 
-        void EnterCombat(Unit * who)
+        void EnterCombat(Unit* /*who*/) override
         {
-            if (Player* p = me->SelectNearestPlayer(10.0f)){
-
+            if (me->SelectNearestPlayer(10.0f))
+            {
                 _EnterCombat();
 
                 if (instance->GetData(TEAM_IN_INSTANCE) == TEAM_HORDE)
@@ -97,7 +97,7 @@ class boss_lord_godfrey : public CreatureScript
                 EnterEvadeMode();
         }
 
-        void JustDied(Unit * /*killer*/)
+        void JustDied(Unit* /*killer*/) override
         {
             _JustDied();
             Talk(SAY_DEATH);
@@ -105,7 +105,7 @@ class boss_lord_godfrey : public CreatureScript
             instance->HandleGameObject(instance->GetGuidData(GO_LORD_GODFREY_DOOR), true);
         }
 
-        void KilledUnit(Unit * victim)
+        void KilledUnit(Unit* /*victim*/) override
         {
              Talk(RAND(SAY_KILLER_1, SAY_KILLER_2));
         }
@@ -115,7 +115,7 @@ class boss_lord_godfrey : public CreatureScript
             BossAI::JustSummoned(summon);
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if(!UpdateVictim())
                 return;
@@ -155,7 +155,7 @@ class boss_lord_godfrey : public CreatureScript
 public:
     boss_lord_godfrey() : CreatureScript("boss_lord_godfrey") {}
 
-    CreatureAI * GetAI(Creature * creature) const
+    CreatureAI* GetAI(Creature* creature) const override
     {
         return new boss_lord_godfreyAI(creature);
     }
@@ -205,14 +205,14 @@ public:
     {
         PrepareAuraScript(spell_pistol_barrage_AuraScript);
 
-        bool Validate(SpellInfo const* /*spell*/)
+        bool Validate(SpellInfo const* /*spell*/) override
         {
             if (!sSpellMgr->GetSpellInfo(SPELL_PISTOL_BARRAGE))
                 return false;
             return true;
         }
 
-        void OnPeriodic(AuraEffect const* aurEff)
+        void OnPeriodic(AuraEffect const* /*aurEff*/)
         {
             if (Unit* caster = GetCaster())
                 caster->CastSpell((Unit*)NULL, SPELL_PISTOL_BARRAGE_DAMAGE, true);

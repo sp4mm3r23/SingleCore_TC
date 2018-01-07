@@ -303,7 +303,7 @@ class npc_well_of_eternity_nozdormu : public CreatureScript
 public:
     npc_well_of_eternity_nozdormu() : CreatureScript("npc_well_of_eternity_nozdormu") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_well_of_eternity_nozdormuAI(pCreature);
     }
@@ -348,7 +348,7 @@ public:
             pInstance->SetData(DATA_EVENT_NOZDORMU, IN_PROGRESS);
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!bTalk)
                 return;
@@ -394,7 +394,7 @@ class npc_well_of_eternity_legion_demon : public CreatureScript
 public:
     npc_well_of_eternity_legion_demon() : CreatureScript("npc_well_of_eternity_legion_demon") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_well_of_eternity_legion_demonAI(pCreature);
     }
@@ -427,19 +427,19 @@ public:
                     me->DespawnOrUnsummon(500);
         }
 
-        void EnterCombat(Unit* who) override
+        void EnterCombat(Unit* /*who*/) override
         {
             events.ScheduleEvent(EVENT_STRIKE_FEAR, urand(5000, 7000));
             //DoCast(who, SPELL_CRUSHING_LEAP);
         }
 
-        void SpellHit(Unit* who, const SpellInfo* spellInfo)
+        void SpellHit(Unit* who, const SpellInfo* spellInfo) override
         {
             if (spellInfo->Id == SPELL_ARCHIVED_DEMON_1)
                 DoCast(who, SPELL_ARCHIVED_DEMON_2, true);
         }
 
-        void MovementInform(uint32 type, uint32 data) override
+        void MovementInform(uint32 /*type*/, uint32 data) override
         {
             if (data == EVENT_JUMP)
             {
@@ -466,7 +466,7 @@ public:
                             pPlayer->CastSpell(me, SPELL_ARCHIVED_DEMON_1, true);
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -506,7 +506,7 @@ class npc_well_of_eternity_illidan_1 : public CreatureScript
 public:
     npc_well_of_eternity_illidan_1() : CreatureScript("npc_well_of_eternity_illidan_1") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_well_of_eternity_illidan_1AI(pCreature);
     }
@@ -615,7 +615,7 @@ public:
                 events.ScheduleEvent(EVENT_ILLIDAN_OUTRO_1_1, 6000);
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!bTalk)
                 return;
@@ -676,7 +676,7 @@ class npc_well_of_eternity_eternal_champion : public CreatureScript
 public:
     npc_well_of_eternity_eternal_champion() : CreatureScript("npc_well_of_eternity_eternal_champion") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_well_of_eternity_eternal_championAI(pCreature);
     }
@@ -691,13 +691,13 @@ public:
             events.Reset();
         }
 
-        void EnterCombat(Unit* who) override
+        void EnterCombat(Unit* /*who*/) override
         {
             events.ScheduleEvent(EVENT_QUEENS_BLADE, urand(2000, 6000));
             events.ScheduleEvent(EVENT_SHIMMERING_STRIKE, urand(9000, 12000));
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -734,7 +734,7 @@ class npc_well_of_eternity_eye_of_legion : public CreatureScript
 public:
     npc_well_of_eternity_eye_of_legion() : CreatureScript("npc_well_of_eternity_eye_of_legion") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_well_of_eternity_eye_of_legionAI(pCreature);
     }
@@ -749,12 +749,12 @@ public:
             events.Reset();
         }
 
-        void EnterCombat(Unit* who) override
+        void EnterCombat(Unit* /*who*/) override
         {
             events.ScheduleEvent(EVENT_FEL_FLAMES, urand(2000, 10000));
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -789,7 +789,7 @@ class npc_well_of_eternity_enchanted_highmistress : public CreatureScript
 public:
     npc_well_of_eternity_enchanted_highmistress() : CreatureScript("npc_well_of_eternity_enchanted_highmistress") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_well_of_eternity_enchanted_highmistressAI(pCreature);
     }
@@ -803,7 +803,7 @@ public:
             events.Reset();
         }
 
-        void EnterCombat(Unit* who) override
+        void EnterCombat(Unit* /*who*/) override
         {
             if (me->GetEntry() == NPC_ENCHANTED_HIGHMISTRESS_1)
             {
@@ -816,7 +816,7 @@ public:
             }
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -865,7 +865,7 @@ class npc_well_of_eternity_royal_handmaiden : public CreatureScript
 public:
     npc_well_of_eternity_royal_handmaiden() : CreatureScript("npc_well_of_eternity_royal_handmaiden") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_well_of_eternity_royal_handmaidenAI(pCreature);
     }
@@ -882,12 +882,12 @@ public:
             events.Reset();
         }
 
-        void EnterCombat(Unit* who) override
+        void EnterCombat(Unit* /*who*/) override
         {
             events.ScheduleEvent(EVENT_SWEET_LULLABY, urand(7000, 12000));
         }
 
-        void SpellHit(Unit* who, const SpellInfo* spellInfo)
+        void SpellHit(Unit* who, const SpellInfo* spellInfo) override
         {
             if (spellInfo->Id == SPELL_ARCHIVED_HANDMAIDEN_1)
                 DoCast(who, SPELL_ARCHIVED_HANDMAIDEN_2, true);
@@ -907,7 +907,7 @@ public:
                             pPlayer->CastSpell(me, SPELL_ARCHIVED_HANDMAIDEN_1, true);
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -967,7 +967,7 @@ class npc_well_of_eternity_doomguard_annihilator : public CreatureScript
 public:
     npc_well_of_eternity_doomguard_annihilator() : CreatureScript("npc_well_of_eternity_doomguard_annihilator") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_well_of_eternity_doomguard_annihilatorAI(pCreature);
     }
@@ -1006,7 +1006,7 @@ class npc_well_of_eternity_illidan_2 : public CreatureScript
 public:
     npc_well_of_eternity_illidan_2() : CreatureScript("npc_well_of_eternity_illidan_2") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_well_of_eternity_illidan_2AI(pCreature);
     }
@@ -1028,7 +1028,7 @@ public:
             events.Reset();
         }
 
-        void EnterEvadeMode(EvadeReason /*why*/)
+        void EnterEvadeMode(EvadeReason /*why*/) override
         { }
 
         void DamageTaken(Unit* who, uint32&damage) override
@@ -1142,7 +1142,7 @@ public:
             }
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!bTalk && !bMove)
                 return;
@@ -1266,7 +1266,7 @@ class npc_well_of_eternity_tyrande : public CreatureScript
 public:
     npc_well_of_eternity_tyrande() : CreatureScript("npc_well_of_eternity_tyrande") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_well_of_eternity_tyrandeAI(pCreature);
     }
@@ -1282,9 +1282,9 @@ public:
             uiDebilitatingCount = 0;
         }
 
-        void EnterEvadeMode(EvadeReason /*why*/) { }
+        void EnterEvadeMode(EvadeReason /*why*/) override { }
 
-        void SpellHit(Unit* /*who*/, const SpellInfo* spellInfo)
+        void SpellHit(Unit* /*who*/, const SpellInfo* spellInfo) override
         {
             if (spellInfo->Id == SPELL_DEBILITATING_FLAY)
                 if (!bDebilitating)
@@ -1384,7 +1384,7 @@ public:
             }
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             events.Update(diff);
 
@@ -1428,7 +1428,7 @@ class npc_well_of_eternity_malfurion : public CreatureScript
 public:
     npc_well_of_eternity_malfurion() : CreatureScript("npc_well_of_eternity_malfurion") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_well_of_eternity_malfurionAI(pCreature);
     }
@@ -1446,7 +1446,7 @@ public:
             events.Reset();
         }
 
-        void EnterEvadeMode(EvadeReason /*why*/)
+        void EnterEvadeMode(EvadeReason /*why*/) override
         { }
 
     private:
@@ -1461,7 +1461,7 @@ public:
 
     npc_well_of_eternity_abyssal_doombringer() : CreatureScript("npc_well_of_eternity_abyssal_doombringer") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_well_of_eternity_abyssal_doombringerAI(pCreature);
     }
@@ -1504,7 +1504,7 @@ public:
             me->DespawnOrUnsummon(3000);
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -1534,7 +1534,7 @@ class npc_well_of_eternity_dragon_soul : public CreatureScript
 public:
     npc_well_of_eternity_dragon_soul() : CreatureScript("npc_well_of_eternity_dragon_soul") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_well_of_eternity_dragon_soulAI(pCreature);
     }
@@ -1553,7 +1553,7 @@ class npc_well_of_eternity_portal_to_twisting_nether : public CreatureScript
 public:
     npc_well_of_eternity_portal_to_twisting_nether() : CreatureScript("npc_well_of_eternity_portal_to_twisting_nether") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_well_of_eternity_portal_to_twisting_netherAI(pCreature);
     }

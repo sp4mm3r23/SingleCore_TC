@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -2580,7 +2580,7 @@ struct GlobalStringsMeta
 {
     static DB2Meta const* Instance()
     {
-        static char const* types = "ssb";
+        static char const* types = "Ssb";
         static uint8 const arraySizes[3] = { 1, 1, 1 };
         static DB2FieldDefault const fieldDefaults[3] = { "", "", uint8(0) };
         static DB2Meta instance(-1, 3, 0x2CA3EA1E, types, arraySizes, fieldDefaults);

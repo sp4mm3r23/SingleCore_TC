@@ -118,7 +118,7 @@ class boss_perotharn : public CreatureScript
 public:
     boss_perotharn() : CreatureScript("boss_perotharn") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new boss_perotharnAI(pCreature);
     }
@@ -190,7 +190,7 @@ public:
             }
         }
 
-        void EnterCombat(Unit* attacker) override
+        void EnterCombat(Unit* /*attacker*/) override
         {
             Talk(SAY_AGGRO);
 
@@ -240,7 +240,7 @@ public:
                 Talk(SAY_KILL);
         }
 
-        void SetGUID(ObjectGuid guid, int32 type)
+        void SetGUID(ObjectGuid guid, int32 /*type*/) override
         {
             targetGUID = guid;
         }
@@ -250,7 +250,7 @@ public:
             return bAchieve;
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -383,7 +383,7 @@ class npc_perotharn_eye_of_perotharn : public CreatureScript
 public:
     npc_perotharn_eye_of_perotharn() : CreatureScript("npc_perotharn_eye_of_perotharn") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_perotharn_eye_of_perotharnAI(pCreature);
     }
@@ -414,7 +414,7 @@ public:
                     events.ScheduleEvent(EVENT_NEXT_MOVE, 500);
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -473,13 +473,13 @@ public:
     {
         PrepareAuraScript(spell_perotharn_drain_essence_AuraScript);
 
-        void OnApply(AuraEffect const* aurEff, AuraEffectHandleModes /*mode*/)
+        void OnApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
         {
             if (GetUnitOwner())
                 GetUnitOwner()->SetControlled(true, UNIT_STATE_STUNNED);
         }
 
-        void OnRemove(AuraEffect const* aurEff, AuraEffectHandleModes /*mode*/)
+        void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
         {
             if (GetUnitOwner())
                 GetUnitOwner()->SetControlled(false, UNIT_STATE_STUNNED);
@@ -576,7 +576,7 @@ class achievement_lazy_eye : public AchievementCriteriaScript
 public:
     achievement_lazy_eye() : AchievementCriteriaScript("achievement_lazy_eye") { }
 
-    bool OnCheck(Player* source, Unit* target) override
+    bool OnCheck(Player* /*source*/, Unit* target) override
     {
         if (!target)
             return false;

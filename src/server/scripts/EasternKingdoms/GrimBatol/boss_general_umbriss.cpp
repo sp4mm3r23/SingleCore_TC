@@ -103,12 +103,12 @@ class boss_general_umbriss : public CreatureScript
                 me->AddUnitState(UNIT_STATE_IGNORE_PATHFINDING);
             }
 
-            void EnterCombat(Unit* pWho) override
+            void EnterCombat(Unit* /*pWho*/) override
             {
                 Talk(0);
             }
 
-            void JustDied(Unit* pKiller) override
+            void JustDied(Unit* /*pKiller*/) override
             {
                 Talk(2);
                 if (pInstance)
@@ -124,7 +124,7 @@ class boss_general_umbriss : public CreatureScript
                 Talk(RAND(SAY_KILL_1, SAY_KILL_2));
             }
 
-            void UpdateAI(uint32 const uiDiff) override
+            void UpdateAI(uint32 uiDiff) override
             {
                 if (!UpdateVictim())
                     return;
@@ -210,7 +210,7 @@ class boss_general_umbriss : public CreatureScript
 
             void SummonCreatureWithRandomTarget(uint32 creatureId, float x, float y, float z, float o)
             {
-                Creature* Summoned = me->SummonCreature(creatureId, x, y, z, 0, TEMPSUMMON_TIMED_OR_DEAD_DESPAWN, 5000);
+                Creature* Summoned = me->SummonCreature(creatureId, x, y, z, o, TEMPSUMMON_TIMED_OR_DEAD_DESPAWN, 5000);
                 if (Summoned)
                 {
                     Unit *pTarget = SelectTarget(SELECT_TARGET_RANDOM, 0);
@@ -235,7 +235,7 @@ class boss_general_umbriss : public CreatureScript
             InstanceScript* pInstance;
         };
 
-        CreatureAI* GetAI(Creature* pCreature) const
+        CreatureAI* GetAI(Creature* pCreature) const override
         {
             return new boss_general_umbrissAI(pCreature);
         }
@@ -299,7 +299,7 @@ class npc_malignant : public CreatureScript
                 }
             }
 
-            void UpdateAI(uint32 const uiDiff) override
+            void UpdateAI(uint32 /*uiDiff*/) override
             {
                 if (!UpdateVictim())
                     return;
@@ -308,7 +308,7 @@ class npc_malignant : public CreatureScript
             }
         };
 
-        CreatureAI* GetAI(Creature* pCreature) const
+        CreatureAI* GetAI(Creature* pCreature) const override
         {
             return new npc_malignantAI(pCreature);
         }
@@ -326,7 +326,7 @@ class npc_trogg_dweller : public CreatureScript
         {
             npc_trogg_dwellerAI(Creature *c) : ScriptedAI(c) {}
 
-            void UpdateAI(uint32 const uiDiff) override
+            void UpdateAI(uint32 /*uiDiff*/) override
             {
                 if (!UpdateVictim())
                     return;
@@ -335,7 +335,7 @@ class npc_trogg_dweller : public CreatureScript
             }
         };
 
-        CreatureAI* GetAI(Creature* pCreature) const
+        CreatureAI* GetAI(Creature* pCreature) const override
         {
             return new npc_trogg_dwellerAI(pCreature);
         }
@@ -380,7 +380,7 @@ public:
     {
         PrepareSpellScript(spell_ground_siege_SpellScript);
 
-        bool Validate(SpellInfo const* /*spellInfo*/)
+        bool Validate(SpellInfo const* /*spellInfo*/) override
         {
             return false;
         }

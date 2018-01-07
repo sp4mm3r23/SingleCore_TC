@@ -180,7 +180,7 @@ public:
                 Talk(SAY_SLAY);
         }
 
-        void MovementInform(uint32 type, uint32 pointId) override
+        void MovementInform(uint32 /*type*/, uint32 pointId) override
         {
             switch (pointId)
             {
@@ -193,7 +193,7 @@ public:
             }
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -291,7 +291,7 @@ public:
             me->SetReactState(REACT_PASSIVE);
         }
 
-        void IsSummonedBy(Unit* /*summoner*/)
+        void IsSummonedBy(Unit* /*summoner*/) override
         {
             me->SetDisplayId(me->GetCreatureTemplate()->Modelid1);
             me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE | UNIT_FLAG_IMMUNE_TO_NPC);
@@ -304,7 +304,7 @@ public:
             me->GetMotionMaster()->MoveRandom(50.0f);
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             events.Update(diff);
 
@@ -343,7 +343,7 @@ public:
     {
         npc_sunballAI(Creature* creature) : ScriptedAI(creature) { }
 
-        void IsSummonedBy(Unit* /*summoner*/)
+        void IsSummonedBy(Unit* /*summoner*/) override
         {
             me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE | UNIT_FLAG_IMMUNE_TO_NPC);
             DoCast(me, SPELL_SUN);
@@ -354,7 +354,7 @@ public:
             me->SetReactState(REACT_PASSIVE);
         }
 
-        void MovementInform(uint32 type, uint32 pointId) override
+        void MovementInform(uint32 /*type*/, uint32 pointId) override
         {
             switch (pointId)
             {
@@ -367,7 +367,7 @@ public:
             }
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             events.Update(diff);
 
@@ -433,7 +433,7 @@ public:
             }
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             events.Update(diff);
 
@@ -458,7 +458,8 @@ public:
                         break;
                     case EVENT_SEARING_FLAME:
                         if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0, 100, true))
-                            if(IsHeroic())
+                        {
+                            if (IsHeroic())
                             {
                                 DoCast(target, 89849);
                                 events.ScheduleEvent(EVENT_SEARING_FLAME, 6000);
@@ -468,6 +469,7 @@ public:
                                 DoCast(target, 74101);
                                 events.ScheduleEvent(EVENT_SEARING_FLAME, 6000);
                             }
+                        }
                         break;
                     default:
                         break;
@@ -516,7 +518,7 @@ public:
                 me->RemoveAllAuras();
             }
         }
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             events.Update(diff);
 
@@ -541,7 +543,8 @@ public:
                         break;
                     case EVENT_SEARING_FLAME:
                         if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0, 100, true))
-                            if(IsHeroic())
+                        {
+                            if (IsHeroic())
                             {
                                 DoCast(target, 89849);
                                 events.ScheduleEvent(EVENT_SEARING_FLAME, 6000);
@@ -551,6 +554,7 @@ public:
                                 DoCast(target, 74101);
                                 events.ScheduleEvent(EVENT_SEARING_FLAME, 6000);
                             }
+                        }
                         break;
                     default:
                         break;
@@ -588,7 +592,7 @@ public:
             events.Reset();
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             events.Update(diff);
 

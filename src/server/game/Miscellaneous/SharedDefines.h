@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -1227,7 +1227,7 @@ enum SpellEffectName
     SPELL_EFFECT_ALLOW_CONTROL_PET                  = 168, // NYI
     SPELL_EFFECT_DESTROY_ITEM                       = 169,
     SPELL_EFFECT_UPDATE_ZONE_AURAS_AND_PHASES       = 170, // NYI
-    SPELL_EFFECT_171                                = 171, // Summons gamebject
+    SPELL_EFFECT_SUMMON_OBJECT_PERSONNAL            = 171, // Summons gamebject visible by summoner only
     SPELL_EFFECT_RESURRECT_WITH_AURA                = 172,
     SPELL_EFFECT_UNLOCK_GUILD_VAULT_TAB             = 173, // Guild tab unlocked (guild perk)
     SPELL_EFFECT_APPLY_AURA_ON_PET                  = 174, // NYI
@@ -6229,6 +6229,19 @@ enum class GameError : uint32
     ERR_CLAIMED_CHALLENGE_MODE_REWARD_OLD                   = 984,
     ERR_TALENT_GRANTED_BY_AURA                              = 985,
     ERR_CHALLENGE_MODE_ALREADY_COMPLETE                     = 986,
+};
+
+enum Maps : uint32
+{
+    MAP_EASTERN_KINGDOMS        = 0,
+    MAP_KALIMDOR                = 1,
+    MAP_OUTLAND                 = 530,
+    MAP_NORTHREND               = 571,
+    MAP_PANDARIA                = 870,
+    MAP_DRAENOR                 = 1116,
+    MAP_WOD_BLASTED_LANDS_PHASE = 1190,
+    MAP_BROKEN_ISLANDS          = 1220,
+    MAP_WOD_TANAAN_JUNGLE_INTRO = 1265,
 };
 
 #endif

@@ -525,7 +525,7 @@ class mob_anduin_wrynn_escort : public CreatureScript
             ObjectGuid m_playerGUID;
             EventMap m_Events;
 
-            void IsSummonedBy(Unit* p_Summoner)
+            void IsSummonedBy(Unit* p_Summoner) override
             {
                 m_Events.Reset();
 
@@ -540,7 +540,7 @@ class mob_anduin_wrynn_escort : public CreatureScript
                 }
             }
 
-            void UpdateAI(uint32 const p_Diff) override
+            void UpdateAI(uint32 p_Diff) override
             {
                 m_Events.Update(p_Diff);
 

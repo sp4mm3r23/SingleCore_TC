@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -133,7 +133,7 @@ void WorldSocket::CheckIpCallback(PreparedQueryResult result)
     initializer.Write(ServerConnectionInitialize.c_str(), ServerConnectionInitialize.length());
     initializer.Write("\n", 1);
 
-    // - io_service.run thread, safe.
+    // - IoContext.run thread, safe.
     QueuePacket(std::move(initializer));
 }
 

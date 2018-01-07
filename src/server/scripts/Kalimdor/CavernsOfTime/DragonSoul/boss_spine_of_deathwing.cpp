@@ -256,7 +256,7 @@ public:
                 {
                 case EVENT_CHECK_CORRUPTION:
                 {
-                    if (Creature* corruption = me->FindNearestCreature(NPC_CORRUPTION, 500.0f, true))
+                    if (me->FindNearestCreature(NPC_CORRUPTION, 500.0f, true))
                     {
                         speed = 0.2f;
                         events.ScheduleEvent(EVENT_CHECK_CORRUPTION, 1000);
@@ -265,7 +265,7 @@ public:
                     {
                         if (GameObject* plate1 = me->FindNearestGameObject(GO_DEATHWING_BACK_PLATE_1, 500.0f))
                         {
-                            if (!plate1->GetGoState() == GO_STATE_ACTIVE)
+                            if (plate1->GetGoState() == GO_STATE_ACTIVE)
                             {
                                 step = 3;
                                 speed = 0.2f;
@@ -478,7 +478,7 @@ public:
             }
         }
 
-        void JustDied(Unit* killer) override
+        void JustDied(Unit* /*killer*/) override
         {
             instance->SetBossState(DATA_SPINE, DONE);
             instance->DoRemoveAurasDueToSpellOnPlayers(SPELL_DEGRADATION);
@@ -558,7 +558,7 @@ public:
             DoZoneInCombat(me);
         }
 
-        void SpellHitTarget(Unit* /*target*/, SpellInfo const* spell)
+        void SpellHitTarget(Unit* /*target*/, SpellInfo const* spell) override
         {
             if (spell->Id == SPELL_ABSORBED_BLOOD)
             {
@@ -566,7 +566,7 @@ public:
             }
         }
 
-        void DamageTaken(Unit* who, uint32&damage) override
+        void DamageTaken(Unit* /*who*/, uint32&damage) override
         {
             if (!me || !me->IsAlive() || me->HasAura(SPELL_RESIDUE))
                 return;
@@ -653,7 +653,7 @@ public:
                 events.ScheduleEvent(EVENT_BLOOD_CORRUPTION, 8000);
         }
 
-        void SpellHitTarget(Unit* /*target*/, SpellInfo const* spell)
+        void SpellHitTarget(Unit* /*target*/, SpellInfo const* spell) override
         {
             if (spell->Id == SPELL_NUCLEAR_BLAST_TENDON)
             {
@@ -665,7 +665,7 @@ public:
             }
         }
 
-        void SpellHit(Unit*, const SpellInfo* spell)
+        void SpellHit(Unit* /*unit*/, const SpellInfo* spell) override
         {
             if (spell->Id == SPELL_ABSORBED_BLOOD)
             {
@@ -679,7 +679,7 @@ public:
             }
         }
 
-        void DamageTaken(Unit* who, uint32&damage) override
+        void DamageTaken(Unit* /*who*/, uint32&damage) override
         {
             if (!me || !me->IsAlive())
                 return;
@@ -726,11 +726,15 @@ public:
             DoMeleeAttackIfReady();
         }
 
-        void JustDied(Unit* killer) override
+        void JustDied(Unit* /*killer*/) override
         {
             if (Aura * absorbed = me->GetAura(SPELL_ABSORBED_BLOOD))
-                if (stacks = absorbed->GetStackAmount() == 9)
+            {
+                stacks = absorbed->GetStackAmount();
+
+                if (stacks == 9)
                     DoCast(SPELL_NUCLEAR_BLAST_TENDON);
+            }
 
             if (IsHeroic())
                 DoCast(me, SPELL_DEGRADATION);
@@ -772,7 +776,7 @@ public:
             events.ScheduleEvent(EVENT_PLATE_CHECK, 500);
         }
 
-        void SpellHitTarget(Unit* /*target*/, SpellInfo const* spell)
+        void SpellHitTarget(Unit* /*target*/, SpellInfo const* spell) override
         {
             if (spell->Id == SPELL_SEAL_ARMOR_BREACH)
             {
@@ -783,7 +787,7 @@ public:
             }
         }
 
-        void DoAction(int32 action)
+        void DoAction(int32 action) override
         {
             switch (action)
             {
@@ -825,7 +829,7 @@ public:
             }
         }
 
-        void JustDied(Unit* killer) override
+        void JustDied(Unit* /*killer*/) override
         {
             me->NearTeleportTo(me->GetHomePosition().GetPositionX(), me->GetHomePosition().GetPositionY(), me->GetHomePosition().GetPositionZ() + 0.5f, me->GetHomePosition().GetOrientation());
 
@@ -854,7 +858,7 @@ public:
 
     struct npc_corruptionAI : public ScriptedAI
     {
-        npc_corruptionAI(Creature* creature) : ScriptedAI(creature), vehicle(creature->GetVehicleKit()), summons(me)
+        npc_corruptionAI(Creature* creature) : ScriptedAI(creature), summons(me), vehicle(creature->GetVehicleKit())
         {
             instance = creature->GetInstanceScript();
         }
@@ -883,7 +887,7 @@ public:
                 summon->AI()->Talk(SAY_SWAYZE_INTRO_SPINE);
         }
 
-        void IsSummonedBy(Unit* summoner)
+        void IsSummonedBy(Unit* /*summoner*/) override
         {
             vehicle = me->GetVehicleKit();
 
@@ -943,7 +947,7 @@ public:
             }
         }
 
-        void DamageTaken(Unit* who, uint32&damage) override
+        void DamageTaken(Unit* /*who*/, uint32&damage) override
         {
             if (!me || !me->IsAlive())
                 return;
@@ -954,7 +958,7 @@ public:
             }
         }
 
-        void JustDied(Unit* killer) override
+        void JustDied(Unit* /*killer*/) override
         {
             me->SummonCreature(NPC_HIDEOUS_AMALGAMATION, me->GetPositionX(), me->GetPositionY(), me->GetPositionZ(), me->GetOrientation(), TEMPSUMMON_CORPSE_TIMED_DESPAWN, 5000);
             me->SummonCreature(NPC_SPAWNER, me->GetPositionX(), me->GetPositionY(), me->GetPositionZ(), me->GetOrientation(), TEMPSUMMON_CORPSE_TIMED_DESPAWN, 5000);
@@ -1009,12 +1013,11 @@ public:
 
         void FilterTargets(std::list<WorldObject*>& targets)
         {
-            if (GetCaster()->GetMap() && GetCaster()->GetMap()->GetDifficultyID() == DIFFICULTY_10_N ||
-                GetCaster()->GetMap() && GetCaster()->GetMap()->GetDifficultyID() == DIFFICULTY_10_HC)
+            if ((GetCaster()->GetMap() && GetCaster()->GetMap()->GetDifficultyID() == DIFFICULTY_10_N) ||
+                (GetCaster()->GetMap() && GetCaster()->GetMap()->GetDifficultyID() == DIFFICULTY_10_HC))
                 Trinity::Containers::RandomResize(targets, 1);
-
-            else if (GetCaster()->GetMap() && GetCaster()->GetMap()->GetDifficultyID() == DIFFICULTY_25_N ||
-                GetCaster()->GetMap() && GetCaster()->GetMap()->GetDifficultyID() == DIFFICULTY_25_HC)
+            else if ((GetCaster()->GetMap() && GetCaster()->GetMap()->GetDifficultyID() == DIFFICULTY_25_N) ||
+                     (GetCaster()->GetMap() && GetCaster()->GetMap()->GetDifficultyID() == DIFFICULTY_25_HC))
                 Trinity::Containers::RandomResize(targets, 3);
         }
 
@@ -1046,7 +1049,7 @@ public:
     {
         PrepareAuraScript(spell_absorb_blood_AuraScript);
 
-        bool Validate(SpellInfo const* /*spell*/)
+        bool Validate(SpellInfo const* /*spell*/) override
         {
             if (!sSpellMgr->GetSpellInfo(SPELL_ABSORB_BLOOD_DUMMY))
                 return false;
@@ -1054,7 +1057,7 @@ public:
         }
 
 
-        void OnPeriodic(AuraEffect const* aurEff)
+        void OnPeriodic(AuraEffect const* /*aurEff*/)
         {
             if (Unit* amalga = GetUnitOwner()->FindNearestCreature(NPC_HIDEOUS_AMALGAMATION, 2.0f, true))
                 GetUnitOwner()->CastSpell(amalga, SPELL_ABSORBED_BLOOD);
@@ -1093,7 +1096,7 @@ public:
         }
     };
 
-    SpellScript *GetSpellScript() const
+    SpellScript* GetSpellScript() const override
     {
         return new spell_nuclear_blast_SpellScript();
     }
@@ -1110,9 +1113,9 @@ public:
 
         void HandleActivate(SpellEffIndex index)
         {
-            if (Unit* caster = GetCaster())
+            if ( GetCaster())
             {
-                if (GameObject* plate = GetHitGObj())
+                if (GetHitGObj())
                 {
                     PreventHitDefaultEffect(index);
                 }
@@ -1191,12 +1194,12 @@ public:
     {
         PrepareAuraScript(spell_blood_corruption_death_AuraScript);
 
-        void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes /*mode*/)
+        void HandleApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
         {
             //aurEff->GetBase()->SetDuration(GetSpellInfo()->GetEffect(EFFECT_0)->CalcValue());
         }
 
-        void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+        void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes /*mode*/)
         {
                 if (Unit* owner = GetUnitOwner())
                 {
@@ -1303,12 +1306,12 @@ public:
     {
         PrepareAuraScript(spell_blood_corruption_earth_AuraScript);
 
-        void HandleApply(AuraEffect const* aurEff, AuraEffectHandleModes /*mode*/)
+        void HandleApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
         {
             //aurEff->GetBase()->SetDuration(GetSpellInfo()->GetEffect(EFFECT_0)->CalcValue());
         }
 
-        void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+        void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes /*mode*/)
         {
                 if (Unit* owner = GetUnitOwner())
                 {

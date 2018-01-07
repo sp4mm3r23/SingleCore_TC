@@ -161,7 +161,7 @@ class boss_mannoroth : public CreatureScript
 public:
     boss_mannoroth() : CreatureScript("boss_mannoroth") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new boss_mannorothAI(pCreature);
     }
@@ -207,7 +207,7 @@ public:
             bEndEncounter = false;
         }
 
-        void JustReachedHome()
+        void JustReachedHome() override
         {
             if (Creature* pTyrande = me->FindNearestCreature(NPC_TYRANDE, 150.0f))
                 pTyrande->AI()->DoAction(7); // ACTION_MANNOROTH_RESET
@@ -223,7 +223,7 @@ public:
             me->Attack(who, false);
         }
 
-        void EnterCombat(Unit* attacker) override
+        void EnterCombat(Unit* /*attacker*/) override
         {
             if (Creature* pVarothen = ObjectAccessor::GetCreature(*me, instance->GetGuidData(DATA_VAROTHEN)))
                 if (!pVarothen->IsInCombat())
@@ -290,7 +290,7 @@ public:
                 damage = 0;
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -503,7 +503,7 @@ public:
                        }
 
                 instance->DoUpdateCriteria(CRITERIA_TYPE_BE_SPELL_TARGET, 105576, 0, me);
-                GameObject* reward = me->SummonGameObject(209541, 3356.39f, -5748.73f, 15.2165f, 2.60053f, QuaternionData(), 200000);
+                me->SummonGameObject(209541, 3356.39f, -5748.73f, 15.2165f, 2.60053f, QuaternionData(), 200000);
                 //instance->UpdateEncounterState(ENCOUNTER_CREDIT_CAST_SPELL, SPELL_COMPLETE_ENCOUNTER, me);
                 instance->SetBossState(DATA_MANNOROTH, DONE);
             }
@@ -521,7 +521,7 @@ class npc_mannoroth_varothen : public CreatureScript
 public:
     npc_mannoroth_varothen() : CreatureScript("npc_mannoroth_varothen") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_mannoroth_varothenAI(pCreature);
     }
@@ -554,7 +554,7 @@ public:
                 me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IMMUNE_TO_PC);
         }
 
-        void EnterCombat(Unit* attacker) override
+        void EnterCombat(Unit* /*attacker*/) override
         {
             Talk(SAY_VAROTHEN_AGGRO);
             events.ScheduleEvent(EVENT_MAGNISTRIKE, urand(3000, 7000));
@@ -571,7 +571,7 @@ public:
                 Talk(SAY_VAROTHEN_KILL);
         }
 
-        void SpellHit(Unit* who, const SpellInfo* spellInfo)
+        void SpellHit(Unit* who, const SpellInfo* spellInfo) override
         {
             if (spellInfo->Id == SPELL_ARCHIVED_VAROTHEN_1)
                 DoCast(who, SPELL_ARCHIVED_VAROTHEN_2, true);
@@ -595,7 +595,7 @@ public:
             }
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -627,7 +627,7 @@ class npc_mannoroth_doomguard_debilitator : public CreatureScript
 public:
     npc_mannoroth_doomguard_debilitator() : CreatureScript("npc_mannoroth_doomguard_debilitator") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_mannoroth_doomguard_debilitatorAI(pCreature);
     }
@@ -657,7 +657,7 @@ public:
             events.Reset();
         }
 
-        void IsSummonedBy(Unit* /*owner*/)
+        void IsSummonedBy(Unit* /*owner*/) override
         {
             events.ScheduleEvent(EVENT_DEBILITATING_FLAY, 1000);
         }
@@ -668,7 +668,7 @@ public:
                 pTyrande->AI()->DoAction(8); // ACTION_DEBILITATING_OFF
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             events.Update(diff);
 
@@ -721,7 +721,7 @@ class achievement_thats_not_cannon : public AchievementCriteriaScript
 public:
     achievement_thats_not_cannon() : AchievementCriteriaScript("achievement_thats_not_cannon") { }
 
-    bool OnCheck(Player* source, Unit* target) override
+    bool OnCheck(Player* /*source*/, Unit* target) override
     {
         if (!target)
             return false;

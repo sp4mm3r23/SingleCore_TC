@@ -43,7 +43,7 @@ public:
             bHagaraEvent = 0;
         }
 
-        void OnPlayerEnter(Player* pPlayer)
+        void OnPlayerEnter(Player* pPlayer) override
         {
             if (!uiTeamInInstance)
                 uiTeamInInstance = pPlayer->GetTeam();
@@ -151,7 +151,7 @@ public:
             }
         }
 
-        void OnCreatureRemove(Creature* pCreature)
+        void OnCreatureRemove(Creature* pCreature) override
         {
             if (pCreature->GetEntry() == NPC_ULTRAXION)
                 uiUltraxionGUID = ObjectGuid::Empty;
@@ -253,7 +253,7 @@ public:
             }
         }
 
-        uint32 GetData(uint32 type) const
+        uint32 GetData(uint32 type) const override 
         {
             if (type == DATA_HAGARA_EVENT)
                 return bHagaraEvent;
@@ -347,15 +347,15 @@ public:
     };
 };
 
-void WhisperToAllPlayerInZone(int32 TextId, Creature* sender)
+void WhisperToAllPlayerInZone(int32 /*TextId*/, Creature* /*sender*/)
 {
-    Map::PlayerList const &players = sender->GetMap()->GetPlayers();
+    /*Map::PlayerList const &players = sender->GetMap()->GetPlayers();
     for (Map::PlayerList::const_iterator i = players.begin(); i != players.end(); ++i)
         if (Player* player = i->GetSource())
         {
             // TODO: Implement this
             // Talk(TextId, sender, player);
-        }
+        }*/
 }
 
 void AddSC_instance_dragon_soul()

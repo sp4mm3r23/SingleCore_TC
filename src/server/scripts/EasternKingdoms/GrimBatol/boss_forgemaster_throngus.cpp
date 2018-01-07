@@ -111,7 +111,7 @@ class boss_forgemaster_throngus: public CreatureScript
 public:
     boss_forgemaster_throngus() : CreatureScript("boss_forgemaster_throngus") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new boss_forgemaster_throngusAI (pCreature);
     }
@@ -149,7 +149,7 @@ public:
                   DespawnCreatures(40228);
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim() || (me->HasUnitState(UNIT_STATE_CASTING) && currentWaepon != WEAPON_SHIELD))
                 return;
@@ -342,7 +342,7 @@ public:
     {
         PrepareAuraScript(spell_effect_fix_AuraScript);
 
-        bool Validate(SpellInfo const* /*spellInfo*/)
+        bool Validate(SpellInfo const* /*spellInfo*/) override
         {
             return true;
         }
@@ -404,7 +404,7 @@ public:
     {
         PrepareSpellScript(script_impl);
 
-        bool Load()
+        bool Load() override
         {
             return true;
         }
@@ -444,17 +444,17 @@ public:
     {
         PrepareAuraScript(spell_disoriented_roar_AuraScript);
 
-        bool Validate(SpellInfo const* /*spellInfo*/)
+        bool Validate(SpellInfo const* /*spellInfo*/) override
         {
             return true;
         }
 
-        bool Load()
+        bool Load() override
         {
             return true;
         }
 
-        void HandleProc(AuraEffect const* aurEff, ProcEventInfo& /*eventInfo*/)
+        void HandleProc(AuraEffect const* /*aurEff*/, ProcEventInfo& /*eventInfo*/)
         {
             PreventDefaultAction();
         }

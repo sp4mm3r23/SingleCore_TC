@@ -654,7 +654,7 @@ class npc_ice_wave : public CreatureScript
                 events.ScheduleEvent(EVENT_RADIATE, 100);
             }
 
-            void IsSummonedBy(Unit* /*summoner*/)
+            void IsSummonedBy(Unit* /*summoner*/) override
             {
                 me->SetReactState(REACT_PASSIVE);
                 me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE);
@@ -791,7 +791,7 @@ class npc_crystal_conductor : public CreatureScript
                     DoCast(target, SPELL_CRYSTAL_CONDUCTOR);
             }
 
-        void SpellHit(Unit* /*who*/, const SpellInfo* spellInfo)
+        void SpellHit(Unit* /*who*/, const SpellInfo* spellInfo) override
         {
             if (spellInfo->Id == SPELL_LIGHTNING_ROD)
                 events.ScheduleEvent(EVENT_CAST_CRYSTAL, 1000);
@@ -851,7 +851,7 @@ class spell_ice_tomb : public SpellScriptLoader
         {
             PrepareSpellScript(spell_ice_tomb_SpellScript);
 
-            bool Load()
+            bool Load() override
             {
                 return GetCaster()->GetTypeId() == TYPEID_UNIT;
             }
@@ -860,8 +860,8 @@ class spell_ice_tomb : public SpellScriptLoader
             {
                targets.remove_if(NotVictimFilter(GetCaster()));
 
-               if (GetCaster()->GetMap() && GetCaster()->GetMap()->GetDifficultyID() == DIFFICULTY_25_N ||
-                   GetCaster()->GetMap() && GetCaster()->GetMap()->GetDifficultyID() == DIFFICULTY_25_HC)
+               if ((GetCaster()->GetMap() && GetCaster()->GetMap()->GetDifficultyID() == DIFFICULTY_25_N) ||
+                   (GetCaster()->GetMap() && GetCaster()->GetMap()->GetDifficultyID() == DIFFICULTY_25_HC))
                    Trinity::Containers::RandomResize(targets, 5);
                else
                    Trinity::Containers::RandomResize(targets, 2);
@@ -896,7 +896,7 @@ class spell_ice_tomb_freeze : public SpellScriptLoader
         {
             PrepareSpellScript(spell_ice_tomb_freeze_SpellScript);
 
-            bool Validate(SpellInfo const* /*spell*/)
+            bool Validate(SpellInfo const* /*spell*/) override
             {
                 if (!sObjectMgr->GetCreatureTemplate(NPC_ICE_TOMB))
                     return false;
@@ -925,17 +925,16 @@ class spell_ice_tomb_freeze : public SpellScriptLoader
     {
         PrepareAuraScript(spell_ice_tomb_freeze_AuraScript);
 
-        bool Validate(SpellInfo const* /*spell*/)
+        bool Validate(SpellInfo const* /*spell*/) override
         {
             if (!sSpellMgr->GetSpellInfo(SPELL_ICE_TOMB))
                 return false;
             return true;
         }
 
-
-        void OnPeriodic(AuraEffect const* aurEff)
+        void OnPeriodic(AuraEffect const* /*aurEff*/)
         {
-            if(Unit*tomb = GetUnitOwner()->FindNearestCreature(NPC_ICE_TOMB, 2.0f, false))
+            if (GetUnitOwner()->FindNearestCreature(NPC_ICE_TOMB, 2.0f, false))
                 GetUnitOwner()->RemoveAurasDueToSpell(SPELL_ICE_TOMB);
         }
 
@@ -960,7 +959,7 @@ public:
     {
         PrepareAuraScript(spell_ds_ice_lance_AuraScript);
 
-        bool Validate(SpellInfo const* /*spell*/)
+        bool Validate(SpellInfo const* /*spell*/) override
         {
             if (!sSpellMgr->GetSpellInfo(SPELL_LANCE_TARGET))
                 return false;
@@ -1087,7 +1086,7 @@ public:
     {
         PrepareAuraScript(spell_lightning_conduit_AuraScript);
 
-        bool Validate(SpellInfo const* /*spell*/)
+        bool Validate(SpellInfo const* /*spell*/) override
         {
             if (!sSpellMgr->GetSpellInfo(SPELL_LIGHTNING_CONDUIT))
                 return false;
@@ -1095,7 +1094,7 @@ public:
         }
 
 
-        void OnPeriodic(AuraEffect const* aurEff)
+        void OnPeriodic(AuraEffect const* /*aurEff*/)
         {
             if(Unit* owner = GetUnitOwner())
                 owner->CastSpell(owner, SPELL_LIGHTNING_CONDUIT_DUMMY, true);
@@ -1122,7 +1121,7 @@ class spell_frozen_tempest : public SpellScriptLoader
         {
             PrepareAuraScript(spell_frozen_tempest_AuraScript);
 
-            void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes mode)
+            void HandleRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
             {
                 if(Unit* owner = GetUnitOwner())
                     if (GetTargetApplication()->GetRemoveMode() == AURA_REMOVE_BY_EXPIRE)
@@ -1179,7 +1178,7 @@ public:
     {
         PrepareAuraScript(spell_frostflake_AuraScript);
 
-        bool Load()
+        bool Load() override
         {
             _spell = GetSpellInfo()->GetEffect(EFFECT_0)->CalcValue();
             return GetCaster()->GetTypeId() == TYPEID_UNIT;
@@ -1187,15 +1186,15 @@ public:
 
         void OnPeriodic(AuraEffect const* aurEff)
         {
-            int32 stack;
-                if (Unit* owner = GetUnitOwner())
-                {
+            int32 stack = 0;
+            if (Unit* owner = GetUnitOwner())
+            {
                 if (Aura* fflake = owner->GetAura(SPELL_FROSTFLAKE))
                     stack = fflake->GetStackAmount();
 
                 owner->SetAuraStack(SPELL_FROSTFLAKE, owner, stack + 1);
                 aurEff->GetBase()->SetDuration(15000 - (1000* stack));
-                }
+            }
         }
 
         void Dispel(DispelInfo* dispelData)
@@ -1237,7 +1236,7 @@ public:
     {
         PrepareSpellScript(spell_storm_pillars_SpellScript);
 
-        bool Load()
+        bool Load() override
         {
             _spell = GetSpellInfo()->GetEffect(EFFECT_0)->CalcValue();
             return GetCaster()->GetTypeId() == TYPEID_UNIT;

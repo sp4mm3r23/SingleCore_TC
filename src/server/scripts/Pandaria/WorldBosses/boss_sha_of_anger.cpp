@@ -93,7 +93,7 @@ class boss_sha_of_anger : public CreatureScript
 
             void Reset() override
             {
-                me->setPowerType(POWER_RAGE);
+                me->SetPowerType(POWER_RAGE);
                 me->SetPower(POWER_RAGE, 0);
 
                 me->SetFloatValue(UNIT_FIELD_COMBATREACH, 5.0f);
@@ -345,7 +345,7 @@ class mob_sha_of_anger_bunny : public CreatureScript
                     who->RemoveAura(SPELL_OVERCOME_BY_ANGER);
             }
 
-            void UpdateAI(uint32 const /*diff*/) override
+            void UpdateAI(uint32 /*diff*/) override
             {
                 if (me->AI() && !me->AI()->CanSeeEvenInPassiveMode())
                     me->AI()->SetCanSeeEvenInPassiveMode(true);

@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2010-2011 Trinity <http://www.projecttrinity.org/>
+ * Copyright (C) 2017-2018 AshamaneProject <https://github.com/AshamaneProject>
+ * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -143,7 +144,7 @@ class boss_anhuur : public CreatureScript
             }
         }
 
-        void EnterCombat(Unit * /*who*/)
+        void EnterCombat(Unit* /*who*/) override
         {
             instance->SendEncounterUnit(ENCOUNTER_FRAME_ENGAGE, me, 1);
             Talk(SAY_AGGRO);
@@ -152,7 +153,7 @@ class boss_anhuur : public CreatureScript
             _EnterCombat();
         }
 
-        void JustDied(Unit * killer)
+        void JustDied(Unit* /*killer*/) override
         {
             instance->SendEncounterUnit(ENCOUNTER_FRAME_DISENGAGE, me);
             Talk(SAY_DEATH);
@@ -166,7 +167,7 @@ class boss_anhuur : public CreatureScript
                 Talk(SAY_KILL);
         }
 
-        void EnterEvadeMode(EvadeReason /*why*/)
+        void EnterEvadeMode(EvadeReason /*why*/) override
         {
             _EnterEvadeMode();
             CleanStalkers();
@@ -203,7 +204,7 @@ class boss_anhuur : public CreatureScript
             }
         }
 
-        void DamageTaken(Unit* done_by, uint32&damage) override
+        void DamageTaken(Unit* /*done_by*/, uint32&/*damage*/) override
         {
             if ((me->HealthBelowPct(66) && _shieldCount == 0) ||
                 (me->HealthBelowPct(33) && _shieldCount == 1))
@@ -310,7 +311,7 @@ class boss_anhuur : public CreatureScript
             SummonList.clear();
         }
 
-        void JustSummoned(Creature * summon)
+        void JustSummoned(Creature* summon) override
         {
             SummonList.push_back(summon->GetGUID());
             if(Player * player = ObjectAccessor::GetPlayer(*me, targetGUID))
@@ -323,7 +324,7 @@ class boss_anhuur : public CreatureScript
         }
         */
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -391,10 +392,7 @@ class boss_anhuur : public CreatureScript
             DoMeleeAttackIfReady();
         }
     private:
-        bool shielded;
-        int8 stage;
         ObjectGuid targetGUID;
-        bool beacons[2];
     };
 
 public:
@@ -419,7 +417,7 @@ public:
         {
             if (InstanceMap* instance = GetCaster()->GetMap()->ToInstanceMap())
             {
-                if (InstanceScript* const script = instance->GetInstanceScript())
+                if (instance->GetInstanceScript())
                 {
                     if (door)
                     {
@@ -461,7 +459,7 @@ public:
         void Notify(SpellEffIndex /*index*/)
         {
             if (InstanceMap* instance = GetCaster()->GetMap()->ToInstanceMap())
-                if (InstanceScript* const script = instance->GetInstanceScript())
+                if (instance->GetInstanceScript())
                     if (door)
                         if (Creature* anhuur = door->ToCreature())
                             anhuur->AI()->DoAction(ACTION_DISABLE_BEACON);

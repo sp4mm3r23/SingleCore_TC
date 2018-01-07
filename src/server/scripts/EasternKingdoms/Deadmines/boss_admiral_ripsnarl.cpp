@@ -174,7 +174,7 @@ public:
             me->SummonCreature(NPC_CAPTAIN_COOKIE, CookieSpawn);
         }
 
-        void SetData(uint32 uiI, uint32 uiValue) override
+        void SetData(uint32 /*uiI*/, uint32 uiValue) override
         {
             if (uiValue == VAPOR_CASTED_COALESCE && numberCastCoalesce < 3)
             {
@@ -271,7 +271,7 @@ public:
             }
         }
 
-        void UpdateAI(uint32 const uiDiff) override
+        void UpdateAI(uint32 uiDiff) override
         {
             if (!me || !instance)
                 return;
@@ -440,7 +440,7 @@ public:
                     pAI->VaporsKilled();
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;

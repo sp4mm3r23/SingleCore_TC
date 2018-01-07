@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -210,6 +210,9 @@ enum HotfixDatabaseStatements : uint32
     HOTFIX_SEL_GARR_SITE_LEVEL_PLOT_INST,
 
     HOTFIX_SEL_GEM_PROPERTIES,
+
+    HOTFIX_SEL_GLOBAL_STRINGS,
+    HOTFIX_SEL_GLOBAL_STRINGS_LOCALE,
 
     HOTFIX_SEL_GLYPH_BINDABLE_SPELL,
 

@@ -132,7 +132,7 @@ public:
             me->SetReactState(REACT_PASSIVE);
             me->SetPower(POWER_ENERGY, 100);
             me->SetMaxPower(POWER_ENERGY, 100);
-            me->setPowerType(POWER_ENERGY);
+            me->SetPowerType(POWER_ENERGY);
             me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_IMMUNE_TO_PC);
             Step = 0;
             Below = false;
@@ -191,7 +191,7 @@ public:
                     Reaper->DespawnOrUnsummon();
         }
 
-        uint32 GetData(uint32 type) const
+        uint32 GetData(uint32 type) const override 
         {
             if (type == DATA_ACHIV_PROTOTYPE_PRODIGY)
             {
@@ -259,7 +259,7 @@ public:
         {
             if (id == 0)
             {
-                if (Creature* HarvestTarget = me->FindNearestCreature(NPC_HARVEST_TARGET, 200.0f, true))
+                if (me->FindNearestCreature(NPC_HARVEST_TARGET, 200.0f, true))
                 {
                     //DoCast(HarvestTarget, IsHeroic() ? SPELL_HARVEST_SWEEP_H : SPELL_HARVEST_SWEEP);
                     me->RemoveAurasDueToSpell(SPELL_HARVEST_AURA);
@@ -278,7 +278,7 @@ public:
             }
         }
 
-        void UpdateAI(uint32 const uiDiff) override
+        void UpdateAI(uint32 uiDiff) override
         {
             if (!me)
                 return;
@@ -430,7 +430,7 @@ public:
 
             me->SetPower(POWER_ENERGY, 100);
             me->SetMaxPower(POWER_ENERGY, 100);
-            me->setPowerType(POWER_ENERGY);
+            me->SetPowerType(POWER_ENERGY);
             if (Status == true)
             {
                 if (!me->HasAura(SPELL_ON_FIRE))
@@ -477,14 +477,6 @@ public:
                 Energizing();
             }
         }
-
-        void UpdateAI(uint32 const diff) override
-        {
-            if (!UpdateVictim())
-                return;
-
-            DoMeleeAttackIfReady();
-        }
     };
 };
 
@@ -494,7 +486,7 @@ public:
     achievement_prototype_reaper() : AchievementCriteriaScript("achievement_prototype_reaper")
     {}
 
-    bool OnCheck(Player* source, Unit* target) override
+    bool OnCheck(Player* /*source*/, Unit* target) override
     {
         if (target && target->IsAIEnabled)
         {

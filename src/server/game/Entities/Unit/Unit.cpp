@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -727,12 +727,6 @@ void Unit::DealDamageMods(Unit const* victim, uint32 &damage, uint32* absorb) co
 
 uint32 Unit::DealDamage(Unit* victim, uint32 damage, CleanDamage const* cleanDamage, DamageEffectType damagetype, SpellSchoolMask damageSchoolMask, SpellInfo const* spellProto, bool durabilityLoss)
 {
-    if (victim->IsImmunedToDamage(spellProto))
-    {
-        SendSpellDamageImmune(victim, spellProto->Id, false);
-        return 0;
-    }
-
     if (victim->IsAIEnabled)
     {
         victim->GetAI()->DamageTaken(this, damage);
@@ -814,7 +808,7 @@ uint32 Unit::DealDamage(Unit* victim, uint32 damage, CleanDamage const* cleanDam
     }
 
     // Rage from Damage made (only from direct weapon damage)
-    if (cleanDamage && (cleanDamage->attackType == BASE_ATTACK || cleanDamage->attackType == OFF_ATTACK) && damagetype == DIRECT_DAMAGE && this != victim && getPowerType() == POWER_RAGE)
+    if (cleanDamage && (cleanDamage->attackType == BASE_ATTACK || cleanDamage->attackType == OFF_ATTACK) && damagetype == DIRECT_DAMAGE && this != victim && GetPowerType() == POWER_RAGE)
     {
         uint32 rage = uint32(GetBaseAttackTime(cleanDamage->attackType) / 1000.f * 1.75f);
         if (cleanDamage->attackType == OFF_ATTACK)
@@ -1228,7 +1222,6 @@ void Unit::DealSpellDamage(SpellNonMeleeDamage const* damageInfo, bool durabilit
         return;
 
     Unit* victim = damageInfo->target;
-
     if (!victim)
         return;
 
@@ -1513,47 +1506,48 @@ void Unit::DealMeleeDamage(CalcDamageInfo* damageInfo, bool durabilityLoss)
         // We're going to call functions which can modify content of the list during iteration over it's elements
         // Let's copy the list so we can prevent iterator invalidation
         AuraEffectList vDamageShieldsCopy(victim->GetAuraEffectsByType(SPELL_AURA_DAMAGE_SHIELD));
-        for (AuraEffectList::const_iterator dmgShieldItr = vDamageShieldsCopy.begin(); dmgShieldItr != vDamageShieldsCopy.end(); ++dmgShieldItr)
+        for (AuraEffect const* aurEff : vDamageShieldsCopy)
         {
-            SpellInfo const* i_spellProto = (*dmgShieldItr)->GetSpellInfo();
+            SpellInfo const* spellInfo = aurEff->GetSpellInfo();
+
             // Damage shield can be resisted...
-            if (SpellMissInfo missInfo = victim->SpellHitResult(this, i_spellProto, false))
+            SpellMissInfo missInfo = victim->SpellHitResult(this, spellInfo, false);
+            if (missInfo != SPELL_MISS_NONE)
             {
-                victim->SendSpellMiss(this, i_spellProto->Id, missInfo);
+                victim->SendSpellMiss(this, spellInfo->Id, missInfo);
                 continue;
             }
 
             // ...or immuned
-            if (IsImmunedToDamage(i_spellProto))
+            if (IsImmunedToDamage(spellInfo))
             {
-                victim->SendSpellDamageImmune(this, i_spellProto->Id, false);
+                victim->SendSpellDamageImmune(this, spellInfo->Id, false);
                 continue;
             }
 
-            uint32 damage = (*dmgShieldItr)->GetAmount();
-
-            if (Unit* caster = (*dmgShieldItr)->GetCaster())
+            uint32 damage = aurEff->GetAmount();
+            if (Unit* caster = aurEff->GetCaster())
             {
-                damage = caster->SpellDamageBonusDone(this, i_spellProto, damage, SPELL_DIRECT_DAMAGE, (*dmgShieldItr)->GetSpellEffectInfo());
-                damage = this->SpellDamageBonusTaken(caster, i_spellProto, damage, SPELL_DIRECT_DAMAGE, (*dmgShieldItr)->GetSpellEffectInfo());
+                damage = caster->SpellDamageBonusDone(this, spellInfo, damage, SPELL_DIRECT_DAMAGE, aurEff->GetSpellEffectInfo());
+                damage = this->SpellDamageBonusTaken(caster, spellInfo, damage, SPELL_DIRECT_DAMAGE, aurEff->GetSpellEffectInfo());
             }
 
-            DamageInfo damageInfo(this, victim, damage, i_spellProto, i_spellProto->GetSchoolMask(), SPELL_DIRECT_DAMAGE, BASE_ATTACK);
+            DamageInfo damageInfo(this, victim, damage, spellInfo, spellInfo->GetSchoolMask(), SPELL_DIRECT_DAMAGE, BASE_ATTACK);
             victim->CalcAbsorbResist(damageInfo);
             damage = damageInfo.GetDamage();
             // No Unit::CalcAbsorbResist here - opcode doesn't send that data - this damage is probably not affected by that
-            victim->DealDamageMods(this, damage, NULL);
+            victim->DealDamageMods(this, damage, nullptr);
 
             WorldPackets::CombatLog::SpellDamageShield damageShield;
             damageShield.Attacker = victim->GetGUID();
             damageShield.Defender = GetGUID();
-            damageShield.SpellID = i_spellProto->Id;
+            damageShield.SpellID = spellInfo->Id;
             damageShield.TotalDamage = damage;
             damageShield.OverKill = std::max(int32(damage) - int32(GetHealth()), 0);
-            damageShield.SchoolMask = i_spellProto->SchoolMask;
+            damageShield.SchoolMask = spellInfo->SchoolMask;
             damageShield.LogAbsorbed = damageInfo.GetAbsorb();
 
-            victim->DealDamage(this, damage, 0, SPELL_DIRECT_DAMAGE, i_spellProto->GetSchoolMask(), i_spellProto, true);
+            victim->DealDamage(this, damage, nullptr, SPELL_DIRECT_DAMAGE, spellInfo->GetSchoolMask(), spellInfo, true);
 
             damageShield.LogData.Initialize(this);
             victim->SendCombatLogMessage(&damageShield);
@@ -2570,6 +2564,11 @@ SpellMissInfo Unit::SpellHitResult(Unit* victim, SpellInfo const* spellInfo, boo
 
     // Check for immune
     if (victim->IsImmunedToSpell(spellInfo))
+        return SPELL_MISS_IMMUNE;
+
+    // Damage immunity is only checked if the spell has damage effects, this immunity must not prevent aura apply
+    // returns SPELL_MISS_IMMUNE in that case, for other spells, the SMSG_SPELL_GO must show hit
+    if (spellInfo->HasOnlyDamageEffects() && victim->IsImmunedToDamage(spellInfo))
         return SPELL_MISS_IMMUNE;
 
     // All positive spells can`t miss
@@ -5293,9 +5292,9 @@ void Unit::SendAttackStateUpdate(uint32 HitInfo, Unit* target, uint8 /*SwingType
     SendAttackStateUpdate(&dmgInfo);
 }
 
-void Unit::setPowerType(Powers new_powertype)
+void Unit::SetPowerType(Powers new_powertype)
 {
-    if (getPowerType() == new_powertype)
+    if (GetPowerType() == new_powertype)
         return;
 
     SetUInt32Value(UNIT_FIELD_DISPLAY_POWER, new_powertype);
@@ -5369,7 +5368,7 @@ void Unit::UpdateDisplayPower()
         }
     }
 
-    setPowerType(displayPower);
+    SetPowerType(displayPower);
 }
 
 FactionTemplateEntry const* Unit::GetFactionTemplateEntry() const
@@ -6041,7 +6040,11 @@ void Unit::SetMinion(Minion *minion, bool apply)
         }
 
         if (minion->m_Properties && minion->m_Properties->Type == SUMMON_TYPE_MINIPET)
+        {
             SetCritterGUID(minion->GetGUID());
+            if (GetTypeId() == TYPEID_PLAYER)
+                minion->SetGuidValue(UNIT_FIELD_BATTLE_PET_COMPANION_GUID, GetGuidValue(PLAYER_FIELD_SUMMONED_BATTLE_PET_ID));
+        }
 
         // PvP, FFAPvP
         minion->SetByteValue(UNIT_FIELD_BYTES_2, UNIT_BYTES_2_OFFSET_PVP_FLAG, GetByteValue(UNIT_FIELD_BYTES_2, UNIT_BYTES_2_OFFSET_PVP_FLAG));
@@ -6053,7 +6056,7 @@ void Unit::SetMinion(Minion *minion, bool apply)
 
         // Ghoul pets have energy instead of mana (is anywhere better place for this code?)
         if (minion->IsPetGhoul())
-            minion->setPowerType(POWER_ENERGY);
+            minion->SetPowerType(POWER_ENERGY);
 
         // Send infinity cooldown - client does that automatically but after relog cooldown needs to be set again
         SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(minion->GetUInt32Value(UNIT_CREATED_BY_SPELL));
@@ -6694,32 +6697,16 @@ float Unit::SpellDamagePctDone(Unit* victim, SpellInfo const* spellProto, Damage
                 if (victim->HasAuraState(AURA_STATE_FROZEN, spellProto, this))
                     DoneTotalMod *= 3.0f;
             break;
-        case SPELLFAMILY_PRIEST:
-            // Smite
-            if (spellProto->SpellFamilyFlags[0] & 0x80)
-            {
-                // Glyph of Smite
-                if (AuraEffect* aurEff = GetAuraEffect(55692, 0))
-                    if (victim->GetAuraEffect(SPELL_AURA_PERIODIC_DAMAGE, SPELLFAMILY_PRIEST, flag128(0x100000, 0, 0), GetGUID()))
-                        AddPct(DoneTotalMod, aurEff->GetAmount());
-            }
-            break;
         case SPELLFAMILY_WARLOCK:
             // Shadow Bite (30% increase from each dot)
             if (spellProto->SpellFamilyFlags[1] & 0x00400000 && IsPet())
                 if (uint8 count = victim->GetDoTsByCaster(GetOwnerGUID()))
                     AddPct(DoneTotalMod, 30 * count);
 
-            // Drain Soul - increased damage for targets under 25 % HP
-            if (spellProto->SpellFamilyFlags[0] & 0x00004000)
-                if (HasAura(100001))
+            // Drain Soul - increased damage for targets under 20% HP
+            if (spellProto->Id == 198590)
+                if (HasAuraState(AURA_STATE_HEALTHLESS_20_PERCENT))
                     DoneTotalMod *= 2;
-            break;
-        case SPELLFAMILY_DEATHKNIGHT:
-            // Sigil of the Vengeful Heart
-            if (spellProto->SpellFamilyFlags[0] & 0x2000)
-                if (AuraEffect* aurEff = GetAuraEffect(64962, EFFECT_1))
-                    DoneTotalMod += aurEff->GetAmount();
             break;
     }
 
@@ -6949,23 +6936,6 @@ float Unit::GetUnitSpellCriticalChance(Unit* victim, SpellInfo const* spellProto
                         // Shiv-applied poisons can't crit
                         if (FindCurrentSpellBySpellId(5938))
                             crit_chance = 0.0f;
-                        break;
-                    case SPELLFAMILY_PALADIN:
-                        // Flash of light
-                        if (spellProto->SpellFamilyFlags[0] & 0x40000000)
-                        {
-                            // Sacred Shield
-                            if (AuraEffect const* aura = victim->GetAuraEffect(58597, 1, GetGUID()))
-                                crit_chance += aura->GetAmount();
-                            break;
-                        }
-                        // Exorcism
-                        else if (spellProto->GetCategory() == 19)
-                        {
-                            if (victim->GetCreatureTypeMask() & CREATURE_TYPEMASK_DEMON_OR_UNDEAD)
-                                return 100.0f;
-                            break;
-                        }
                         break;
                     case SPELLFAMILY_SHAMAN:
                         // Lava Burst
@@ -8372,15 +8342,6 @@ int32 Unit::ModifyPower(Powers power, int32 dVal)
     return gain;
 }
 
-// returns negative amount on power reduction
-int32 Unit::ModifyPowerPct(Powers power, float pct, bool apply)
-{
-    float amount = (float)GetMaxPower(power);
-    ApplyPercentModFloatVar(amount, pct, apply);
-
-    return ModifyPower(power, (int32)amount - GetMaxPower(power));
-}
-
 bool Unit::IsAlwaysVisibleFor(WorldObject const* seer) const
 {
     if (WorldObject::IsAlwaysVisibleFor(seer))
@@ -8703,7 +8664,7 @@ void Unit::setDeathState(DeathState s)
         // without this when removing IncreaseMaxHealth aura player may stuck with 1 hp
         // do not why since in IncreaseMaxHealth currenthealth is checked
         SetHealth(0);
-        SetPower(getPowerType(), 0);
+        SetPower(GetPowerType(), 0);
         SetUInt32Value(UNIT_NPC_EMOTESTATE, 0);
 
         // players in instance don't have ZoneScript, but they have InstanceScript
@@ -9098,21 +9059,6 @@ int32 Unit::ModSpellDuration(SpellInfo const* spellProto, Unit const* target, in
         }
     }
 
-    // Glyphs which increase duration of selfcast buffs
-    if (target == this)
-    {
-        switch (spellProto->SpellFamilyName)
-        {
-            case SPELLFAMILY_DRUID:
-                if (spellProto->SpellFamilyFlags[0] & 0x100)
-                {
-                    // Glyph of Thorns
-                    if (AuraEffect* aurEff = GetAuraEffect(57862, 0))
-                        duration += aurEff->GetAmount() * MINUTE * IN_MILLISECONDS;
-                }
-                break;
-        }
-    }
     return std::max(duration, 0);
 }
 
@@ -9428,9 +9374,9 @@ bool Unit::HandleStatModifier(UnitMods unitMod, UnitModifierType modifierType, f
         case UNIT_MOD_RUNES:
         case UNIT_MOD_RUNIC_POWER:
         case UNIT_MOD_SOUL_SHARDS:
-        case UNIT_MOD_ECLIPSE:
+        case UNIT_MOD_LUNAR_POWER:
         case UNIT_MOD_HOLY_POWER:
-        case UNIT_MOD_ALTERNATIVE:
+        case UNIT_MOD_ALTERNATE:
         case UNIT_MOD_MAELSTROM:
         case UNIT_MOD_CHI:
         case UNIT_MOD_INSANITY:
@@ -9680,7 +9626,7 @@ void Unit::SetPower(Powers power, int32 val)
     if (powerIndex == MAX_POWERS || powerIndex >= MAX_POWERS_PER_CLASS)
         return;
 
-    int32 maxPower = int32(GetMaxPower(power));
+    int32 maxPower = GetMaxPower(power);
     if (maxPower < val)
         val = maxPower;
 

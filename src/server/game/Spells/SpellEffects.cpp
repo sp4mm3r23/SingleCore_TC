@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -246,7 +246,7 @@ pEffect SpellEffects[TOTAL_SPELL_EFFECTS]=
     &Spell::EffectNULL,                                     //168 SPELL_EFFECT_ALLOW_CONTROL_PET
     &Spell::EffectDestroyItem,                              //169 SPELL_EFFECT_DESTROY_ITEM
     &Spell::EffectUpdateZoneAurasAndPhases,                 //170 SPELL_EFFECT_UPDATE_ZONE_AURAS_AND_PHASES
-    &Spell::EffectNULL,                                     //171 SPELL_EFFECT_171
+    &Spell::EffectSummonObjectPersonnal,                    //171 SPELL_EFFECT_SUMMON_OBJECT_PERSONNAL
     &Spell::EffectResurrectWithAura,                        //172 SPELL_EFFECT_RESURRECT_WITH_AURA
     &Spell::EffectUnlockGuildVaultTab,                      //173 SPELL_EFFECT_UNLOCK_GUILD_VAULT_TAB
     &Spell::EffectNULL,                                     //174 SPELL_EFFECT_APPLY_AURA_ON_PET
@@ -1110,7 +1110,7 @@ void Spell::EffectPowerDrain(SpellEffIndex effIndex)
 
     Powers powerType = Powers(effectInfo->MiscValue);
 
-    if (!unitTarget || !unitTarget->IsAlive() || unitTarget->getPowerType() != powerType || damage < 0)
+    if (!unitTarget || !unitTarget->IsAlive() || unitTarget->GetPowerType() != powerType || damage < 0)
         return;
 
     // add spell damage bonus
@@ -1185,7 +1185,7 @@ void Spell::EffectPowerBurn(SpellEffIndex effIndex)
 
     Powers powerType = Powers(effectInfo->MiscValue);
 
-    if (!unitTarget || !unitTarget->IsAlive() || unitTarget->getPowerType() != powerType || damage < 0)
+    if (!unitTarget || !unitTarget->IsAlive() || unitTarget->GetPowerType() != powerType || damage < 0)
         return;
 
     int32 newDamage = -(unitTarget->ModifyPower(powerType, -damage));
@@ -1570,26 +1570,15 @@ void Spell::EffectEnergize(SpellEffIndex /*effIndex*/)
         return;
 
     // Some level depends spells
-    int level_multiplier = 0;
-    int level_diff = 0;
     switch (m_spellInfo->Id)
     {
-        case 9512:                                          // Restore Energy
-            level_diff = m_caster->getLevel() - 40;
-            level_multiplier = 2;
-            break;
         case 24571:                                         // Blood Fury
-            level_diff = m_caster->getLevel() - 60;
-            level_multiplier = 10;
+            // Instantly increases your rage by ${(300-10*$max(0,$PL-60))/10}.
+            damage -= 10 * std::max(0, std::min(30, m_caster->getLevel() - 60));
             break;
         case 24532:                                         // Burst of Energy
-            level_diff = m_caster->getLevel() - 60;
-            level_multiplier = 4;
-            break;
-        case 31930:                                         // Judgements of the Wise
-        case 63375:                                         // Primal Wisdom
-        case 68082:                                         // Glyph of Seal of Command
-            damage = int32(CalculatePct(unitTarget->GetCreateMana(), damage));
+            // Instantly increases your energy by ${60-4*$max(0,$min(15,$PL-60))}.
+            damage -= 4 * std::max(0, std::min(15, m_caster->getLevel() - 60));
             break;
         case 67490:                                         // Runic Mana Injector (mana gain increased by 25% for engineers - 3.2.0 patch change)
         {
@@ -1601,12 +1590,6 @@ void Spell::EffectEnergize(SpellEffIndex /*effIndex*/)
         default:
             break;
     }
-
-    if (level_diff > 0)
-        damage -= level_multiplier * level_diff;
-
-    if (damage < 0 && power != POWER_LUNAR_POWER)
-        return;
 
     m_caster->EnergizeBySpell(unitTarget, m_spellInfo->Id, damage, power);
 
@@ -2195,22 +2178,6 @@ void Spell::EffectLearnSpell(SpellEffIndex effIndex)
     uint32 spellToLearn = (m_spellInfo->Id == 483 || m_spellInfo->Id == 55884) ? damage : effectInfo->TriggerSpell;
     player->LearnSpell(spellToLearn, false);
 
-    if (m_spellInfo->Id == 55884)
-    {
-        if (BattlePetMgr* battlePetMgr = player->GetSession()->GetBattlePetMgr())
-        {
-            for (auto entry : sBattlePetSpeciesStore)
-            {
-                if (entry->SummonSpellID == spellToLearn)
-                {
-                    battlePetMgr->AddPet(entry->ID, entry->CreatureID, BattlePetMgr::RollPetBreed(entry->ID), BattlePetMgr::GetDefaultPetQuality(entry->ID));
-                    player->UpdateCriteria(CRITERIA_TYPE_OWN_BATTLE_PET_COUNT);
-                    break;
-                }
-            }
-        }
-    }
-
     TC_LOG_DEBUG("spells", "Spell: %s has learned spell %u from %s", player->GetGUID().ToString().c_str(), spellToLearn, m_caster->GetGUID().ToString().c_str());
 }
 
@@ -2421,7 +2388,7 @@ void Spell::EffectLearnSkill(SpellEffIndex /*effIndex*/)
     if (effectHandleMode != SPELL_EFFECT_HANDLE_HIT_TARGET)
         return;
 
-    if (unitTarget->GetTypeId() != TYPEID_PLAYER)
+    if (!unitTarget->IsPlayer())
         return;
 
     if (damage < 0)
@@ -2438,6 +2405,23 @@ void Spell::EffectLearnSkill(SpellEffIndex /*effIndex*/)
 
     uint16 skillval = unitTarget->ToPlayer()->GetPureSkillValue(skillid);
     unitTarget->ToPlayer()->SetSkill(skillid, effectInfo->CalcValue(), std::max<uint16>(skillval, 1), tier->Value[damage - 1]);
+
+    // learn dependent spells
+    SpellLearnSpellMapBounds spell_bounds = sSpellMgr->GetSpellLearnSpellMapBounds(GetSpellInfo()->Id);
+
+    for (SpellLearnSpellMap::const_iterator itr2 = spell_bounds.first; itr2 != spell_bounds.second; ++itr2)
+    {
+        if (!itr2->second.AutoLearned)
+        {
+            if (!unitTarget->ToPlayer()->IsInWorld() || !itr2->second.Active)       // at spells loading, no output, but allow save
+                unitTarget->ToPlayer()->AddSpell(itr2->second.Spell, itr2->second.Active, true, true, false);
+            else                                            // at normal learning
+                unitTarget->ToPlayer()->LearnSpell(itr2->second.Spell, true);
+        }
+
+        if (itr2->second.OverridesSpell && itr2->second.Active)
+            unitTarget->ToPlayer()->AddOverrideSpell(itr2->second.OverridesSpell, itr2->second.Spell);
+    }
 }
 
 void Spell::EffectPlayMovie(SpellEffIndex /*effIndex*/)
@@ -3573,12 +3557,6 @@ void Spell::EffectScriptEffect(SpellEffIndex effIndex)
                             m_caster->CastCustomSpell(totem, 55277, &basepoints0, NULL, NULL, true);
                         }
                     }
-                    // Glyph of Stoneclaw Totem
-                    if (AuraEffect* aur=unitTarget->GetAuraEffect(63298, 0))
-                    {
-                        basepoints0 *= aur->GetAmount();
-                        m_caster->CastCustomSpell(unitTarget, 55277, &basepoints0, NULL, NULL, true);
-                    }
                     break;
                 }
                 case 45668:                                 // Ultra-Advanced Proto-Typical Shortening Blaster
@@ -4239,7 +4217,7 @@ void Spell::EffectSelfResurrect(SpellEffIndex /*effIndex*/)
     player->SetHealth(health);
     player->SetPower(POWER_MANA, mana);
     player->SetPower(POWER_RAGE, 0);
-    player->SetPower(POWER_ENERGY, player->GetMaxPower(POWER_ENERGY));
+    player->SetFullPower(POWER_ENERGY);
     player->SetPower(POWER_FOCUS, 0);
 
     player->SpawnCorpseBones();
@@ -5620,7 +5598,7 @@ void Spell::EffectCreateGarrison(SpellEffIndex effIndex)
     if (effectHandleMode != SPELL_EFFECT_HANDLE_HIT_TARGET)
         return;
 
-    if (!unitTarget || unitTarget->GetTypeId() != TYPEID_PLAYER)
+    if (!unitTarget || !unitTarget->IsPlayer())
         return;
 
     unitTarget->ToPlayer()->CreateGarrison(GetEffect(effIndex)->MiscValue);
@@ -5705,15 +5683,15 @@ void Spell::EffectEnableBattlePets(SpellEffIndex /*effIndex*/)
     plr->GetSession()->GetBattlePetMgr()->UnlockSlot(0);
 }
 
-void Spell::EffectLaunchQuestChoice(SpellEffIndex effIndex)
+void Spell::EffectLaunchQuestChoice(SpellEffIndex /*effIndex*/)
 {
     if (effectHandleMode != SPELL_EFFECT_HANDLE_HIT_TARGET)
         return;
 
-    if (!unitTarget || unitTarget->GetTypeId() != TYPEID_PLAYER)
+    if (!unitTarget || !unitTarget->IsPlayer())
         return;
 
-    unitTarget->ToPlayer()->SendPlayerChoice(GetCaster()->GetGUID(), GetEffect(effIndex)->MiscValue);
+    unitTarget->ToPlayer()->SendPlayerChoice(GetCaster()->GetGUID(), effectInfo->MiscValue);
 }
 
 void Spell::EffectUncageBattlePet(SpellEffIndex /*effIndex*/)
@@ -5744,14 +5722,9 @@ void Spell::EffectUncageBattlePet(SpellEffIndex /*effIndex*/)
     if (!battlePetMgr)
         return;
 
-    uint16 maxLearnedLevel = 0;
-
-    for (auto pet : battlePetMgr->GetLearnedPets())
-        maxLearnedLevel = std::max(pet.PacketInfo.Level, maxLearnedLevel);
-
     // TODO: This means if you put your highest lvl pet into cage, you won't be able to uncage it again which is probably wrong.
     // We will need to store maxLearnedLevel somewhere to avoid this behaviour.
-    if (maxLearnedLevel < level)
+    if (battlePetMgr->GetMaxPetLevel() < level)
     {
         battlePetMgr->SendError(BATTLEPETRESULT_TOO_HIGH_LEVEL_TO_UNCAGE, creatureId); // or speciesEntry.CreatureID
         SendCastResult(SPELL_FAILED_CANT_ADD_BATTLE_PET);
@@ -5765,10 +5738,11 @@ void Spell::EffectUncageBattlePet(SpellEffIndex /*effIndex*/)
         return;
     }
 
+    battlePetMgr->AddPet(speciesId, creatureId, breed, quality, level);
+
     if (!plr->HasSpell(speciesEntry->SummonSpellID))
         plr->LearnSpell(speciesEntry->SummonSpellID, false);
 
-    battlePetMgr->AddPet(speciesId, creatureId, breed, quality, level);
     plr->DestroyItem(m_CastItem->GetBagSlot(), m_CastItem->GetSlot(), true);
     m_CastItem = nullptr;
 }
@@ -5824,6 +5798,64 @@ void Spell::EffectUpdateZoneAurasAndPhases(SpellEffIndex /*effIndex*/)
         return;
 
     unitTarget->ToPlayer()->UpdateAreaDependentAuras(unitTarget->GetAreaId());
+}
+
+void Spell::EffectSummonObjectPersonnal(SpellEffIndex effIndex)
+{
+    if (effectHandleMode != SPELL_EFFECT_HANDLE_HIT)
+        return;
+
+    uint32 gameobject_id = effectInfo->MiscValue;
+
+    GameObject* pGameObj = new GameObject();
+
+    WorldObject* target = focusObject;
+    if (!target)
+        target = m_caster;
+
+    float x, y, z;
+    if (m_targets.HasDst())
+        destTarget->GetPosition(x, y, z);
+    else
+        m_caster->GetClosePoint(x, y, z, DEFAULT_WORLD_OBJECT_SIZE);
+
+    Map* map = target->GetMap();
+
+    QuaternionData rot = QuaternionData::fromEulerAnglesZYX(target->GetOrientation(), 0.f, 0.f);
+    if (!pGameObj->Create(gameobject_id, map, m_caster->GetPhaseMask(), Position(x, y, z, target->GetOrientation()), rot, 255, GO_STATE_READY))
+    {
+        delete pGameObj;
+        return;
+    }
+
+    pGameObj->CopyPhaseFrom(m_caster);
+    pGameObj->SetVisibleBySummonerOnly(true);
+
+    int32 duration = m_spellInfo->CalcDuration(m_caster);
+
+    pGameObj->SetRespawnTime(duration > 0 ? duration / IN_MILLISECONDS : 0);
+    pGameObj->SetSpellId(m_spellInfo->Id);
+
+    ExecuteLogEffectSummonObject(effIndex, pGameObj);
+
+    // Wild object not have owner and check clickable by players
+    map->AddToMap(pGameObj);
+
+    if (pGameObj->GetGoType() == GAMEOBJECT_TYPE_FLAGDROP)
+        if (Player* player = m_caster->ToPlayer())
+            if (Battleground* bg = player->GetBattleground())
+                bg->SetDroppedFlagGUID(pGameObj->GetGUID(), player->GetTeam() == ALLIANCE ? TEAM_HORDE : TEAM_ALLIANCE);
+
+    if (GameObject* linkedTrap = pGameObj->GetLinkedTrap())
+    {
+        linkedTrap->CopyPhaseFrom(m_caster);
+        linkedTrap->SetVisibleBySummonerOnly(true);
+
+        linkedTrap->SetRespawnTime(duration > 0 ? duration / IN_MILLISECONDS : 0);
+        linkedTrap->SetSpellId(m_spellInfo->Id);
+
+        ExecuteLogEffectSummonObject(effIndex, linkedTrap);
+    }
 }
 
 void Spell::EffectGiveExperience(SpellEffIndex /*effIndex*/)

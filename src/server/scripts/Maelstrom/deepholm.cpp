@@ -32,12 +32,10 @@ class npc_elemental_energy_quest : public CreatureScript
         {
             npc_elemental_energy_questAI(Creature* creature) : ScriptedAI(creature) { }
 
-            void JustDied(Unit * who)
+            void JustDied(Unit* /*who*/) override
             {
-                printf("\n ! just died ! \n ");
                 if (Creature * totem = GetClosestCreatureWithEntry(me, 45088, 25.0f))
                 {
-                    printf("\n ! casting spell on totem ! \n ");
                     //if(Player * plr = totem->GetCharmerOrOwnerPlayerOrPlayerItself())
                         totem->CastSpell(totem, 84170, true);
                 }
@@ -67,7 +65,7 @@ class npc_imposing_confrontation_quest : public CreatureScript
             void Reset() override
             {
                 eventStarted = false;
-                uint8 phase = 0;
+                phase = 0;
                 phaseTimer = 0;
                 initiator = ObjectGuid::Empty;
             }
@@ -85,7 +83,7 @@ class npc_imposing_confrontation_quest : public CreatureScript
                 }
             }
 
-            void UpdateAI(uint32 const diff) override
+            void UpdateAI(uint32 diff) override
             {
                 if(eventStarted)
                 {
@@ -183,19 +181,19 @@ class AreaTrigger_at_deepholm_flyover : public AreaTriggerScript
         NPC_GENERIC_TRIGGER             = 44839,
     };
 
-    bool OnTrigger(Player* player, AreaTriggerEntry const* trigger, bool /*entered*/) override
+    bool OnTrigger(Player* player, AreaTriggerEntry const* /*trigger*/, bool /*entered*/) override
     {
         if (player->GetQuestStatus(QUEST_FLY_OVER_A) == QUEST_STATUS_INCOMPLETE)
         {
-            if (Creature * trigger = player->FindNearestCreature(NPC_GENERIC_TRIGGER, 25.0f))
-                player->KilledMonsterCredit(NPC_GENERIC_TRIGGER);
+            if (Creature* trigger = player->FindNearestCreature(NPC_GENERIC_TRIGGER, 25.0f))
+                player->KilledMonsterCredit(NPC_GENERIC_TRIGGER, trigger->GetGUID());
         }
         return true;
 
         if (player->GetQuestStatus(QUEST_FLY_OVER_H) == QUEST_STATUS_INCOMPLETE)
         {
-            if (Creature * trigger = player->FindNearestCreature(NPC_GENERIC_TRIGGER, 25.0f))
-                player->KilledMonsterCredit(NPC_GENERIC_TRIGGER);
+            if (Creature* trigger = player->FindNearestCreature(NPC_GENERIC_TRIGGER, 25.0f))
+                player->KilledMonsterCredit(NPC_GENERIC_TRIGGER, trigger->GetGUID());
         }
         return true;
     }
@@ -268,7 +266,7 @@ class npc_slaincrewmember : public CreatureScript
                 }
             }
         }
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if(!QuestInProgress)
                 return;
@@ -353,7 +351,7 @@ public:
         uint64 uiProcessDialog;
         Unit* SpeakPlayer;
 
-        void SpellHit(Unit* Caster,const SpellInfo* Spell)
+        void SpellHit(Unit* Caster, const SpellInfo* Spell) override
         {
             if(Spell->Id != SPELL_EARTHEN_RING_PROCLAMATION/* || Caster->ToPlayer()->GetQuestStatus(QUEST_TAKE_HIM_TO_THE_EARTHCALLER) != QUEST_STATUS_INCOMPLETE*/) // The Quest if clause didn't work^^ don#t know why
                 return;
@@ -366,9 +364,9 @@ public:
             SpeakPlayer = Caster;
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
-            if(DialogNumber == NULL)
+            if(DialogNumber == 0)
                 return;
 
             if (uiProcessDialog <= diff)
@@ -432,7 +430,7 @@ public:
 
     struct npc_ricket_tickerAI : public ScriptedAI
     {
-        npc_ricket_tickerAI(Creature* creature) : ScriptedAI(creature), uiExplode(NULL) { }
+        npc_ricket_tickerAI(Creature* creature) : ScriptedAI(creature), uiExplode(0) { }
 
         uint32 uiExplode;
         Player* player;
@@ -442,15 +440,15 @@ public:
             uiExplode = 0;
         }
 
-        void IsSummonedBy(Unit* summoner)
+        void IsSummonedBy(Unit* summoner) override
         {
             uiExplode = 3500;
             player = summoner->ToPlayer();
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
-            if (uiExplode == NULL)
+            if (uiExplode == 0)
                 return;
 
             if (uiExplode <= diff)
@@ -504,7 +502,7 @@ public:
             me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_REMOVE_CLIENT_CONTROL    | UNIT_FLAG_NOT_SELECTABLE);
         }
 
-        void IsSummonedBy(Unit* summoner)
+        void IsSummonedBy(Unit* summoner) override
         {
             std::list<Creature*> creatures;
             GetCreatureListWithEntryInGrid(creatures, me, NPC_STONEHEART_DEFENDER, 10.0f /*Range is official*/);
@@ -567,7 +565,7 @@ public:
             events.ScheduleEvent(EVENT_UNLEASHED_MAGIC, 66000);
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
 
             if (!UpdateVictim())
@@ -579,34 +577,31 @@ public:
             {
                switch (eventId)
                {
-
-                case EVENT_TWILIGHT_BUFFET:
-                    if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0))
-                        DoCast(SPELL_TWILIGHT_BUFFET);
+                    case EVENT_TWILIGHT_BUFFET:
+                        if (SelectTarget(SELECT_TARGET_RANDOM, 0))
+                            DoCast(SPELL_TWILIGHT_BUFFET);
                         events.ScheduleEvent(EVENT_TWILIGHT_BUFFET, 20000);
                         break;
-
-                case EVENT_TWILIGHT_FISSURE:
-                        if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0))
-                        DoCast(SPELL_TWILIGHT_FISSURE);
+                    case EVENT_TWILIGHT_FISSURE:
+                        if (SelectTarget(SELECT_TARGET_RANDOM, 0))
+                            DoCast(SPELL_TWILIGHT_FISSURE);
                         events.ScheduleEvent(EVENT_TWILIGHT_FISSURE, 23000);
                         break;
-
                     case EVENT_TWILIGHT_ZONE:
-                       if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0))
-                       DoCast(me, SPELL_TWILIGHT_ZONE);
-                       events.ScheduleEvent(EVENT_TWILIGHT_ZONE, 30000);
+                        if (SelectTarget(SELECT_TARGET_RANDOM, 0))
+                            DoCast(me, SPELL_TWILIGHT_ZONE);
+                        events.ScheduleEvent(EVENT_TWILIGHT_ZONE, 30000);
                         break;
-
-                case EVENT_UNLEASHED_MAGIC:
-                        if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0))
-                        DoCast(SPELL_TWILIGHT_BREATH);
-                        DoCast(SPELL_UNLEASHED_MAGIC);
+                    case EVENT_UNLEASHED_MAGIC:
+                        if (SelectTarget(SELECT_TARGET_RANDOM, 0))
+                        {
+                            DoCast(SPELL_TWILIGHT_BREATH);
+                            DoCast(SPELL_UNLEASHED_MAGIC);
+                        }
                         events.ScheduleEvent(EVENT_UNLEASHED_MAGIC, 66000);
                         break;
-
                     default:
-                       break;
+                         break;
                 }
             }
 
@@ -688,7 +683,7 @@ public:
 
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
 
         //Out of combat
@@ -732,14 +727,14 @@ public:
                 switch (eventId)
                 {
                     case EVENT_EARTHBOLT:
-                        if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0))
-                        DoCast(SPELL_EARTHBOLT);
+                        if (SelectTarget(SELECT_TARGET_RANDOM, 0))
+                            DoCast(SPELL_EARTHBOLT);
                         events.ScheduleEvent(EVENT_EARTHBOLT, 1500);
                         break;
 
                     case EVENT_AIRBOLT:
-                        if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0))
-                        DoCast(SPELL_AIRBOLT);
+                        if (SelectTarget(SELECT_TARGET_RANDOM, 0))
+                            DoCast(SPELL_AIRBOLT);
                         Talk(SAY_AIR);
                         events.ScheduleEvent(EVENT_AIRBOLT, 11000);
                         break;
@@ -750,15 +745,15 @@ public:
                         break;
 
                     case EVENT_FIREBOLT:
-                        if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0))
-                        DoCast(SPELL_FIREBOLT);
+                        if (SelectTarget(SELECT_TARGET_RANDOM, 0))
+                            DoCast(SPELL_FIREBOLT);
                         Talk(SAY_FIRE);
                         events.ScheduleEvent(EVENT_FIREBOLT, 11000);
                         break;
 
                     case EVENT_WATERBOLT:
-                        if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0))
-                        DoCast(SPELL_WATERBOLT);
+                        if (SelectTarget(SELECT_TARGET_RANDOM, 0))
+                            DoCast(SPELL_WATERBOLT);
                         Talk(SAY_WATER);
                         events.ScheduleEvent(EVENT_WATERBOLT, 11000);
                         break;

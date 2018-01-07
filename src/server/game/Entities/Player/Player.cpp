@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -18,6 +18,7 @@
 
 #include "Player.h"
 #include "AreaTrigger.h"
+#include "AreaTriggerPackets.h"
 #include "AccountMgr.h"
 #include "AchievementMgr.h"
 #include "ArenaTeam.h"
@@ -363,6 +364,8 @@ Player::Player(WorldSession* session) : Unit(true), m_sceneMgr(this)
     _restMgr = Trinity::make_unique<RestMgr>(this);
 
     m_areaQuestTimer = 0;
+
+    _insideGarrisonType = GARRISON_TYPE_NONE;
 }
 
 Player::~Player()
@@ -606,8 +609,8 @@ bool Player::Create(ObjectGuid::LowType guidlow, WorldPackets::Character::Charac
     // apply original stats mods before spell loading or item equipment that call before equip _RemoveStatsMods()
     UpdateMaxHealth();                                      // Update max Health (for add bonus from stamina)
     SetFullHealth();
-    if (getPowerType() == POWER_MANA)
-        SetPower(POWER_MANA, GetMaxPower(POWER_MANA));
+    if (GetPowerType() == POWER_MANA)
+        SetFullPower(POWER_MANA);
 
     // original spells
     LearnDefaultSkills();
@@ -1705,6 +1708,106 @@ bool Player::TeleportTo(WorldLocation const &loc, uint32 options /*= 0*/)
     return TeleportTo(loc.GetMapId(), loc.GetPositionX(), loc.GetPositionY(), loc.GetPositionZ(), loc.GetOrientation(), options);
 }
 
+bool Player::TeleportTo(AreaTriggerTeleportStruct const* at)
+{
+    bool teleported = false;
+    if (GetMapId() != at->target_mapId)
+    {
+        if (Map::EnterState denyReason = sMapMgr->PlayerCannotEnter(at->target_mapId, this, false))
+        {
+            bool reviveAtTrigger = false; // should we revive the player if he is trying to enter the correct instance?
+            switch (denyReason)
+            {
+                case Map::CANNOT_ENTER_NO_ENTRY:
+                    TC_LOG_DEBUG("maps", "MAP: Player '%s' attempted to enter map with id %d which has no entry", GetName().c_str(), at->target_mapId);
+                    break;
+                case Map::CANNOT_ENTER_UNINSTANCED_DUNGEON:
+                    TC_LOG_DEBUG("maps", "MAP: Player '%s' attempted to enter dungeon map %d but no instance template was found", GetName().c_str(), at->target_mapId);
+                    break;
+                case Map::CANNOT_ENTER_DIFFICULTY_UNAVAILABLE:
+                    TC_LOG_DEBUG("maps", "MAP: Player '%s' attempted to enter instance map %d but the requested difficulty was not found", GetName().c_str(), at->target_mapId);
+                    if (MapEntry const* entry = sMapStore.LookupEntry(at->target_mapId))
+                        SendTransferAborted(entry->ID, TRANSFER_ABORT_DIFFICULTY, GetDifficultyID(entry));
+                    break;
+                case Map::CANNOT_ENTER_NOT_IN_RAID:
+                    TC_LOG_DEBUG("maps", "MAP: Player '%s' must be in a raid group to enter map %d", GetName().c_str(), at->target_mapId);
+                    SendRaidGroupOnlyMessage(RAID_GROUP_ERR_ONLY, 0);
+                    reviveAtTrigger = true;
+                    break;
+                case Map::CANNOT_ENTER_CORPSE_IN_DIFFERENT_INSTANCE:
+                    GetSession()->SendPacket(WorldPackets::AreaTrigger::AreaTriggerNoCorpse().Write());
+                    TC_LOG_DEBUG("maps", "MAP: Player '%s' does not have a corpse in instance map %d and cannot enter", GetName().c_str(), at->target_mapId);
+                    break;
+                case Map::CANNOT_ENTER_INSTANCE_BIND_MISMATCH:
+                    if (MapEntry const* entry = sMapStore.LookupEntry(at->target_mapId))
+                    {
+                        char const* mapName = entry->MapName->Str[GetSession()->GetSessionDbcLocale()];
+                        TC_LOG_DEBUG("maps", "MAP: Player '%s' cannot enter instance map '%s' because their permanent bind is incompatible with their group's", GetName().c_str(), mapName);
+                        // is there a special opcode for this?
+                        // @todo figure out how to get player localized difficulty string (e.g. "10 player", "Heroic" etc)
+                        ChatHandler(GetSession()).PSendSysMessage(GetSession()->GetTrinityString(LANG_INSTANCE_BIND_MISMATCH), mapName);
+                    }
+                    reviveAtTrigger = true;
+                    break;
+                case Map::CANNOT_ENTER_TOO_MANY_INSTANCES:
+                    SendTransferAborted(at->target_mapId, TRANSFER_ABORT_TOO_MANY_INSTANCES);
+                    TC_LOG_DEBUG("maps", "MAP: Player '%s' cannot enter instance map %d because he has exceeded the maximum number of instances per hour.", GetName().c_str(), at->target_mapId);
+                    reviveAtTrigger = true;
+                    break;
+                case Map::CANNOT_ENTER_MAX_PLAYERS:
+                    SendTransferAborted(at->target_mapId, TRANSFER_ABORT_MAX_PLAYERS);
+                    reviveAtTrigger = true;
+                    break;
+                case Map::CANNOT_ENTER_ZONE_IN_COMBAT:
+                    SendTransferAborted(at->target_mapId, TRANSFER_ABORT_ZONE_IN_COMBAT);
+                    reviveAtTrigger = true;
+                    break;
+                default:
+                    break;
+            }
+
+            if (reviveAtTrigger) // check if the player is touching the areatrigger leading to the map his corpse is on
+                if (!IsAlive() && HasCorpse())
+                    if (GetCorpseLocation().GetMapId() == at->target_mapId)
+                    {
+                        ResurrectPlayer(0.5f);
+                        SpawnCorpseBones();
+                    }
+
+            return false;
+        }
+
+        if (Group* group = GetGroup())
+            if (group->isLFGGroup() && GetMap()->IsDungeon())
+                teleported = TeleportToBGEntryPoint();
+    }
+
+    if (!teleported)
+    {
+        WorldSafeLocsEntry const* entranceLocation = nullptr;
+        InstanceSave* instanceSave = GetInstanceSave(at->target_mapId);
+        if (instanceSave)
+        {
+            // Check if we can contact the instancescript of the instance for an updated entrance location
+            if (Map* map = sMapMgr->FindMap(at->target_mapId, GetInstanceSave(at->target_mapId)->GetInstanceId()))
+                if (InstanceMap* instanceMap = map->ToInstanceMap())
+                    if (InstanceScript* instanceScript = instanceMap->GetInstanceScript())
+                        entranceLocation = sWorldSafeLocsStore.LookupEntry(instanceScript->GetEntranceLocation());
+
+            // Finally check with the instancesave for an entrance location if we did not get a valid one from the instancescript
+            if (!entranceLocation)
+                entranceLocation = sWorldSafeLocsStore.LookupEntry(instanceSave->GetEntranceLocation());
+        }
+
+        if (entranceLocation)
+            return TeleportTo(entranceLocation->MapID, entranceLocation->Loc.X, entranceLocation->Loc.Y, entranceLocation->Loc.Z, entranceLocation->Facing * M_PI / 180, TELE_TO_NOT_LEAVE_TRANSPORT);
+        else
+            return TeleportTo(at->target_mapId, at->target_X, at->target_Y, at->target_Z, at->target_Orientation, TELE_TO_NOT_LEAVE_TRANSPORT);
+    }
+
+    return false;
+}
+
 bool Player::SeamlessTeleportToMap(uint32 mapid, uint32 options /*= 0*/)
 {
     return TeleportTo(mapid, GetPosition(), options | TELE_TO_SEAMLESS);
@@ -2084,17 +2187,18 @@ void Player::RegenerateHealth()
 
 void Player::ResetAllPowers()
 {
-    SetHealth(GetMaxHealth());
-    switch (getPowerType())
+    SetFullHealth();
+
+    switch (GetPowerType())
     {
         case POWER_MANA:
-            SetPower(POWER_MANA, GetMaxPower(POWER_MANA));
+            SetFullPower(POWER_MANA);
             break;
         case POWER_RAGE:
             SetPower(POWER_RAGE, 0);
             break;
         case POWER_ENERGY:
-            SetPower(POWER_ENERGY, GetMaxPower(POWER_ENERGY));
+            SetFullPower(POWER_ENERGY);
             break;
         case POWER_RUNIC_POWER:
             SetPower(POWER_RUNIC_POWER, 0);
@@ -2518,10 +2622,10 @@ void Player::GiveLevel(uint8 level)
 
     // set current level health and mana/energy to maximum after applying all mods.
     SetFullHealth();
-    SetPower(POWER_MANA, GetMaxPower(POWER_MANA));
-    SetPower(POWER_ENERGY, GetMaxPower(POWER_ENERGY));
+    SetFullPower(POWER_MANA);
+    SetFullPower(POWER_ENERGY);
     if (GetPower(POWER_RAGE) > GetMaxPower(POWER_RAGE))
-        SetPower(POWER_RAGE, GetMaxPower(POWER_RAGE));
+        SetFullPower(POWER_RAGE);
     SetPower(POWER_FOCUS, 0);
 
     // update level to hunter/summon pet
@@ -2746,11 +2850,11 @@ void Player::InitStatsForLevel(bool reapplyMods)
 
     // set current level health and mana/energy to maximum after applying all mods.
     SetFullHealth();
-    SetPower(POWER_MANA, GetMaxPower(POWER_MANA));
-    SetPower(POWER_ENERGY, GetMaxPower(POWER_ENERGY));
+    SetFullPower(POWER_MANA);
+    SetFullPower(POWER_ENERGY);
     if (GetPower(POWER_RAGE) > GetMaxPower(POWER_RAGE))
-        SetPower(POWER_RAGE, GetMaxPower(POWER_RAGE));
-    SetPower(POWER_FOCUS, GetMaxPower(POWER_FOCUS));
+        SetFullPower(POWER_RAGE);
+    SetFullPower(POWER_FOCUS);
     SetPower(POWER_RUNIC_POWER, 0);
 
     // update level to hunter/summon pet
@@ -4265,11 +4369,11 @@ void Player::ResurrectPlayer(float restore_percent, bool applySickness)
     // set health/powers (0- will be set in caller)
     if (restore_percent > 0.0f)
     {
-        SetHealth(uint32(GetMaxHealth()*restore_percent));
-        SetPower(POWER_MANA, uint32(GetMaxPower(POWER_MANA)*restore_percent));
+        SetHealth(GetMaxHealth() * restore_percent);
+        SetPower(POWER_MANA, GetMaxPower(POWER_MANA) * restore_percent);
         SetPower(POWER_RAGE, 0);
-        SetPower(POWER_ENERGY, uint32(GetMaxPower(POWER_ENERGY)*restore_percent));
-        SetPower(POWER_FOCUS, uint32(GetMaxPower(POWER_FOCUS)*restore_percent));
+        SetPower(POWER_ENERGY, GetMaxPower(POWER_ENERGY) * restore_percent);
+        SetPower(POWER_FOCUS, GetMaxPower(POWER_FOCUS) * restore_percent);
         SetPower(POWER_LUNAR_POWER, 0);
     }
 
@@ -5939,6 +6043,20 @@ bool Player::UpdatePosition(float x, float y, float z, float orientation, bool t
     return true;
 }
 
+bool Player::MeetPlayerCondition(uint32 conditionId) const
+{
+    if (PlayerConditionEntry const* playerCondition = sPlayerConditionStore.LookupEntry(conditionId))
+        if (sConditionMgr->IsPlayerMeetingCondition(this, playerCondition))
+            return true;
+
+    return false;
+}
+
+bool Player::HasWorldQuestEnabled() const
+{
+    return MeetPlayerCondition(41005);
+}
+
 void Player::UpdateWorldQuestPosition(float x, float y)
 {
     for (auto bonus_quest : sObjectMgr->BonusQuestsRects)
@@ -5972,19 +6090,11 @@ void Player::UpdateWorldQuestPosition(float x, float y)
             if (quest->IsWorldQuest())
             {
                 // Uniting the Isles, required for Legion world quests
-                if (HasWorldQuestEnabled())
+                if (!HasWorldQuestEnabled())
                     continue;
 
-                if (WorldQuestTemplate* temp = sWorldQuestMgr->GetQuest(quest->GetQuestId()))
-                {
-                    if (!temp->active)
-                        continue;
-                }
-                else
-                {
-                    // no data in world_quest table. skip
+                if (!sWorldQuestMgr->IsQuestActive(quest->GetQuestId()))
                     continue;
-                }
             }
 
             AddQuest(quest, this);
@@ -7183,6 +7293,19 @@ void Player::UpdateArea(uint32 newArea)
     if (oldArea != newArea)
     {
         sScriptMgr->OnPlayerUpdateArea(this, newArea, oldArea);
+
+        if (IsInGarrison())
+        {
+            if (Garrison* garrison = GetGarrison(GetCurrentGarrison()))
+                if (!garrison->IsAllowedArea(area))
+                    garrison->Leave();
+        }
+        else
+        {
+            for (auto& garrison : GetGarrisons())
+                if (garrison.second->IsAllowedArea(area))
+                    garrison.second->Enter();
+        }
     }
 }
 
@@ -14315,9 +14438,9 @@ void Player::SendNewItem(Item* item, uint32 quantity, bool pushed, bool created,
     packet.Quantity = quantity;
     packet.QuantityInInventory = GetItemCount(item->GetEntry());
     //packet.DungeonEncounterID;
+    packet.BattlePetSpeciesID = item->GetModifier(ITEM_MODIFIER_BATTLE_PET_SPECIES_ID);
     packet.BattlePetBreedID = item->GetModifier(ITEM_MODIFIER_BATTLE_PET_BREED_DATA) & 0xFFFFFF;
     packet.BattlePetBreedQuality = (item->GetModifier(ITEM_MODIFIER_BATTLE_PET_BREED_DATA) >> 24) & 0xFF;
-    packet.BattlePetSpeciesID = item->GetModifier(ITEM_MODIFIER_BATTLE_PET_SPECIES_ID);
     packet.BattlePetLevel = item->GetModifier(ITEM_MODIFIER_BATTLE_PET_LEVEL);
 
     packet.ItemGUID = item->GetGUID();
@@ -15397,6 +15520,51 @@ bool Player::CanSelectQuestPackageItem(QuestPackageItemEntry const* questPackage
     return false;
 }
 
+void Player::RewardQuestPackage(uint32 questPackageId, uint32 onlyItemId /*= 0*/)
+{
+    bool hasFilteredQuestPackageReward = false;
+    if (std::vector<QuestPackageItemEntry const*> const* questPackageItems = sDB2Manager.GetQuestPackageItems(questPackageId))
+    {
+        for (QuestPackageItemEntry const* questPackageItem : *questPackageItems)
+        {
+            if (onlyItemId && questPackageItem->ItemID != onlyItemId)
+                continue;
+
+            if (CanSelectQuestPackageItem(questPackageItem))
+            {
+                hasFilteredQuestPackageReward = true;
+                ItemPosCountVec dest;
+                if (CanStoreNewItem(NULL_BAG, NULL_SLOT, dest, questPackageItem->ItemID, questPackageItem->ItemCount) == EQUIP_ERR_OK)
+                {
+                    std::vector<int32> bonusListIDs = sDB2Manager.GetItemBonusTreeVector(questPackageItem->ItemID, 0);
+                    Item* item = StoreNewItem(dest, questPackageItem->ItemID, true, GenerateItemRandomPropertyId(questPackageItem->ItemID), GuidSet(), 0, bonusListIDs);
+                    SendNewItem(item, questPackageItem->ItemCount, true, false);
+                }
+            }
+        }
+    }
+
+    if (!hasFilteredQuestPackageReward)
+    {
+        if (std::vector<QuestPackageItemEntry const*> const* questPackageItems = sDB2Manager.GetQuestPackageItemsFallback(questPackageId))
+        {
+            for (QuestPackageItemEntry const* questPackageItem : *questPackageItems)
+            {
+                if (onlyItemId && questPackageItem->ItemID != onlyItemId)
+                    continue;
+
+                ItemPosCountVec dest;
+                if (CanStoreNewItem(NULL_BAG, NULL_SLOT, dest, questPackageItem->ItemID, questPackageItem->ItemCount) == EQUIP_ERR_OK)
+                {
+                    std::vector<int32> bonusListIDs = sDB2Manager.GetItemBonusTreeVector(questPackageItem->ItemID, 0);
+                    Item* item = StoreNewItem(dest, questPackageItem->ItemID, true, GenerateItemRandomPropertyId(questPackageItem->ItemID), GuidSet(), 0, bonusListIDs);
+                    SendNewItem(item, questPackageItem->ItemCount, true, false);
+                }
+            }
+        }
+    }
+}
+
 void Player::RewardQuest(Quest const* quest, uint32 reward, Object* questGiver, bool announce)
 {
     //this THING should be here to protect code from quest, which cast on player far teleport as a reward
@@ -15455,51 +15623,7 @@ void Player::RewardQuest(Quest const* quest, uint32 reward, Object* questGiver, 
 
     // QuestPackageItem.db2
     if (rewardProto && quest->GetQuestPackageID())
-    {
-        bool hasFilteredQuestPackageReward = false;
-        if (std::vector<QuestPackageItemEntry const*> const* questPackageItems = sDB2Manager.GetQuestPackageItems(quest->GetQuestPackageID()))
-        {
-            for (QuestPackageItemEntry const* questPackageItem : *questPackageItems)
-            {
-                if (questPackageItem->ItemID != reward)
-                    continue;
-
-                if (CanSelectQuestPackageItem(questPackageItem))
-                {
-                    hasFilteredQuestPackageReward = true;
-                    ItemPosCountVec dest;
-                    if (CanStoreNewItem(NULL_BAG, NULL_SLOT, dest, questPackageItem->ItemID, questPackageItem->ItemCount) == EQUIP_ERR_OK)
-                    {
-                        std::vector<int32> bonusListIDs = sDB2Manager.GetItemBonusTreeVector(reward, 0);
-
-                        Item* item = StoreNewItem(dest, questPackageItem->ItemID, true, GenerateItemRandomPropertyId(questPackageItem->ItemID), GuidSet(), 0, bonusListIDs);
-                        SendNewItem(item, questPackageItem->ItemCount, true, false);
-                    }
-                }
-            }
-        }
-
-        if (!hasFilteredQuestPackageReward)
-        {
-            if (std::vector<QuestPackageItemEntry const*> const* questPackageItems = sDB2Manager.GetQuestPackageItemsFallback(quest->GetQuestPackageID()))
-            {
-                for (QuestPackageItemEntry const* questPackageItem : *questPackageItems)
-                {
-                    if (questPackageItem->ItemID != reward)
-                        continue;
-
-                    ItemPosCountVec dest;
-                    if (CanStoreNewItem(NULL_BAG, NULL_SLOT, dest, questPackageItem->ItemID, questPackageItem->ItemCount) == EQUIP_ERR_OK)
-                    {
-                        std::vector<int32> bonusListIDs = sDB2Manager.GetItemBonusTreeVector(reward, 0);
-
-                        Item* item = StoreNewItem(dest, questPackageItem->ItemID, true, GenerateItemRandomPropertyId(questPackageItem->ItemID), GuidSet(), 0, bonusListIDs);
-                        SendNewItem(item, questPackageItem->ItemCount, true, false);
-                    }
-                }
-            }
-        }
-    }
+        RewardQuestPackage(quest->GetQuestPackageID(), reward);
 
     if (quest->GetRewItemsCount() > 0)
     {
@@ -16644,20 +16768,19 @@ void Player::AreaExploredOrEventHappens(uint32 questId)
         uint16 log_slot = FindQuestSlot(questId);
         if (log_slot < MAX_QUEST_LOG_SIZE)
         {
-            TC_LOG_ERROR("entities.player.quest", "Player::AreaExploredOrEventHappens:Deprecated function called for quest %u", questId);
-            /** @todo
-            This function was previously used for area triggers but now those are a part of quest objective system
-            Currently this function is used to complete quests with no objectives (needs verifying) so probably rename it?
-
-            QuestStatusData& q_status = m_QuestStatus[questId];
-
-            if (!q_status.Explored)
+            Quest const* qInfo = sObjectMgr->GetQuestTemplate(questId);
+            if (qInfo && GetQuestStatus(questId) == QUEST_STATUS_INCOMPLETE)
             {
-                q_status.Explored = true;
-                m_QuestStatusSave[questId] = QUEST_DEFAULT_SAVE_TYPE;
-                SetQuestSlotState(log_slot, QUEST_STATE_COMPLETE);
-                SendQuestComplete(questId);
-            }**/
+                for (QuestObjective const& obj : qInfo->Objectives)
+                {
+                    if (obj.Type == QUEST_OBJECTIVE_AREATRIGGER && !IsQuestObjectiveComplete(obj))
+                    {
+                        SetQuestObjectiveData(obj, 1);
+                        SendQuestUpdateAddCreditSimple(obj);
+                        break;
+                    }
+                }
+            }
         }
 		if (CanCompleteQuest(questId))
 		{
@@ -18207,7 +18330,7 @@ bool Player::LoadFromDB(ObjectGuid guid, SQLQueryHolder *holder)
     // load the player's map here if it's not already loaded
     if (!map)
         map = sMapMgr->CreateMap(mapId, this, instanceId);
-    AreaTriggerStruct const* areaTrigger = nullptr;
+    AreaTriggerTeleportStruct const* areaTrigger = nullptr;
     bool check = false;
 
     if (!map)
@@ -18595,7 +18718,7 @@ bool Player::LoadFromDB(ObjectGuid guid, SQLQueryHolder *holder)
     m_achievementMgr->CheckAllAchievementCriteria(this);
 
     // Add active emissary quests on player at login
-    sWorldQuestMgr->AddEmissaryQuestOnPlayerIfNeeded(this);
+    sWorldQuestMgr->AddEmissaryQuestsOnPlayerIfNeeded(this);
 
     UpdateAverageItemLevel();
 
@@ -25318,19 +25441,12 @@ void Player::ResurrectUsingRequestDataImpl()
 {
     ResurrectPlayer(0.0f, false);
 
-    if (GetMaxHealth() > _resurrectionData->Health)
-        SetHealth(_resurrectionData->Health);
-    else
-        SetFullHealth();
-
-    if (uint32(GetMaxPower(POWER_MANA)) > _resurrectionData->Mana)
-        SetPower(POWER_MANA, _resurrectionData->Mana);
-    else
-        SetPower(POWER_MANA, GetMaxPower(POWER_MANA));
+    SetHealth(_resurrectionData->Health);
+    SetPower(POWER_MANA, _resurrectionData->Mana);
 
     SetPower(POWER_RAGE, 0);
-    SetPower(POWER_ENERGY, GetMaxPower(POWER_ENERGY));
-    SetPower(POWER_FOCUS, GetMaxPower(POWER_FOCUS));
+    SetFullPower(POWER_ENERGY);
+    SetFullPower(POWER_FOCUS);
     SetPower(POWER_LUNAR_POWER, 0);
 
     if (uint32 aura = _resurrectionData->Aura)
@@ -27143,7 +27259,7 @@ void Player::ActivateTalentGroup(ChrSpecializationEntry const* spec)
     SendActionButtons(1);
 
     UpdateDisplayPower();
-    Powers pw = getPowerType();
+    Powers pw = GetPowerType();
     if (pw != POWER_MANA)
         SetPower(POWER_MANA, 0); // Mana must be 0 even if it isn't the active power type.
 
@@ -27784,6 +27900,21 @@ void Player::DeleteGarrison(GarrisonType type)
     }
 }
 
+GarrisonType Player::GetCurrentGarrison() const
+{
+    return _insideGarrisonType;
+}
+
+void Player::SetCurrentGarrison(GarrisonType type)
+{
+    _insideGarrisonType = type;
+}
+
+bool Player::IsInGarrison() const
+{
+    return GetCurrentGarrison() != GARRISON_TYPE_NONE;
+}
+
 void Player::AddGarrisonFollower(uint32 garrFollowerId)
 {
     if (GarrFollowerEntry const* followerEntry = sGarrFollowerStore.LookupEntry(garrFollowerId))
@@ -27898,15 +28029,90 @@ void Player::SendMovementSetCollisionHeight(float height)
     SendMessageToSet(updateCollisionHeight.Write(), false);
 }
 
-void Player::SendPlayerChoice(ObjectGuid sender, uint32 choiceID)
+void Player::SendPlayerChoice(ObjectGuid sender, int32 choiceId)
 {
-    PlayerChoice const* playerChoice = sObjectMgr->GetPlayerChoice(choiceID);
+    PlayerChoice const* playerChoice = sObjectMgr->GetPlayerChoice(choiceId);
     if (!playerChoice)
         return;
 
+    LocaleConstant locale = GetSession()->GetSessionDbLocaleIndex();
+    PlayerChoiceLocale const* playerChoiceLocale = locale != DEFAULT_LOCALE ? sObjectMgr->GetPlayerChoiceLocale(choiceId) : nullptr;
+
+    PlayerTalkClass->GetInteractionData().Reset();
+    PlayerTalkClass->GetInteractionData().SourceGuid = sender;
+    PlayerTalkClass->GetInteractionData().PlayerChoiceId = uint32(choiceId);
+
     WorldPackets::Quest::DisplayPlayerChoice displayPlayerChoice;
-    displayPlayerChoice.Choice = *playerChoice;
     displayPlayerChoice.SenderGUID = sender;
+    displayPlayerChoice.ChoiceID = choiceId;
+    displayPlayerChoice.Question = playerChoice->Question;
+    if (playerChoiceLocale)
+        ObjectMgr::GetLocaleString(playerChoiceLocale->Question, locale, displayPlayerChoice.Question);
+
+    displayPlayerChoice.Responses.resize(playerChoice->Responses.size());
+    displayPlayerChoice.CloseChoiceFrame = false;
+
+    for (std::size_t i = 0; i < playerChoice->Responses.size(); ++i)
+    {
+        PlayerChoiceResponse const& playerChoiceResponseTemplate = playerChoice->Responses[i];
+        WorldPackets::Quest::PlayerChoiceResponse& playerChoiceResponse = displayPlayerChoice.Responses[i];
+        playerChoiceResponse.ResponseID = playerChoiceResponseTemplate.ResponseId;
+        playerChoiceResponse.ChoiceArtFileID = playerChoiceResponseTemplate.ChoiceArtFileId;
+        playerChoiceResponse.Answer = playerChoiceResponseTemplate.Answer;
+        playerChoiceResponse.Header = playerChoiceResponseTemplate.Header;
+        playerChoiceResponse.Description = playerChoiceResponseTemplate.Description;
+        playerChoiceResponse.Confirmation = playerChoiceResponseTemplate.Confirmation;
+        if (playerChoiceLocale)
+        {
+            if (PlayerChoiceResponseLocale const* playerChoiceResponseLocale = Trinity::Containers::MapGetValuePtr(playerChoiceLocale->Responses, playerChoiceResponseTemplate.ResponseId))
+            {
+                ObjectMgr::GetLocaleString(playerChoiceResponseLocale->Answer, locale, playerChoiceResponse.Answer);
+                ObjectMgr::GetLocaleString(playerChoiceResponseLocale->Header, locale, playerChoiceResponse.Header);
+                ObjectMgr::GetLocaleString(playerChoiceResponseLocale->Description, locale, playerChoiceResponse.Description);
+                ObjectMgr::GetLocaleString(playerChoiceResponseLocale->Confirmation, locale, playerChoiceResponse.Confirmation);
+            }
+        }
+
+        if (playerChoiceResponseTemplate.Reward)
+        {
+            playerChoiceResponse.Reward = boost::in_place();
+            playerChoiceResponse.Reward->TitleID = playerChoiceResponseTemplate.Reward->TitleId;
+            playerChoiceResponse.Reward->PackageID = playerChoiceResponseTemplate.Reward->PackageId;
+            playerChoiceResponse.Reward->SkillLineID = playerChoiceResponseTemplate.Reward->SkillLineId;
+            playerChoiceResponse.Reward->SkillPointCount = playerChoiceResponseTemplate.Reward->SkillPointCount;
+            playerChoiceResponse.Reward->ArenaPointCount = playerChoiceResponseTemplate.Reward->ArenaPointCount;
+            playerChoiceResponse.Reward->HonorPointCount = playerChoiceResponseTemplate.Reward->HonorPointCount;
+            playerChoiceResponse.Reward->Money = playerChoiceResponseTemplate.Reward->Money;
+            playerChoiceResponse.Reward->Xp = playerChoiceResponseTemplate.Reward->Xp;
+            for (PlayerChoiceResponseRewardItem const& item : playerChoiceResponseTemplate.Reward->Items)
+            {
+                playerChoiceResponse.Reward->Items.emplace_back();
+                WorldPackets::Quest::PlayerChoiceResponseRewardEntry& rewardEntry = playerChoiceResponse.Reward->Items.back();
+                rewardEntry.Item.ItemID = item.Id;
+                rewardEntry.Quantity = item.Quantity;
+                if (!item.BonusListIDs.empty())
+                {
+                    rewardEntry.Item.ItemBonus = boost::in_place();
+                    rewardEntry.Item.ItemBonus->BonusListIDs = item.BonusListIDs;
+                }
+            }
+            for (PlayerChoiceResponseRewardEntry const& currency : playerChoiceResponseTemplate.Reward->Currency)
+            {
+                playerChoiceResponse.Reward->Items.emplace_back();
+                WorldPackets::Quest::PlayerChoiceResponseRewardEntry& rewardEntry = playerChoiceResponse.Reward->Items.back();
+                rewardEntry.Item.ItemID = currency.Id;
+                rewardEntry.Quantity = currency.Quantity;
+            }
+            for (PlayerChoiceResponseRewardEntry const& faction : playerChoiceResponseTemplate.Reward->Faction)
+            {
+                playerChoiceResponse.Reward->Items.emplace_back();
+                WorldPackets::Quest::PlayerChoiceResponseRewardEntry& rewardEntry = playerChoiceResponse.Reward->Items.back();
+                rewardEntry.Item.ItemID = faction.Id;
+                rewardEntry.Quantity = faction.Quantity;
+            }
+        }
+    }
+
     SendDirectMessage(displayPlayerChoice.Write());
 }
 
@@ -28020,7 +28226,7 @@ Pet* Player::SummonPet(uint32 entry, float x, float y, float z, float ang, PetTy
     pet->SetCreatorGUID(GetGUID());
     pet->SetUInt32Value(UNIT_FIELD_FACTIONTEMPLATE, getFaction());
 
-    pet->setPowerType(POWER_MANA);
+    pet->SetPowerType(POWER_MANA);
     pet->SetUInt64Value(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_NONE);
     pet->SetUInt32Value(UNIT_FIELD_BYTES_1, 0);
     pet->InitStatsForLevel(getLevel());
@@ -28036,7 +28242,7 @@ Pet* Player::SummonPet(uint32 entry, float x, float y, float z, float ang, PetTy
             pet->SetUInt32Value(UNIT_FIELD_PETEXPERIENCE, 0);
             pet->SetUInt32Value(UNIT_FIELD_PETNEXTLEVELEXP, 1000);
             pet->SetFullHealth();
-            pet->SetPower(POWER_MANA, pet->GetMaxPower(POWER_MANA));
+            pet->SetFullPower(POWER_MANA);
             pet->SetUInt32Value(UNIT_FIELD_PET_NAME_TIMESTAMP, uint32(time(nullptr))); // cast can't be helped in this case
             break;
         default:

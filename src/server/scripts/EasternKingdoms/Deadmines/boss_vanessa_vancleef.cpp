@@ -448,7 +448,7 @@ public:
             }
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -596,10 +596,10 @@ public:
             Below = false;
             me->SetPower(POWER_ENERGY, 100);
             me->SetMaxPower(POWER_ENERGY, 100);
-            me->setPowerType(POWER_ENERGY);
+            me->SetPowerType(POWER_ENERGY);
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (SinisterTimer <= diff)
             {
@@ -659,7 +659,7 @@ public:
                 DoCast(target, SPELL_CHARGE);
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (BloodBathTimer <= diff)
             {
@@ -701,7 +701,7 @@ public:
             ShieldTimer = 8000;
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (HolyfireTimer <= diff)
             {
@@ -748,7 +748,7 @@ public:
             threat = true;
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (MotivateTimer <= diff)
             {
@@ -789,7 +789,7 @@ public:
             UppercutTimer = 4000;
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (UppercutTimer <= diff)
             {
@@ -826,7 +826,7 @@ public:
             below = true;
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (AxeHeadTimer <= diff)
             {
@@ -870,7 +870,7 @@ public:
             RagezoneTimer = urand(7000, 9000);
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (BloodboltTimer <= diff)
             {
@@ -929,7 +929,7 @@ public:
             me->AddUnitMovementFlag(MOVEMENTFLAG_WALKING);
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (EventStarted)
             {
@@ -1067,7 +1067,7 @@ public:
             PlayerGUID = player->GetGUID();
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (PongTimer <= diff)
             {
@@ -1255,7 +1255,7 @@ public:
              me->SummonCreature(NPC_ENRAGED_WORGEN, EnragedWorgen_2[i], TEMPSUMMON_CORPSE_TIMED_DESPAWN, 10000);
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (Nightmare)
             {
@@ -1517,7 +1517,7 @@ public:
             HitTimer = 2500;
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (HitTimer <= diff)
             {
@@ -1575,7 +1575,7 @@ public:
             _JustDied();
 
         }
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (FlagResetTimer <= diff)
             {
@@ -1677,7 +1677,7 @@ public:
             }
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (FlagResetTimer <= diff)
             {
@@ -1755,7 +1755,7 @@ public:
                     pAI->NightmarePass();
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             events.Update(diff);
 
@@ -1798,11 +1798,6 @@ public:
             if (Creature* Vanessa = me->FindNearestCreature(NPC_VANESSA_NIGHTMARE, 500, true))
                 if (npc_vanessa_nightmare::npc_vanessa_nightmareAI* pAI = CAST_AI(npc_vanessa_nightmare::npc_vanessa_nightmareAI, Vanessa->AI()))
                     pAI->WorgenKilled();
-
-        }
-        void UpdateAI(uint32 const diff) override
-        {
-            DoMeleeAttackIfReady();
         }
     };
 };
@@ -1829,7 +1824,7 @@ public:
 
         }
 
-        void UpdateAI(uint32 const /*diff*/) override
+        void UpdateAI(uint32 /*diff*/) override
         {
             if (!me->GetVehicleKit())
                 return;
@@ -1878,7 +1873,7 @@ public:
             }
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (TurnTimer <= diff)
             {
@@ -1935,7 +1930,7 @@ public:
             }
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (RunAway)
             {
@@ -1992,7 +1987,7 @@ public:
             achievementTimer = 300000;
         }
 
-        void SetData(uint32 uiI, uint32 uiValue) override
+        void SetData(uint32 /*uiI*/, uint32 uiValue) override
         {
             if (uiValue == START_TIMER_ACHIEVEMENT && startTimerAchievement == false)
             {
@@ -2023,7 +2018,7 @@ public:
             }
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (startTimerAchievement == true && getAchievementPlayers == true)
             {

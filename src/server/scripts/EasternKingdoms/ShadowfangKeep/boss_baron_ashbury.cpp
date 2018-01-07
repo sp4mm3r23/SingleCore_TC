@@ -100,7 +100,7 @@ class boss_baron_ashbury : public CreatureScript
                 instance->DoRemoveAurasDueToSpellOnPlayers(SPELL_WRACKING_PAIN);
             }
 
-            void KilledUnit(Unit* victim) override
+            void KilledUnit(Unit* /*victim*/) override
             {
                 Talk(SAY_KILL);
             }
@@ -129,13 +129,13 @@ class boss_baron_ashbury : public CreatureScript
                     BossAI::AttackStart(victim);
             }
 
-            void MoveInLineOfSight(Unit* victim)
+            void MoveInLineOfSight(Unit* victim) override
             {
                 if (me->IsWithinDist2d(victim, 14.0f))
                     BossAI::MoveInLineOfSight(victim);
             }
 
-            void UpdateAI(uint32 const diff) override
+            void UpdateAI(uint32 diff) override
             {
                 if(!UpdateVictim())
                     return;
@@ -215,7 +215,7 @@ public:
     {
         PrepareSpellScript(spell_ashbury_archangel_SpellScript);
 
-        void HandleScript(SpellEffIndex effIndex)
+        void HandleScript(SpellEffIndex /*effIndex*/)
         {
             if (Unit* target = GetHitUnit())
             {

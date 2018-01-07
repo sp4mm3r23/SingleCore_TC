@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -3481,6 +3481,13 @@ void SpellMgr::LoadSpellInfoCorrections()
     ApplySpellFix({ 60603 }, [](SpellInfo* spellInfo)
     {
         const_cast<SpellEffectInfo*>(spellInfo->GetEffect(EFFECT_0))->BasePoints = 1;
+    });
+
+    // Play Teleport Dalaran Scene
+    ApplySpellFix({ 227861 }, [](SpellInfo* spellInfo)
+    {
+        // Area 7881 should be applied to player by Dalaran Gob, but NYI
+        spellInfo->RequiredAreasID = 0;
     });
 
     SpellInfo* spellInfo = NULL;

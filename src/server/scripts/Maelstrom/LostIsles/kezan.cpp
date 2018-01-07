@@ -79,7 +79,7 @@ public:
             //me->LoadEquipment(2901, true);
         }
 
-        void JustReachedHome() { }
+        void JustReachedHome() override { }
 
         void SpellHits(Unit* caster, const SpellEntry* spell)
         {
@@ -126,7 +126,7 @@ public:
             }
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (me->HasAura(SPELL_RAGE))
                 return ;
@@ -505,7 +505,7 @@ public:
             me->RemoveAura(66916);
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (me->HasAura(75042) || me->HasAura(75044) || me->HasAura(75046) || me->HasAura(75048) || me->HasAura(75050))
             {
@@ -530,7 +530,6 @@ public:
     private:
         uint32 rebuffTimer;
         uint32 rebuffsTimer;
-        bool work;
     };
 };
 
@@ -552,7 +551,7 @@ public:
         return true;
     }
 
-    bool OnGossipSelect(Player* player, GameObject* /*go*/, uint32 sender, uint32 action) override
+    bool OnGossipSelect(Player* player, GameObject* /*go*/, uint32 /*sender*/, uint32 /*action*/) override
     {
         player->PlayerTalkClass->ClearMenus();
         CloseGossipMenuFor(player);
@@ -569,7 +568,7 @@ public:
     {
         PrepareSpellScript(spell_kabummbombSpellScript);
 
-        bool Validate(SpellInfo const* spellEntry) override
+        bool Validate(SpellInfo const* /*spellEntry*/) override
         {
             return true;
         }
@@ -581,7 +580,7 @@ public:
         }
 
 
-        void HandleActivateGameobject(SpellEffIndex effIndex)
+        void HandleActivateGameobject(SpellEffIndex /*effIndex*/)
         {
             if (Unit* caster = GetCastItem()->GetOwner())
             {
@@ -605,7 +604,7 @@ public:
     };
 
 
-    SpellScript *GetSpellScript() const
+    SpellScript* GetSpellScript() const override
     {
         return new spell_kabummbombSpellScript();
     }
@@ -634,7 +633,7 @@ public:
             move = false;
         }
 
-        void MovementInform(uint32 /*type*/, uint32 id) override
+        void MovementInform(uint32 /*type*/, uint32 /*id*/) override
         {
         }
 
@@ -720,7 +719,7 @@ public:
             }
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (_t <= diff)
             {
@@ -760,7 +759,7 @@ class gob_canon_gobelin : public GameObjectScript
 public:
     gob_canon_gobelin() : GameObjectScript("gob_canon_gobelin") { }
 
-    bool OnGossipHello(Player* player, GameObject* go) override
+    bool OnGossipHello(Player* player, GameObject* /*go*/) override
     {
         player->GetMotionMaster()->MoveJump( -7851.79f, 1838.72f, 8.0f, 0.0f, 20.0f, 20.0f);
         return true;
@@ -826,7 +825,7 @@ public:
 
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (_t <= diff)
             {
@@ -860,7 +859,7 @@ class npc_galaw: public CreatureScript
 public:
     npc_galaw() : CreatureScript("npc_galaw") {}
 
-    bool OnQuestAccept(Player* player, Creature* creature, const Quest *_Quest) override
+    bool OnQuestAccept(Player* player, Creature* /*creature*/, const Quest *_Quest) override
     {
         if (_Quest->GetQuestId() == 14120)
         {
@@ -890,9 +889,9 @@ public:
             _t = 1000;
         }
 
-        void JustReachedHome() {}
+        void JustReachedHome() override { }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (_t <= diff)
             {
@@ -930,9 +929,9 @@ public:
             _c = 600000;
         }
 
-        void JustReachedHome() {}
+        void JustReachedHome() override { }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (_a <= diff)
             {
@@ -974,14 +973,14 @@ class npc_gw: public CreatureScript
 public:
     npc_gw() : CreatureScript("npc_gw") {}
 
-    bool OnQuestReward(Player* player, Creature* creature, const Quest *_Quest, uint32 ) override
+    bool OnQuestReward(Player* player, Creature* /*creature*/, const Quest *_Quest, uint32 ) override
     {
         if (_Quest->GetQuestId() == QUEST_BRUTALITY_NECESSARY_ROUND_2)
             player->CastSpell(player, 78607, true);
         return false;
     }
 
-    bool OnQuestComplete (Player* player, Creature* creature, Quest const* quest)
+    bool OnQuestComplete (Player* /*player*/, Creature* /*creature*/, Quest const* /*quest*/)
     {
         return false;
     }
@@ -1064,7 +1063,7 @@ public:
             activate = true;
         }
 
-        void MovementInform(uint32 /*type*/, uint32 id) override
+        void MovementInform(uint32 /*type*/, uint32 /*id*/) override
         {
         }
 
@@ -1077,7 +1076,7 @@ public:
             me->SummonCreature(37114, SharkPos[i], TEMPSUMMON_CORPSE_TIMED_DESPAWN, 60*IN_MILLISECONDS);
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (_t <= diff)
             {
@@ -1142,7 +1141,7 @@ public:
 
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (start)
                 return;
@@ -1155,7 +1154,7 @@ public:
         }
 
     private :
-        bool start, goal;
+        bool start;
         uint32 _t;
     };
 };
@@ -1217,7 +1216,7 @@ public:
             me->AddUnitState(UNIT_STATE_IGNORE_PATHFINDING);
         }
 
-        void PassengerBoarded(Unit* who, int8 /*seatId*/, bool apply) override
+        void PassengerBoarded(Unit* /*who*/, int8 /*seatId*/, bool /*apply*/) override
         {
         }
 
@@ -1255,7 +1254,7 @@ public:
         {
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
             npc_escortAI::UpdateAI(diff);
         }
@@ -1309,7 +1308,7 @@ public:
 
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (m_ty <= diff)
             {
@@ -1332,8 +1331,6 @@ public:
     private :
         uint32 m_ty;
         Vehicle* vehicle;
-        uint64 _prev_aura;
-        uint64 _will_aura;
         bool st;
     };
 };
@@ -1384,11 +1381,14 @@ public:
                 return;
             m_ty = 2000;
             _prev_aura = param;
-            Player *player = NULL;
-            if (Unit *p = me->ToTempSummon()->GetSummoner())
-                if (player = p->ToPlayer())
+            Player* player = NULL;
+            if (Unit* p = me->ToTempSummon()->GetSummoner())
+            {
+                player = p->ToPlayer();
+                if (player)
                     if (param != ACTION_FAIL)
                         player->PlayDirectSound(11595, player);
+            }
             if (_prev_aura != _will_aura)
             {
                 if (player)
@@ -1438,21 +1438,15 @@ public:
                 Talk(sc_text, player);
         }
 
-        void SpellHit(Unit* caster, const SpellInfo* spell) override
+        void SpellHit(Unit* /*caster*/, const SpellInfo* /*spell*/) override
         {
         }
 
         void JustReachedHome() override
         {
-
         }
 
-        void WaypointReached(uint32)
-        {
-
-        }
-
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!_scriptetre)
                 return;
@@ -1531,7 +1525,7 @@ public:
     {
         PrepareSpellScript(spell_klaxonSpellScript);
 
-        bool Validate(SpellInfo const* spellEntry) override
+        bool Validate(SpellInfo const* /*spellEntry*/) override
         {
             st = false;
             return true;
@@ -1543,7 +1537,7 @@ public:
             return true;
         }
 
-        void SummonPetAndValidQuest(uint32 spellEntry, Player *player, uint32 npcEntry, uint32 petEntry)
+        void SummonPetAndValidQuest(uint32 spellEntry, Player *player, uint32 npcEntry, uint32 /*petEntry*/)
         {
             if (Creature *c = player->FindNearestCreature(npcEntry, 10))
             {
@@ -1577,7 +1571,7 @@ public:
         }
     };
 
-    SpellScript *GetSpellScript() const
+    SpellScript* GetSpellScript() const override
     {
         return new spell_klaxonSpellScript();
     }
@@ -1594,7 +1588,7 @@ public:
     {
         PrepareSpellScript(spell_radioSpellScript);
 
-        bool Validate(SpellInfo const* spellEntry) override
+        bool Validate(SpellInfo const* /*spellEntry*/) override
         {
             st = false;
             return true;
@@ -1631,7 +1625,7 @@ public:
         }
     };
 
-    SpellScript *GetSpellScript() const
+    SpellScript* GetSpellScript() const override
     {
         return new spell_radioSpellScript();
     }
@@ -1647,7 +1641,7 @@ public:
     {
         PrepareSpellScript(spell_bank_67495SpellScript);
 
-        bool Validate(SpellInfo const* spellEntry) override
+        bool Validate(SpellInfo const* /*spellEntry*/) override
         {
             st = false;
             return true;
@@ -1676,7 +1670,7 @@ public:
         }
     };
 
-    SpellScript *GetSpellScript() const
+    SpellScript* GetSpellScript() const override
     {
         return new spell_bank_67495SpellScript();
     }
@@ -1692,7 +1686,7 @@ public:
     {
         PrepareSpellScript(spell_bank_67496SpellScript);
 
-        bool Validate(SpellInfo const* spellEntry) override
+        bool Validate(SpellInfo const* /*spellEntry*/) override
         {
             st = false;
             return true;
@@ -1722,7 +1716,7 @@ public:
         }
     };
 
-    SpellScript *GetSpellScript() const
+    SpellScript* GetSpellScript() const override
     {
         return new spell_bank_67496SpellScript();
     }
@@ -1738,7 +1732,7 @@ public:
     {
         PrepareSpellScript(spell_bank_67497SpellScript);
 
-        bool Validate(SpellInfo const* spellEntry) override
+        bool Validate(SpellInfo const* /*spellEntry*/) override
         {
             st = false;
             return true;
@@ -1767,7 +1761,7 @@ public:
         }
     };
 
-    SpellScript *GetSpellScript() const
+    SpellScript* GetSpellScript() const override
     {
         return new spell_bank_67497SpellScript();
     }
@@ -1782,7 +1776,7 @@ public:
     {
         PrepareSpellScript(spell_bank_67498SpellScript);
 
-        bool Validate(SpellInfo const* spellEntry) override
+        bool Validate(SpellInfo const* /*spellEntry*/) override
         {
             st = false;
             return true;
@@ -1811,7 +1805,7 @@ public:
         }
     };
 
-    SpellScript *GetSpellScript() const
+    SpellScript* GetSpellScript() const override
     {
         return new spell_bank_67498SpellScript();
     }
@@ -1827,7 +1821,7 @@ public:
     {
         PrepareSpellScript(spell_bank_67499SpellScript);
 
-        bool Validate(SpellInfo const* spellEntry) override
+        bool Validate(SpellInfo const* /*spellEntry*/) override
         {
             st = false;
             return true;
@@ -1856,7 +1850,7 @@ public:
         }
     };
 
-    SpellScript *GetSpellScript() const
+    SpellScript* GetSpellScript() const override
     {
         return new spell_bank_67499SpellScript();
     }
@@ -1905,12 +1899,12 @@ public:
             m_timerValidGoalEvent = 100;
         }
 
-        void SetData(uint32 type, uint32 value) override
+        void SetData(uint32 /*type*/, uint32 /*value*/) override
         {
             activate = true;
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!activate)
                 return ;
@@ -1990,7 +1984,7 @@ public:
         {
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 /*diff*/) override
         {
         }
     };
@@ -2031,7 +2025,7 @@ public:
 
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!entervh)
                 return;

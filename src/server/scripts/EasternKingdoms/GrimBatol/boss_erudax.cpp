@@ -125,7 +125,7 @@ public:
             }
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim() || me->HasUnitState(UNIT_STATE_CASTING))
                 return;
@@ -188,7 +188,7 @@ public:
             DoMeleeAttackIfReady();
         }
 
-        void KilledUnit(Unit* victim) override
+        void KilledUnit(Unit* /*victim*/) override
         {
             Talk(4);
         }
@@ -301,9 +301,9 @@ public:
     {
         mob_facelessAI(Creature* creature) : ScriptedAI(creature), isAtAnEgg(false), instance(creature->GetInstanceScript())  {}
 
-        void IsSummonedBy(Unit* summoner)
+        void IsSummonedBy(Unit* /*summoner*/) override
         {
-            Creature *pTarget = NULL;
+            Creature* pTarget = nullptr;
             pTargetGUID = ObjectGuid::Empty;
             pTarget = GetRandomEgg();
             DoZoneInCombat();
@@ -320,7 +320,7 @@ public:
             me->SetReactState(REACT_PASSIVE);
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!isAtAnEgg || me->HasUnitState(UNIT_STATE_CASTING))
                 return;
@@ -451,7 +451,7 @@ public:
             me->SetReactState(REACT_PASSIVE);
         }
 
-        void JustDied(Unit* killer) override
+        void JustDied(Unit* /*killer*/) override
         {
             DoCastAOE(SPELL_SUMMON_TWILIGHT_HATCHLINGS, true);
         }

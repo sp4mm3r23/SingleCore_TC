@@ -118,7 +118,7 @@ public:
                 pInstance->SetData(DATA_ERUNAK_STONESPEAKER, NOT_STARTED);
         }
 
-        void JustSummoned(Creature* pSummon)
+        void JustSummoned(Creature* pSummon) override
         {
             switch (pSummon->GetEntry())
             {
@@ -128,13 +128,13 @@ public:
             }
         }
 
-        void KilledUnit(Unit * /*victim*/)
+        void KilledUnit(Unit* /*victim*/) override
         {
-            if (Unit * mindbender = me->GetVehicleKit()->GetPassenger(0))
+            if (me->GetVehicleKit()->GetPassenger(0))
                 Talk(RAND(SAY_KILL_PLAYER_1, SAY_KILL_PLAYER_2));
         }
 
-        void SpellHit(Unit* caster, SpellInfo const* spell) override
+        void SpellHit(Unit* /*caster*/, SpellInfo const* spell) override
         {
             if (me->GetCurrentSpell(CURRENT_GENERIC_SPELL))
             if (me->GetCurrentSpell(CURRENT_GENERIC_SPELL)->m_spellInfo->Id == SPELL_LAVA_BOLT
@@ -154,7 +154,7 @@ public:
                 pInstance->SetBossState(DATA_MINDBENDER_GHURSHA, IN_PROGRESS);
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -211,7 +211,7 @@ public:
         }
     };
 
-    CreatureAI* GetAI(Creature *pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new boss_erunak_stonespeakerAI(pCreature);
     }
@@ -247,7 +247,7 @@ public:
             EnslaveTargetGUID = ObjectGuid::Empty;
         }
 
-        void KilledUnit(Unit * /*victim*/)
+        void KilledUnit(Unit* /*victim*/) override
         {
             Talk(RAND(SAY_KILL_PLAYER_1, SAY_KILL_PLAYER_2));
         }
@@ -317,12 +317,12 @@ public:
             SummonList.clear();
         }
 
-        void JustSummoned(Creature* pSummon)
+        void JustSummoned(Creature* pSummon) override
         {
             SummonList.push_back(pSummon->GetGUID());
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -441,14 +441,14 @@ public:
             {
                 pInstance->HandleGameObject(pInstance->GetGuidData(GO_ERUNAK_STONESPEAKER_DOOR), true);
                 pInstance->SetData(DATA_ERUNAK_STONESPEAKER, DONE);
-                if (Creature * pErunak = pInstance->instance->GetCreature(pInstance->GetGuidData(DATA_ERUNAK_STONESPEAKER)))
+                if (pInstance->instance->GetCreature(pInstance->GetGuidData(DATA_ERUNAK_STONESPEAKER)))
                     Talk(SAY_DEATH_ERUNAK);
             }
             RemoveSummons();
         }
     };
 
-    CreatureAI* GetAI(Creature *pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new boss_mindbender_ghurshaAI(pCreature);
     }
@@ -510,7 +510,7 @@ class npc_ghursha_mind_fog : public CreatureScript
 public:
     npc_ghursha_mind_fog() : CreatureScript("npc_ghursha_mind_fog") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_ghursha_mind_fogAI(pCreature);
     }
@@ -528,10 +528,6 @@ public:
         {
             DoCast(me, SPELL_MIND_FOG_AURA, true);
             DoCast(me, SPELL_MIND_FOG_VISUAL, true);
-        }
-
-        void UpdateAI(const uint32 diff) override
-        {
         }
     };
 };

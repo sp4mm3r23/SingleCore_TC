@@ -97,7 +97,7 @@ class boss_isiset : public CreatureScript
             }
         }
 
-        void JustDied(Unit * )
+        void JustDied(Unit* ) override
         {
             Talk(SAY_DEATH);
             _JustDied();
@@ -108,7 +108,7 @@ class boss_isiset : public CreatureScript
             Talk(SAY_SLAY);
         }
 
-        void EnterCombat(Unit * /*who*/)
+        void EnterCombat(Unit* /*who*/) override
         {
             Talk(SAY_AGGRO);
             events.ScheduleEvent(EVENT_CELESTIAL_CALL, urand(5000, 8000));
@@ -118,7 +118,7 @@ class boss_isiset : public CreatureScript
             me->SummonCreature(NPC_SPATIAL_FLUX, -482.35f, 414.21f, 343.94f, 4.27f);
         }
 
-        void SummonedCreatureDies(Creature * creature, Unit * /*killer*/)
+        void SummonedCreatureDies(Creature* creature, Unit* /*killer*/) override
         {
             if(split)
             {
@@ -154,7 +154,7 @@ class boss_isiset : public CreatureScript
             }
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if(!UpdateVictim() || split)
                 return;
@@ -200,7 +200,7 @@ class boss_isiset : public CreatureScript
 public:
     boss_isiset() : CreatureScript("boss_isiset") {}
 
-    CreatureAI * GetAI(Creature * creature) const
+    CreatureAI* GetAI(Creature* creature) const override
     {
         return new boss_isisetAI(creature);
     }
@@ -262,7 +262,7 @@ class npc_spatial_flux : public CreatureScript
             summonTimer = 10000;
         }
 
-        void JustSummoned(Creature * summon)
+        void JustSummoned(Creature* summon) override
         {
             //if(Unit * victim = ObjectAccessor::GetUnit(*me, targetGUID))
             if(Unit * victim = summon->SelectNearestPlayer(20.0f))
@@ -274,7 +274,7 @@ class npc_spatial_flux : public CreatureScript
             DoCast(SPELL_ENERGY_FLUX_BEAM);
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if(summonTimer <= diff)
             {
@@ -290,7 +290,7 @@ class npc_spatial_flux : public CreatureScript
 public:
     npc_spatial_flux() : CreatureScript("npc_spatial_flux") {}
 
-    CreatureAI * GetAI(Creature * creature) const
+    CreatureAI* GetAI(Creature* creature) const override
     {
         return new npc_spatial_fluxAI(creature);
     }

@@ -71,7 +71,7 @@ class boss_baron_silverlaine : public CreatureScript
             }
         }
 
-        void EnterCombat(Unit * /*who*/)
+        void EnterCombat(Unit* /*who*/) override
         {
             Talk(SAY_AGGRO);
 
@@ -86,7 +86,7 @@ class boss_baron_silverlaine : public CreatureScript
             _EnterCombat();
         }
 
-        void JustDied(Unit * /*killer*/)
+        void JustDied(Unit* /*killer*/) override
         {
             Talk(SAY_DEATH);
             _JustDied();
@@ -97,12 +97,12 @@ class boss_baron_silverlaine : public CreatureScript
             }
         }
 
-        void KilledUnit(Unit * victim)
+        void KilledUnit(Unit* /*victim*/) override
         {
             Talk(RAND(SAY_KILLER_1, SAY_KILLER_2));
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if(!UpdateVictim())
                 return;
@@ -137,7 +137,7 @@ class boss_baron_silverlaine : public CreatureScript
 public:
     boss_baron_silverlaine() : CreatureScript("boss_baron_silverlaine") {}
 
-    CreatureAI * GetAI(Creature * creature) const
+    CreatureAI* GetAI(Creature* creature) const override
     {
         return new boss_baron_silverlaineAI(creature);
     }
@@ -152,7 +152,7 @@ class spell_summon_worgen_spirits : public SpellScriptLoader
         {
             PrepareSpellScript(spell_summon_worgen_spirits_SpellScript);
 
-            bool Validate(SpellInfo const* /*spellEntry*/)
+            bool Validate(SpellInfo const* /*spellEntry*/) override
             {
                 if (!sSpellMgr->GetSpellInfo(SPELL_SUMMON_WORGEN_SPIRIT))
                     return false;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -136,6 +136,11 @@ enum AreaFlags
     AREA_FLAG_CAN_HEARTH_AND_RESURRECT = 0x08000000,             // Can Hearth And Resurrect From Area
     AREA_FLAG_NO_FLY_ZONE           = 0x20000000,                // Marks zones where you cannot fly
     AREA_FLAG_UNK9                  = 0x40000000
+};
+
+enum AreaFlags2
+{
+    AREA_FLAG_GARRISON  = 0x20,
 };
 
 enum AreaMountFlags

@@ -42,7 +42,7 @@ public:
             malediction_de_la_nuee_azur = 25000;
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -64,7 +64,7 @@ public:
 
     };
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new mob_gardien_de_la_nuee_azurAI(pCreature);
     }
@@ -96,7 +96,7 @@ public:
             onde_de_choc_cramoisie = 25000;
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -119,7 +119,7 @@ public:
 
     };
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new mob_gardien_de_la_nuee_cramoisieAI(pCreature);
     }
@@ -151,7 +151,7 @@ public:
             flamme_corrompue = 10000;
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -173,7 +173,7 @@ public:
 
     };
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new mob_prophete_de_la_nuee_cramoisieAI(pCreature);
     }
@@ -208,7 +208,7 @@ public:
             eclair_crepusculaire = 10000;
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -237,7 +237,7 @@ public:
 
     };
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new mob_prophete_de_la_nuee_azurAI(pCreature);
     }
@@ -272,7 +272,7 @@ public:
             trait_deau = 5000;
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -301,7 +301,7 @@ public:
 
     };
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new mob_brise_tempete_du_crepusculeAI(pCreature);
     }
@@ -330,7 +330,7 @@ public:
             trait_deau = 3000;
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -347,7 +347,7 @@ public:
 
     };
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new mob_esprit_de_leau_asserviAI(pCreature);
     }
@@ -379,7 +379,7 @@ public:
             frappe_mortelle = 15000;
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -401,7 +401,7 @@ public:
 
     };
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new mob_maitre_darmes_du_crepusculeAI(pCreature);
     }
@@ -430,7 +430,7 @@ public:
             bouclier_rocheux_dentele = 15000;
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -446,7 +446,7 @@ public:
 
     };
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new mob_elementaire_de_roche_asserviAI(pCreature);
     }
@@ -481,7 +481,7 @@ public:
             pointe_de_terre = 25000;
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -509,7 +509,7 @@ public:
         }
     };
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new mob_sculpte_terre_du_crepusculeAI(pCreature);
     }
@@ -540,7 +540,7 @@ public:
             broyeur_a_viande = 20000;
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -557,7 +557,7 @@ public:
         }
     };
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new mob_massacreur_du_crepusculeAI(pCreature);
     }
@@ -588,7 +588,7 @@ public:
             flammes_deconcertantes = 30000;
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -611,7 +611,7 @@ public:
         }
     };
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new mob_chercheflamme_rehausseAI(pCreature);
     }
@@ -639,7 +639,7 @@ public:
             marche_vent = 20000;
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -655,7 +655,7 @@ public:
         }
     };
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new mob_marche_vent_rehausseAI(pCreature);
     }
@@ -690,7 +690,7 @@ public:
             trait_de_lombre = 4000;
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -718,7 +718,7 @@ public:
         }
     };
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new mob_tisseur_dombre_du_crepusculeAI(pCreature);
     }
@@ -750,7 +750,7 @@ public:
             invocation_dun_visage_tordu = 45000;
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -772,7 +772,7 @@ public:
         }
     };
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new mob_seigneur_de_guerre_de_la_nuee_azurAI(pCreature);
     }
@@ -804,7 +804,7 @@ public:
             renforcement_du_crepuscule = 25000;
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -825,7 +825,7 @@ public:
         }
     };
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new mob_seigneur_de_guerre_de_la_nuee_cramoisieAI(pCreature);
     }
@@ -859,7 +859,7 @@ public:
             explosion_trompeuse = 13000;
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -886,7 +886,7 @@ public:
         }
     };
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new mob_imposteur_du_crepusculeAI(pCreature);
     }
@@ -915,7 +915,7 @@ public:
             broie_armure = 20000;
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -930,7 +930,7 @@ public:
         }
     };
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new mob_brute_gronn_asservieAI(pCreature);
     }
@@ -959,7 +959,7 @@ public:
             appel_declair = 15000;
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -975,7 +975,7 @@ public:
         }
     };
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new mob_esprit_du_tonnerre_asservieAI(pCreature);
     }
@@ -1010,7 +1010,7 @@ public:
             surcharger = 6000;
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -1038,7 +1038,7 @@ public:
         }
     };
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new mob_mande_tonnerre_du_crepusculeAI(pCreature);
     }
@@ -1073,7 +1073,7 @@ public:
             invocation_de_braise_ardente = 55000;
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -1102,7 +1102,7 @@ public:
         }
     };
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new mob_grippe_feu_du_crepusculeAI(pCreature);
     }
@@ -1131,7 +1131,7 @@ public:
             horion_de_flammes = 20000;
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -1147,7 +1147,7 @@ public:
         }
     };
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new mob_braise_ardente_asservieAI(pCreature);
     }
@@ -1181,7 +1181,7 @@ public:
             nuage_declairs = 23000;
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -1209,7 +1209,7 @@ public:
         }
     };
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new mob_flagellant_aquatique_rehausseAI(pCreature);
     }
@@ -1243,7 +1243,7 @@ public:
             poings_ardents = 35000;
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -1256,7 +1256,7 @@ public:
 
             if (choc_de_pierre<= diff)
             {
-                if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 1, 10.0f, true))
+                if (SelectTarget(SELECT_TARGET_RANDOM, 1, 10.0f, true))
                     DoCast(me, spell_choc_de_pierre);
                 choc_de_pierre = 20000;
             } else choc_de_pierre-= diff;
@@ -1271,7 +1271,7 @@ public:
         }
     };
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new mob_brise_roche_rehausseAI(pCreature);
     }
@@ -1300,7 +1300,7 @@ public:
             nourrir_le_familier = 30000;
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -1315,7 +1315,7 @@ public:
         }
     };
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new mob_mande_wyrm_du_crepusculeAI(pCreature);
     }
@@ -1347,7 +1347,7 @@ public:
             souffle_crepusculaire = 15000;
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -1370,7 +1370,7 @@ public:
 
 
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new mob_drake_du_crepusculeAI(pCreature);
     }
@@ -1402,7 +1402,7 @@ public:
             siphon_dessence = 15000;
         }
 
-        void UpdateAI(const uint32 diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -1424,7 +1424,7 @@ public:
         }
     };
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new mob_corrupteur_sans_visageAI(pCreature);
     }

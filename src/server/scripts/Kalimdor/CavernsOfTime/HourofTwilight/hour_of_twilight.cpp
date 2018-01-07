@@ -117,7 +117,7 @@ class npc_thrall_hot : public CreatureScript
 public:
     npc_thrall_hot() : CreatureScript("npc_thrall_hot") { }
 
-    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action) override
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 /*action*/) override
     {
         player->PlayerTalkClass->ClearMenus();
         npc_thrall_hotAI* ai = CAST_AI(npc_thrall_hot::npc_thrall_hotAI, creature->AI());
@@ -189,7 +189,7 @@ public:
             Reset();
         }
 
-        void DoAction(int32 action)
+        void DoAction(int32 action) override
         {
             switch (action)
             {
@@ -212,7 +212,7 @@ public:
                     SetEscortPaused(false);
                     break;
                 case ACTION_START_ARCURION:
-                    if (Creature *arcurion = me->FindNearestCreature(BOSS_ARCURION, 200.0f, true))
+                    if (me->FindNearestCreature(BOSS_ARCURION, 200.0f, true))
                     {
                         events.ScheduleEvent(EVENT_KILL_FROZEN_SERVITOR, 6000);
                     }
@@ -226,7 +226,7 @@ public:
             }
         }
 
-        void WaypointReached(uint32 waypointId)
+        void WaypointReached(uint32 waypointId) override
         {
             switch (waypointId)
             {
@@ -402,7 +402,7 @@ public:
                 instance->SetData(DATA_TRASH_KILLED, 1);
         }
 
-        void IsSummonedBy(Unit* summoner)
+        void IsSummonedBy(Unit* /*summoner*/) override
         {
             if (instance)
             {
@@ -481,7 +481,7 @@ public:
                 instance->SetData(DATA_TRASH_KILLED, 1);
         }
 
-        void IsSummonedBy(Unit* summoner)
+        void IsSummonedBy(Unit* /*summoner*/) override
         {
             if (instance)
             {
@@ -548,7 +548,7 @@ class npc_thrall_second_hot : public CreatureScript
 public:
     npc_thrall_second_hot() : CreatureScript("npc_thrall_second_hot") { }
 
-    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action) override
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 /*action*/) override
     {
         player->PlayerTalkClass->ClearMenus();
         npc_thrall_second_hotAI* ai = CAST_AI(npc_thrall_second_hot::npc_thrall_second_hotAI, creature->AI());
@@ -627,7 +627,7 @@ public:
                     events.ScheduleEvent(EVENT_LAVA_BURST, 1000);
         }
 
-        void DoAction(int32 action)
+        void DoAction(int32 action) override
         {
             switch (action)
             {
@@ -650,7 +650,7 @@ public:
             }
         }
 
-        void WaypointReached(uint32 waypointId)
+        void WaypointReached(uint32 waypointId) override
         {
             switch (waypointId)
             {
@@ -677,7 +677,8 @@ public:
                     break;
                 case 6:
                     SetEscortPaused(true);
-                    if (asira = me->FindNearestCreature(BOSS_ASIRA_DAWNSLAYER, 100.0f, true))
+                    asira = me->FindNearestCreature(BOSS_ASIRA_DAWNSLAYER, 100.0f, true);
+                    if (asira != nullptr)
                     {
                         me->SetReactState(REACT_PASSIVE);
                         me->SetHomePosition(HomePoints[3]);
@@ -889,7 +890,7 @@ public:
                 instance->SetData(DATA_TRASH_KILLED, 1);
         }
 
-        void IsSummonedBy(Unit* summoner)
+        void IsSummonedBy(Unit* summoner) override
         {
             me->GetMotionMaster()->MovePoint(0, summoner->GetPositionX(), summoner->GetPositionY(), summoner->GetPositionZ());
         }
@@ -968,7 +969,7 @@ public:
                 instance->SetData(DATA_TRASH_KILLED, 1);
         }
 
-        void IsSummonedBy(Unit* summoner)
+        void IsSummonedBy(Unit* summoner) override
         {
             me->GetMotionMaster()->MovePoint(0, summoner->GetPositionX(), summoner->GetPositionY(), summoner->GetPositionZ());
         }
@@ -1056,7 +1057,7 @@ public:
                 instance->SetData(DATA_TRASH_KILLED, 1);
         }
 
-        void IsSummonedBy(Unit* summoner)
+        void IsSummonedBy(Unit* summoner) override
         {
             me->GetMotionMaster()->MovePoint(0, summoner->GetPositionX(), summoner->GetPositionY(), summoner->GetPositionZ());
         }
@@ -1131,7 +1132,7 @@ public:
                 instance->SetData(DATA_TRASH_KILLED, 1);
         }
 
-        void IsSummonedBy(Unit* summoner)
+        void IsSummonedBy(Unit* summoner) override
         {
             me->GetMotionMaster()->MovePoint(0, summoner->GetPositionX(), summoner->GetPositionY(), summoner->GetPositionZ());
         }
@@ -1295,7 +1296,7 @@ public:
             summons.Summon(summoned);
         }
 
-        void DoAction(int32 action)
+        void DoAction(int32 action) override
         {
             switch (action)
             {
@@ -1327,7 +1328,7 @@ public:
             }
         }
 
-        void WaypointReached(uint32 waypointId)
+        void WaypointReached(uint32 waypointId) override
         {
             switch (waypointId)
             {
@@ -1463,7 +1464,7 @@ public:
                 instance->SetData(DATA_TRASH_KILLED, 1);
         }
 
-        void IsSummonedBy(Unit* summoner)
+        void IsSummonedBy(Unit* summoner) override
         {
             me->GetMotionMaster()->MovePoint(0, summoner->GetPositionX(), summoner->GetPositionY(), summoner->GetPositionZ());
         }
@@ -1536,7 +1537,7 @@ public:
                 instance->SetData(DATA_TRASH_KILLED, 1);
         }
 
-        void IsSummonedBy(Unit* summoner)
+        void IsSummonedBy(Unit* summoner) override
         {
             me->GetMotionMaster()->MovePoint(0, summoner->GetPositionX(), summoner->GetPositionY(), summoner->GetPositionZ());
         }
@@ -1662,7 +1663,7 @@ public:
             events.Reset();
         }
 
-        void IsSummonedBy(Unit* summoner)
+        void IsSummonedBy(Unit* /*summoner*/) override
         {
             events.ScheduleEvent(EVENT_WATER_SHELL_RANGE, 250);
         }

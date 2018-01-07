@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -1234,6 +1234,14 @@ struct GemPropertiesEntry
     uint32 Type;
     uint16 EnchantID;
     uint16 MinItemLevel;
+};
+
+struct GlobalStringsEntry
+{
+    uint32 ID;
+    char const* StringName;
+    LocalizedString* StringValue;
+    uint8 Unknown;
 };
 
 struct GlyphBindableSpellEntry

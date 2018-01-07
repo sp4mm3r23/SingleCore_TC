@@ -281,7 +281,7 @@ class boss_theralion : public CreatureScript
                 }
             }
 
-            void DamageTaken(Unit* who, uint32&damage) override
+            void DamageTaken(Unit* /*who*/, uint32&damage) override
             {
                 if (!me || !me->IsAlive())
                     return;
@@ -345,7 +345,7 @@ class boss_theralion : public CreatureScript
                 breathcount = 0;
             }
 
-            void JustDied(Unit* killer) override
+            void JustDied(Unit* /*killer*/) override
             {
                 summons.DespawnAll();
                 /*
@@ -675,7 +675,7 @@ class boss_valiona : public CreatureScript
                 }
             }
 
-            void JustDied(Unit* killer) override
+            void JustDied(Unit* /*killer*/) override
             {
                 me->LowerPlayerDamageReq(me->GetMaxHealth());
 
@@ -685,7 +685,7 @@ class boss_valiona : public CreatureScript
                 instance->SetData(DATA_VALIONA_THERALION_EVENT, DONE);
             }
 
-            void DamageTaken(Unit* who, uint32&damage) override
+            void DamageTaken(Unit* /*who*/, uint32& damage) override
             {
                 if (!me || !me->IsAlive())
                     return;
@@ -798,6 +798,7 @@ class boss_valiona : public CreatureScript
                             if (dazzlingCount == 0)
                             {
                                 if (Creature* theralion = instance->GetCreature(DATA_THERALION))
+                                {
                                     if (roll_chance_i(50))
                                     {
                                         theralion->Yell(SAY_THER_DAZ, LANG_UNIVERSAL);
@@ -808,7 +809,7 @@ class boss_valiona : public CreatureScript
                                         theralion->Yell(SAY_THER_DA2, LANG_UNIVERSAL);
                                         DoPlaySoundToSet(theralion, SOU_THER_DA2);
                                     }
-
+                                }
                             }
                             // Cast 2 flames per time, 6 total
                             for (uint8 i = 0; i < 2; i++)
@@ -919,7 +920,7 @@ class boss_valiona : public CreatureScript
             }
         };
 
-        CreatureAI * GetAI(Creature * creature) const
+        CreatureAI* GetAI(Creature* creature) const override
         {
             return new boss_valionaAI(creature);
         }
@@ -936,13 +937,13 @@ class spell_dazzling_destruction : public SpellScriptLoader
             int32 spell_trigger;
             PrepareSpellScript(spell_dazzling_destructionSpellScript);
 
-            bool Load()
+            bool Load() override
             {
                 spell_trigger = GetSpellInfo()->GetEffect(EFFECT_0)->BasePoints;
                 return true;
             }
 
-            void HandleDummy(SpellEffIndex effIndex)
+            void HandleDummy(SpellEffIndex /*effIndex*/)
             {
                 GetCaster()->CastSpell(GetHitUnit(),spell_trigger,false);
             }
@@ -970,7 +971,7 @@ class spell_dazzling_destruction : public SpellScriptLoader
             }
         };
 
-        SpellScript * GetSpellScript() const
+        SpellScript* GetSpellScript() const override
         {
             return new spell_dazzling_destructionSpellScript();
         }
@@ -1014,7 +1015,7 @@ class spell_devouring_flame : public SpellScriptLoader
         {
             PrepareAuraScript(spell_devouring_flame_AuraScript);
 
-            void PeriodicTick(AuraEffect const* aurEff)
+            void PeriodicTick(AuraEffect const* /*aurEff*/)
             {
                 PreventDefaultAction();
                 if (GetCaster())
@@ -1058,7 +1059,7 @@ class spell_engulfing_magic : public SpellScriptLoader
             }
         };
 
-        SpellScript *GetSpellScript() const
+        SpellScript* GetSpellScript() const override
         {
             return new spell_engulfing_magic_SpellScript();
         }
@@ -1092,7 +1093,7 @@ class spell_shifting_reality : public SpellScriptLoader
             }
         };
 
-        SpellScript *GetSpellScript() const
+        SpellScript* GetSpellScript() const override
         {
             return new spell_shifting_reality_SpellScript();
         }
@@ -1104,13 +1105,13 @@ class npc_twilight_portal_bot : public CreatureScript
     public:
         npc_twilight_portal_bot() : CreatureScript("npc_twilight_portal_bot") { }
 
-        bool OnGossipHello(Player* pPlayer, Creature* pCreature) override
+        bool OnGossipHello(Player* pPlayer, Creature* /*pCreature*/) override
         {
             pPlayer->RemoveAura(74807);
             return true;
         }
 
-        bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action) override
+        bool OnGossipSelect(Player* player, Creature* /*creature*/, uint32 /*sender*/, uint32 /*action*/) override
         {
             ClearGossipMenuFor(player);
             return true;
@@ -1166,18 +1167,9 @@ public:
 
         InstanceScript* instance;
 
-        void JustDied(Unit* killer) override
+        void JustDied(Unit* /*killer*/) override
         {
             instance->SetData(DATA_FIEND_KILLS, 1);
-        }
-
-        void UpdateAI(uint32 diff) override
-
-        {
-            if (!UpdateVictim())
-                return;
-
-            DoMeleeAttackIfReady();
         }
     };
 

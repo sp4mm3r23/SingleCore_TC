@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -27,7 +27,7 @@ void WorldPackets::Spells::SpellCastLogData::Initialize(Unit const* unit)
     Health = unit->GetHealth();
     AttackPower = unit->GetTotalAttackPowerValue(unit->getClass() == CLASS_HUNTER ? RANGED_ATTACK : BASE_ATTACK);
     SpellPower = unit->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_SPELL);
-    PowerData.emplace_back(int32(unit->getPowerType()), unit->GetPower(unit->getPowerType()), int32(0));
+    PowerData.emplace_back(int32(unit->GetPowerType()), unit->GetPower(unit->GetPowerType()), int32(0));
 }
 
 void WorldPackets::Spells::SpellCastLogData::Initialize(Spell const* spell)
@@ -35,7 +35,7 @@ void WorldPackets::Spells::SpellCastLogData::Initialize(Spell const* spell)
     Health = spell->GetCaster()->GetHealth();
     AttackPower = spell->GetCaster()->GetTotalAttackPowerValue(spell->GetCaster()->getClass() == CLASS_HUNTER ? RANGED_ATTACK : BASE_ATTACK);
     SpellPower = spell->GetCaster()->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_SPELL);
-    Powers primaryPowerType = spell->GetCaster()->getPowerType();
+    Powers primaryPowerType = spell->GetCaster()->GetPowerType();
     bool primaryPowerAdded = false;
     for (SpellPowerCost const& cost : spell->GetPowerCost())
     {

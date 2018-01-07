@@ -45,7 +45,7 @@ class instance_the_vortex_pinnacle : public InstanceMapScript
             ObjectGuid npcWindGUID;
             uint32 goldenOrbCount;
 
-            void Initialize()
+            void Initialize() override
             {
                 npcWindGUID = ObjectGuid::Empty;
                 SetBossNumber(MAX_BOSSES);
@@ -101,7 +101,7 @@ class instance_the_vortex_pinnacle : public InstanceMapScript
                 return ObjectGuid::Empty;
             }
 
-            void SetData(uint32 type, uint32 data) override
+            void SetData(uint32 type, uint32 /*data*/) override
             {
                 switch (type)
                 {
@@ -117,7 +117,7 @@ class instance_the_vortex_pinnacle : public InstanceMapScript
                 }
             }
 
-            void Update(uint32 diff)
+            void Update(uint32 diff) override
             {
                 if (underMapTimer <= diff)
                 {

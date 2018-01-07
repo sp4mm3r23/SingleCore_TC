@@ -124,7 +124,7 @@ class boss_queen_azshara : public CreatureScript
 public:
     boss_queen_azshara() : CreatureScript("boss_queen_azshara") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new boss_queen_azsharaAI(pCreature);
     }
@@ -171,7 +171,7 @@ public:
             addsCount = 0;
         }
 
-        void EnterCombat(Unit* attacker) override
+        void EnterCombat(Unit* /*attacker*/) override
         {
             Talk(SAY_AGGRO);
 
@@ -183,7 +183,7 @@ public:
             instance->SetBossState(DATA_AZSHARA, IN_PROGRESS);
         }
 
-        void JustReachedHome()
+        void JustReachedHome() override
         {
             Talk(SAY_WIPE);
             addsCount = 0;
@@ -201,17 +201,16 @@ public:
                 Talk(SAY_KILL);
         }
 
-        void SpellHit(Unit* /*who*/, const SpellInfo* spellInfo)
+        void SpellHit(Unit* /*who*/, const SpellInfo* spellInfo) override
         {
-            if (Spell* spell = me->GetCurrentSpell(CURRENT_GENERIC_SPELL))
-                if (spellInfo->HasEffect(SPELL_EFFECT_INTERRUPT_CAST))
-                {
-                    me->InterruptSpell(CURRENT_GENERIC_SPELL);
-                    Talk(SAY_INTERRUPT);
-                }
+            if (spellInfo->HasEffect(SPELL_EFFECT_INTERRUPT_CAST))
+            {
+                me->InterruptSpell(CURRENT_GENERIC_SPELL);
+                Talk(SAY_INTERRUPT);
+            }
         }
 
-        void SummonedCreatureDies(Creature* summon, Unit* /*killer*/)
+        void SummonedCreatureDies(Creature* summon, Unit* /*killer*/) override
         {
             if (!me->IsInCombat())
                 return;
@@ -232,7 +231,7 @@ public:
             }
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -273,28 +272,29 @@ public:
                     events.ScheduleEvent(EVENT_TOTAL_OBEDIENCE, urand(10000, 20000));
                     break;
                 case EVENT_END:
+                {
+                    me->SummonGameObject(210025, 3465.447f, -5238.09f, 230.575f, 4.54f, QuaternionData(), 200000);
+                    if (me->GetMap()->IsHeroic())
                     {
-                    GameObject* reward = me->SummonGameObject(210025, 3465.447f, -5238.09f, 230.575f, 4.54f, QuaternionData(), 200000);
-                   if (me->GetMap()->IsHeroic())
-                       {
-                          if (!me->GetMap()->GetPlayers().isEmpty())
-                          {
-                              for (Map::PlayerList::const_iterator i = me->GetMap()->GetPlayers().begin(); i != me->GetMap()->GetPlayers().end(); ++i)
-                              {
-                                   if (!i->GetSource())
-                                       continue;
+                        if (!me->GetMap()->GetPlayers().isEmpty())
+                        {
+                            for (Map::PlayerList::const_iterator i = me->GetMap()->GetPlayers().begin(); i != me->GetMap()->GetPlayers().end(); ++i)
+                            {
+                                if (!i->GetSource())
+                                    continue;
 
-                                   i->GetSource()->KilledMonsterCredit(NPC_AZSHARA);
-                                   i->GetSource()->ModifyCurrency(CURRENCY_TYPE_JUSTICE_POINTS, 7000);
-                              }
-                          }
-                       }
-                        instance->SetBossState(DATA_AZSHARA, DONE);
-                        //instance->DespawnObjects(instance->GetGuidData(DATA_ROYAL_CACHE), DAY);
-                        //player->ModifyCurrency(CURRENCY_TYPE_JUSTICE_POINTS, 7000);
-                        me->DespawnOrUnsummon();
-                        break;
+                                i->GetSource()->KilledMonsterCredit(NPC_AZSHARA);
+                                i->GetSource()->ModifyCurrency(CURRENCY_TYPE_JUSTICE_POINTS, 7000);
+                            }
+                        }
                     }
+
+                    instance->SetBossState(DATA_AZSHARA, DONE);
+                    //instance->DespawnObjects(instance->GetGuidData(DATA_ROYAL_CACHE), DAY);
+                    //player->ModifyCurrency(CURRENCY_TYPE_JUSTICE_POINTS, 7000);
+                    me->DespawnOrUnsummon();
+                    break;
+                }
                 default:
                     break;
                 }
@@ -302,7 +302,6 @@ public:
         }
     private:
         EventMap events;
-        uint8 phase;
         ObjectGuid addsGUIDs[6];
         uint8 addsCount;
     };
@@ -313,7 +312,7 @@ class npc_queen_azshara_enchanted_magus : public CreatureScript
 public:
     npc_queen_azshara_enchanted_magus() : CreatureScript("npc_queen_azshara_enchanted_magus") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_queen_azshara_enchanted_magusAI(pCreature);
     }
@@ -357,7 +356,7 @@ public:
         DoCast(pPlayer, SPELL_BLADES_OF_ICE_DMG, true);
         }*/
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -433,7 +432,7 @@ class npc_queen_azshara_hammer_of_divinity : public CreatureScript
 public:
     npc_queen_azshara_hammer_of_divinity() : CreatureScript("npc_queen_azshara_hammer_of_divinity") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_queen_azshara_hammer_of_divinityAI(pCreature);
     }
@@ -448,7 +447,7 @@ public:
             me->SetDisableGravity(true);
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 /*diff*/) override
         {
             if (bDespawn)
                 return;
@@ -475,13 +474,13 @@ public:
     {
         PrepareAuraScript(spell_queen_azshara_coldflame_AuraScript);
 
-        bool Load()
+        bool Load() override
         {
             count = 0;
             return true;
         }
 
-        void PeriodicTick(AuraEffect const* aurEff)
+        void PeriodicTick(AuraEffect const* /*aurEff*/)
         {
             if (!GetCaster())
                 return;

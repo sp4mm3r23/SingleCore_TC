@@ -201,7 +201,7 @@ public:
                 events.ScheduleEvent(EVENT_CHEST_BOMB, 5000);
         }
 
-        void UpdateAI(uint32 const uiDiff) override
+        void UpdateAI(uint32 uiDiff) override
         {
             if (!UpdateVictim())
                 return;
@@ -323,7 +323,8 @@ public:
                         me->Attack(passenger, true);
                     }
 
-                    if (bunny = me->FindNearestCreature(NPC_GENERAL_PURPOSE_BUNNY_JMF, 100.0f))
+                    bunny = me->FindNearestCreature(NPC_GENERAL_PURPOSE_BUNNY_JMF, 100.0f);
+                    if (bunny != nullptr)
                     {
                         me->CastSpell(me, IsHeroic() ? SPELL_OAF_SMASH_H : SPELL_OAF_SMASH);
 
@@ -343,7 +344,7 @@ public:
             }
         }
 
-        void UpdateAI(uint32 const uiDiff) override
+        void UpdateAI(uint32 uiDiff) override
         {
             if (!UpdateVictim())
                 return;
@@ -378,7 +379,8 @@ public:
                         if (me->GetDistance(OafPos[0]) <= 2.0f)
                         {
                             me->GetMotionMaster()->Clear(true);
-                            if (bunny = me->FindNearestCreature(NPC_GENERAL_PURPOSE_BUNNY_JMF, 150.0f))
+                            bunny = me->FindNearestCreature(NPC_GENERAL_PURPOSE_BUNNY_JMF, 150.0f);
+                            if (bunny != nullptr)
                             {
                                 me->GetMotionMaster()->MovePoint(1, bunny->GetPositionX(), bunny->GetPositionY(), bunny->GetPositionZ());
                                 bunny->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
@@ -430,7 +432,7 @@ public:
             DoCast(me, SPELL_CHEST_BOMB);
         }
 
-        void UpdateAI(uint32 const uiDiff) override
+        void UpdateAI(uint32 uiDiff) override
         {
             if (!me)
                 return;
@@ -503,7 +505,7 @@ public:
             }
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (ThrowBombTimer <= diff)
             {

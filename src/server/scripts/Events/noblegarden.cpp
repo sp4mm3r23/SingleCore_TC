@@ -68,7 +68,7 @@ public:
                 me->GetMotionMaster()->MoveFollow(owner, PET_FOLLOW_DIST, PET_FOLLOW_ANGLE);
         }
 
-        void EnterCombat(Unit * /*who*/) { }
+        void EnterCombat(Unit* /*who*/) override { }
 
         void DoAction(int32 const /*param*/) override
         {
@@ -77,7 +77,7 @@ public:
                 owner->CastSpell(owner, SPELL_SPRING_FLING, true);
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (inLove)
             {

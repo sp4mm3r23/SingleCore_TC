@@ -85,7 +85,7 @@ public:
         uint32 spell_2_Timer;
         uint32 spell_1_Timer;
 
-        void JustDied(Unit* killer) override
+        void JustDied(Unit* /*killer*/) override
         {
             me->Respawn();
             Map::PlayerList const &PlayerList = me->GetMap()->GetPlayers();
@@ -96,7 +96,7 @@ public:
                 i->GetSource()->TeleportTo(861, 1166.23f, 532.65f, 18.0f, 0.0f);
         }
 
-        void EnterCombat(Unit* pWho) override
+        void EnterCombat(Unit* /*pWho*/) override
         {
             DoCast(79938);
         }
@@ -107,7 +107,7 @@ public:
             spell_2_Timer = 6000;
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -136,7 +136,7 @@ public:
         }
     };
 
-    CreatureAI* GetAI(Creature *pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_pyrelordAI(pCreature);
     }
@@ -159,7 +159,7 @@ public:
         uint32 spell_2_Timer;
         uint32 spell_3_Timer;
 
-        void EnterCombat(Unit* pWho) override
+        void EnterCombat(Unit* /*pWho*/) override
         {
             DoCast(98701);
         }
@@ -171,7 +171,7 @@ public:
             spell_3_Timer = 14000;
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -210,7 +210,7 @@ public:
         }
     };
 
-    CreatureAI* GetAI(Creature *pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_ancient_charhoundAI(pCreature);
     }
@@ -225,7 +225,7 @@ class npc_druid_of_the_flame : public CreatureScript
 public:
     npc_druid_of_the_flame() : CreatureScript("npc_druid_of_the_flame") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_druid_of_the_flameAI(pCreature);
     }
@@ -250,7 +250,7 @@ public:
             events.ScheduleEvent(EVENT_SCORCH, 6000);
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -292,7 +292,7 @@ class npc_subterranean_magma_worm : public CreatureScript
 public:
     npc_subterranean_magma_worm() : CreatureScript("npc_subterranean_magma_worm") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_subterranean_magma_wormAI(pCreature);
     }
@@ -317,7 +317,7 @@ public:
             events.ScheduleEvent(EVENT_BURNING_HUNGER, urand(9000, 17000));
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -357,7 +357,7 @@ class npc_ancient_firelord : public CreatureScript
 public:
     npc_ancient_firelord() : CreatureScript("npc_ancient_firelord") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_ancient_firelordAI(pCreature);
     }
@@ -382,7 +382,7 @@ public:
             events.ScheduleEvent(EVENT_THREE, 9000);
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -427,7 +427,7 @@ class npc_firehawk : public CreatureScript
 public:
     npc_firehawk() : CreatureScript("npc_firehawk") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_firehawkAI(pCreature);
     }
@@ -453,7 +453,7 @@ public:
             events.ScheduleEvent(EVENT_ONE, 4000);
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -488,7 +488,7 @@ class npc_bear_cub : public CreatureScript
 public:
     npc_bear_cub() : CreatureScript("npc_bear_cub") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_bear_cubAI(pCreature);
     }
@@ -526,7 +526,7 @@ public:
             //events.ScheduleEvent(EVENT_ONE, 100);
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -561,7 +561,7 @@ class npc_squirrel : public CreatureScript
 public:
     npc_squirrel() : CreatureScript("npc_squirrel") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_squirrelAI(pCreature);
     }
@@ -618,7 +618,7 @@ public:
             //events.ScheduleEvent(EVENT_ONE, 100);
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -652,7 +652,7 @@ class npc_child_of_tortolla : public CreatureScript
 public:
     npc_child_of_tortolla() : CreatureScript("npc_child_of_tortolla") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_child_of_tortollaAI(pCreature);
     }
@@ -690,7 +690,7 @@ public:
             //events.ScheduleEvent(EVENT_ONE, 100);
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -725,7 +725,7 @@ class npc_alpine_songbird : public CreatureScript
 public:
     npc_alpine_songbird() : CreatureScript("npc_alpine_songbird") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_alpine_songbirdAI(pCreature);
     }
@@ -780,7 +780,7 @@ public:
             //events.ScheduleEvent(EVENT_ONE, 100);
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -815,7 +815,7 @@ class npc_forest_owl : public CreatureScript
 public:
     npc_forest_owl() : CreatureScript("npc_forest_owl") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_forest_owlAI(pCreature);
     }
@@ -870,7 +870,7 @@ public:
             //events.ScheduleEvent(EVENT_ONE, 100);
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -905,7 +905,7 @@ class npc_goldwing_hawk : public CreatureScript
 public:
     npc_goldwing_hawk() : CreatureScript("npc_goldwing_hawk") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_goldwing_hawkAI(pCreature);
     }
@@ -960,7 +960,7 @@ public:
             //events.ScheduleEvent(EVENT_ONE, 100);
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -995,7 +995,7 @@ class npc_pyrachnis : public CreatureScript
 public:
     npc_pyrachnis() : CreatureScript("npc_pyrachnis") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_pyrachnisAI(pCreature);
     }
@@ -1016,13 +1016,13 @@ public:
             events.Reset();
         }
 
-        void EnterCombat(Unit* who) override
+        void EnterCombat(Unit* /*who*/) override
         {
             events.ScheduleEvent(EVENT_ONE, urand(3000, 7000));
             events.ScheduleEvent(EVENT_TWO, urand(9000, 10000));
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -1062,12 +1062,12 @@ class npc_tooga : public CreatureScript
 public:
     npc_tooga() : CreatureScript("npc_tooga") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_toogaAI(pCreature);
     }
 
-    bool OnGossipHello(Player* pPlayer, Creature* pCreature) override
+    bool OnGossipHello(Player* pPlayer, Creature* /*pCreature*/) override
     {
         pPlayer->PlayerTalkClass->ClearMenus();
         CloseGossipMenuFor(pPlayer);
@@ -1096,11 +1096,11 @@ public:
             events.Reset();
         }
 
-        void EnterCombat(Unit* who) override
+        void EnterCombat(Unit* /*who*/) override
         {
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -1135,7 +1135,7 @@ class npc_nemesis : public CreatureScript
 public:
     npc_nemesis() : CreatureScript("npc_nemesis") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_nemesisAI(pCreature);
     }
@@ -1156,13 +1156,13 @@ public:
             events.Reset();
         }
 
-        void EnterCombat(Unit* who) override
+        void EnterCombat(Unit* /*who*/) override
         {
             events.ScheduleEvent(EVENT_ONE, urand(3000, 7000));
             //events.ScheduleEvent(EVENT_TWO, urand(9000,10000));
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -1197,7 +1197,7 @@ class npc_lylagar : public CreatureScript
 public:
     npc_lylagar() : CreatureScript("npc_lylagar") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_lylagarAI(pCreature);
     }
@@ -1218,13 +1218,13 @@ public:
             events.Reset();
         }
 
-        void EnterCombat(Unit* who) override
+        void EnterCombat(Unit* /*who*/) override
         {
             events.ScheduleEvent(EVENT_ONE, urand(3000, 5000));
             //events.ScheduleEvent(EVENT_TWO, urand(9000,10000));
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -1259,7 +1259,7 @@ class npc_millagazor : public CreatureScript
 public:
     npc_millagazor() : CreatureScript("npc_millagazor") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_millagazorAI(pCreature);
     }
@@ -1283,13 +1283,13 @@ public:
             events.Reset();
         }
 
-        void EnterCombat(Unit* who) override
+        void EnterCombat(Unit* /*who*/) override
         {
             events.ScheduleEvent(EVENT_ONE, urand(3000, 5000));
             //events.ScheduleEvent(EVENT_TWO, urand(9000,10000));
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -1352,7 +1352,7 @@ class npc_galenges : public CreatureScript
 public:
     npc_galenges() : CreatureScript("npc_galenges") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_galengesAI(pCreature);
     }
@@ -1373,13 +1373,13 @@ public:
             events.Reset();
         }
 
-        void EnterCombat(Unit* who) override
+        void EnterCombat(Unit* /*who*/) override
         {
             events.ScheduleEvent(EVENT_ONE, urand(3000, 5000));
             events.ScheduleEvent(EVENT_TWO, urand(27000, 30000));
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -1444,12 +1444,12 @@ class npc_arch_druid_hamuul_runetotem : public CreatureScript
 public:
     npc_arch_druid_hamuul_runetotem() : CreatureScript("npc_arch_druid_hamuul_runetotem") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_arch_druid_hamuul_runetotemAI(pCreature);
     }
 
-    bool OnGossipHello(Player* pPlayer, Creature* pCreature) override
+    bool OnGossipHello(Player* pPlayer, Creature* /*pCreature*/) override
     {
         if (pPlayer->GetQuestStatus(29199))
         {
@@ -1500,7 +1500,7 @@ public:
             //events.ScheduleEvent(EVENT_ONE, 100);
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -1535,7 +1535,7 @@ class npc_leyara : public CreatureScript
 public:
     npc_leyara() : CreatureScript("npc_leyara") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_leyaraAI(pCreature);
     }
@@ -1566,13 +1566,13 @@ public:
             events.Reset();
         }
 
-        void EnterCombat(Unit* who) override
+        void EnterCombat(Unit* /*who*/) override
         {
             events.ScheduleEvent(EVENT_ONE, urand(3000, 5000));
             events.ScheduleEvent(EVENT_TWO, urand(9000, 10000));
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -1612,12 +1612,12 @@ class npc_elderlimb : public CreatureScript
 public:
     npc_elderlimb() : CreatureScript("npc_elderlimb") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_elderlimbAI(pCreature);
     }
 
-    bool OnGossipHello(Player* pPlayer, Creature* pCreature) override
+    bool OnGossipHello(Player* pPlayer, Creature* /*pCreature*/) override
     {
         if (pPlayer->GetQuestStatus(29283) == QUEST_STATUS_COMPLETE)
         {
@@ -1670,7 +1670,7 @@ public:
             //events.ScheduleEvent(EVENT_ONE, 100);
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -1705,7 +1705,7 @@ class npc_thisalee_crow : public CreatureScript
 public:
     npc_thisalee_crow() : CreatureScript("npc_thisalee_crow") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_thisalee_crowAI(pCreature);
     }
@@ -1757,7 +1757,7 @@ public:
             //events.ScheduleEvent(EVENT_ONE, 100);
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -1792,7 +1792,7 @@ class npc_tholo_whitehoof : public CreatureScript
 public:
     npc_tholo_whitehoof() : CreatureScript("npc_tholo_whitehoof") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_tholo_whitehoofAI(pCreature);
     }
@@ -1838,7 +1838,7 @@ public:
             //events.ScheduleEvent(EVENT_ONE, 100);
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -1873,7 +1873,7 @@ class npc_melfurion_stormrage : public CreatureScript
 public:
     npc_melfurion_stormrage() : CreatureScript("npc_melfurion_stormrage") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_melfurion_stormrageAI(pCreature);
     }
@@ -1935,7 +1935,7 @@ public:
         {
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -1970,7 +1970,7 @@ class npc_leyara2 : public CreatureScript
 public:
     npc_leyara2() : CreatureScript("npc_leyara2") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_leyara2AI(pCreature);
     }
@@ -2010,7 +2010,7 @@ public:
             //events.ScheduleEvent(EVENT_ONE, 100);
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -2045,7 +2045,7 @@ class npc_molten_behemoth : public CreatureScript
 public:
     npc_molten_behemoth() : CreatureScript("npc_molten_behemoth") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_molten_behemothAI(pCreature);
     }
@@ -2066,7 +2066,7 @@ public:
             events.Reset();
         }
 
-        void EnterCombat(Unit* who) override
+        void EnterCombat(Unit* /*who*/) override
         {
             events.ScheduleEvent(EVENT_ONE, urand(3000, 5000));
             //events.ScheduleEvent(EVENT_TWO, urand(9000,10000));
@@ -2087,7 +2087,7 @@ public:
         {
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -2127,7 +2127,7 @@ class npc_rayne_feathersong : public CreatureScript
 public:
     npc_rayne_feathersong() : CreatureScript("npc_rayne_feathersong") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_rayne_feathersongAI(pCreature);
     }
@@ -2139,7 +2139,7 @@ public:
         if (!summoned)
         if (pPlayer->GetQuestStatus(29143) == QUEST_STATUS_INCOMPLETE)
         {
-            Creature* wisp = pCreature->SummonCreature(53083, pPlayer->GetPositionX(), pPlayer->GetPositionY(), pPlayer->GetPositionZ(), 0, TEMPSUMMON_TIMED_DESPAWN, 180000);
+            pCreature->SummonCreature(53083, pPlayer->GetPositionX(), pPlayer->GetPositionY(), pPlayer->GetPositionZ(), 0, TEMPSUMMON_TIMED_DESPAWN, 180000);
             return true;
         }
         return false;
@@ -2161,11 +2161,11 @@ public:
             events.Reset();
         }
 
-        void EnterCombat(Unit* who) override
+        void EnterCombat(Unit* /*who*/) override
         {
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -2202,7 +2202,7 @@ class npc_cinderweb_spinner2 : public CreatureScript
 public:
     npc_cinderweb_spinner2() : CreatureScript("npc_cinderweb_spinner2") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_cinderweb_spinner2AI(pCreature);
     }
@@ -2223,13 +2223,13 @@ public:
             events.Reset();
         }
 
-        void EnterCombat(Unit* who) override
+        void EnterCombat(Unit* /*who*/) override
         {
             events.ScheduleEvent(EVENT_ONE, urand(500, 1000));
             //events.ScheduleEvent(EVENT_TWO, urand(9000,10000));
         }
 
-        void JustDied(Unit* killer) override
+        void JustDied(Unit* /*killer*/) override
         {
         }
 
@@ -2237,7 +2237,7 @@ public:
         {
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -2282,7 +2282,7 @@ class npc_Achievement_helper : public CreatureScript
 public:
     npc_Achievement_helper() : CreatureScript("npc_Achievement_helper") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_Achievement_helperAI(pCreature);
     }
@@ -2320,7 +2320,7 @@ public:
             //events.ScheduleEvent(EVENT_ONE, 100);
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -2355,7 +2355,7 @@ class npc_fireside_chat : public CreatureScript
 public:
     npc_fireside_chat() : CreatureScript("npc_fireside_chat") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_fireside_chatAI(pCreature);
     }
@@ -2403,11 +2403,11 @@ public:
             events.Reset();
         }
 
-        void EnterCombat(Unit* who) override
+        void EnterCombat(Unit* /*who*/) override
         {
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -2443,7 +2443,7 @@ class npc_currency_required_quest_taker : public CreatureScript
 public:
     npc_currency_required_quest_taker() : CreatureScript("npc_currency_required_quest_taker") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_currency_required_quest_takerAI(pCreature);
     }
@@ -2489,7 +2489,7 @@ public:
             //events.ScheduleEvent(EVENT_ONE, 100);
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -2524,7 +2524,7 @@ class npc_flamewaker_shaman : public CreatureScript
 public:
     npc_flamewaker_shaman() : CreatureScript("npc_flamewaker_shaman") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_flamewaker_shamanAI(pCreature);
     }
@@ -2545,14 +2545,14 @@ public:
             events.Reset();
         }
 
-        void EnterCombat(Unit* who) override
+        void EnterCombat(Unit* /*who*/) override
         {
             events.ScheduleEvent(EVENT_ONE, urand(3000, 5000));
             events.ScheduleEvent(EVENT_TWO, urand(7000, 9000));
             events.ScheduleEvent(EVENT_THREE, urand(12000, 15000));
         }
 
-        void JustDied(Unit* killer) override
+        void JustDied(Unit* /*killer*/) override
         {
         }
 
@@ -2560,7 +2560,7 @@ public:
         {
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -2609,7 +2609,7 @@ class npc_flamewaker_shaman_helper : public CreatureScript
 public:
     npc_flamewaker_shaman_helper() : CreatureScript("npc_flamewaker_shaman_helper") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_flamewaker_shaman_helperAI(pCreature);
     }
@@ -2630,12 +2630,12 @@ public:
             events.Reset();
         }
 
-        void EnterCombat(Unit* who) override
+        void EnterCombat(Unit* /*who*/) override
         {
             events.ScheduleEvent(EVENT_ONE, 1000);
         }
 
-        void JustDied(Unit* killer) override
+        void JustDied(Unit* /*killer*/) override
         {
         }
 
@@ -2652,7 +2652,7 @@ public:
             }
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -2686,7 +2686,7 @@ class npc_flamewaker_hunter : public CreatureScript
 public:
     npc_flamewaker_hunter() : CreatureScript("npc_flamewaker_hunter") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_flamewaker_hunterAI(pCreature);
     }
@@ -2707,14 +2707,14 @@ public:
             events.Reset();
         }
 
-        void EnterCombat(Unit* who) override
+        void EnterCombat(Unit* /*who*/) override
         {
             events.ScheduleEvent(EVENT_ONE, urand(1000, 2000));
             events.ScheduleEvent(EVENT_TWO, urand(7000, 10000));
             events.ScheduleEvent(EVENT_THREE, urand(15000, 18000));
         }
 
-        void JustDied(Unit* killer) override
+        void JustDied(Unit* /*killer*/) override
         {
         }
 
@@ -2722,7 +2722,7 @@ public:
         {
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -2836,7 +2836,7 @@ class npc_flamewaker_hunter_helper2 : public CreatureScript
 public:
     npc_flamewaker_hunter_helper2() : CreatureScript("npc_flamewaker_hunter_helper2") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_flamewaker_hunter_helper2AI(pCreature);
     }
@@ -2857,22 +2857,22 @@ public:
             events.Reset();
         }
 
-        void EnterCombat(Unit* who) override
+        void EnterCombat(Unit* /*who*/) override
         {
             Creature* helper1 = GetClosestCreatureWithEntry(me, 531430, 50.0f);
             me->CastSpell(helper1, 98393, true);
             events.ScheduleEvent(EVENT_ONE, 2000);
         }
 
-        void JustDied(Unit* killer) override
+        void JustDied(Unit* /*killer*/) override
         {
         }
 
-        void KilledUnit(Unit* who) override
+        void KilledUnit(Unit* /*who*/) override
         {
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -2904,7 +2904,7 @@ class npc_flamewaker_hunter_helper : public CreatureScript
 public:
     npc_flamewaker_hunter_helper() : CreatureScript("npc_flamewaker_hunter_helper") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_flamewaker_hunter_helperAI(pCreature);
     }
@@ -2925,20 +2925,20 @@ public:
             events.Reset();
         }
 
-        void EnterCombat(Unit* who) override
+        void EnterCombat(Unit* /*who*/) override
         {
             events.ScheduleEvent(EVENT_ONE, 2000);
         }
 
-        void JustDied(Unit* killer) override
+        void JustDied(Unit* /*killer*/) override
         {
         }
 
-        void KilledUnit(Unit* who) override
+        void KilledUnit(Unit* /*who*/) override
         {
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -2984,7 +2984,7 @@ class npc_flamewaker_sentinel : public CreatureScript
 public:
     npc_flamewaker_sentinel() : CreatureScript("npc_flamewaker_sentinel") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_flamewaker_sentinelAI(pCreature);
     }
@@ -3005,7 +3005,7 @@ public:
             events.Reset();
         }
 
-        void EnterCombat(Unit* who) override
+        void EnterCombat(Unit* /*who*/) override
         {
             if (Unit *pTarget = SelectTarget(SELECT_TARGET_RANDOM, 0))
                 me->CastSpell(pTarget, 32323, true);
@@ -3023,7 +3023,7 @@ public:
         {
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -3062,7 +3062,7 @@ class npc_emberspit_scorpion : public CreatureScript
 public:
     npc_emberspit_scorpion() : CreatureScript("npc_emberspit_scorpion") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_emberspit_scorpionAI(pCreature);
     }
@@ -3083,14 +3083,14 @@ public:
             events.Reset();
         }
 
-        void EnterCombat(Unit* who) override
+        void EnterCombat(Unit* /*who*/) override
         {
             if (Unit *pTarget = SelectTarget(SELECT_TARGET_RANDOM, 0))
                 me->CastSpell(pTarget, 53148, true);
             events.ScheduleEvent(EVENT_ONE, urand(3000, 5000));
         }
 
-        void JustDied(Unit* killer) override
+        void JustDied(Unit* /*killer*/) override
         {
             //if (killer)
             //killer->ToPlayer()->KilledMonsterCredit(53263);
@@ -3102,7 +3102,7 @@ public:
         {
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -3137,7 +3137,7 @@ class npc_trained_firehawk : public CreatureScript
 public:
     npc_trained_firehawk() : CreatureScript("npc_trained_firehawk") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_trained_firehawkAI(pCreature);
     }
@@ -3182,7 +3182,7 @@ public:
             //events.ScheduleEvent(EVENT_ONE, 100);
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             events.Update(diff);
 
@@ -3207,7 +3207,7 @@ class npc_firehawk_helper : public CreatureScript
 public:
     npc_firehawk_helper() : CreatureScript("npc_firehawk_helper") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_firehawk_helperAI(pCreature);
     }
@@ -3263,7 +3263,7 @@ public:
             //events.ScheduleEvent(EVENT_ONE, 100);
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -3297,7 +3297,7 @@ class death_from_above : public CreatureScript
 public:
     death_from_above() : CreatureScript("death_from_above") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new death_from_aboveAI(pCreature);
     }
@@ -3318,11 +3318,11 @@ public:
             events.Reset();
         }
 
-        void EnterCombat(Unit* who) override
+        void EnterCombat(Unit* /*who*/) override
         {
         }
 
-        void JustDied(Unit* killer) override
+        void JustDied(Unit* /*killer*/) override
         {
             Map::PlayerList const &PlayerList = me->GetMap()->GetPlayers();
             if (!PlayerList.isEmpty())
@@ -3349,7 +3349,7 @@ public:
         {
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -3402,7 +3402,7 @@ class npc_little_lasher : public CreatureScript
 public:
     npc_little_lasher() : CreatureScript("npc_little_lasher") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_little_lasherAI(pCreature);
     }
@@ -3444,7 +3444,7 @@ public:
             //events.ScheduleEvent(EVENT_ONE, 100);
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             events.Update(diff);
 
@@ -3469,7 +3469,7 @@ class npc_hyjal_druid : public CreatureScript
 public:
     npc_hyjal_druid() : CreatureScript("npc_hyjal_druid") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_hyjal_druidAI(pCreature);
     }
@@ -3515,7 +3515,7 @@ public:
             //events.ScheduleEvent(EVENT_ONE, 100);
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             events.Update(diff);
 
@@ -3541,7 +3541,7 @@ class npc_flame_protection_rune : public CreatureScript
 public:
     npc_flame_protection_rune() : CreatureScript("npc_flame_protection_rune") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_flame_protection_runeAI(pCreature);
     }
@@ -3581,7 +3581,7 @@ public:
             //events.ScheduleEvent(EVENT_ONE, 100);
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             events.Update(diff);
 
@@ -3606,7 +3606,7 @@ class npc_flame_protection_rune1 : public CreatureScript
 public:
     npc_flame_protection_rune1() : CreatureScript("npc_flame_protection_rune1") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_flame_protection_rune1AI(pCreature);
     }
@@ -3651,7 +3651,7 @@ public:
             //events.ScheduleEvent(EVENT_ONE, 100);
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             events.Update(diff);
 
@@ -3694,7 +3694,7 @@ class npc_druid_of_the_flame_molten_front : public CreatureScript
 public:
     npc_druid_of_the_flame_molten_front() : CreatureScript("npc_druid_of_the_flame_molten_front") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_druid_of_the_flame_molten_frontAI(pCreature);
     }
@@ -3723,7 +3723,7 @@ public:
         }
 
 
-        void SpellHit(Unit* caster, const SpellInfo* spell) override
+        void SpellHit(Unit* /*caster*/, const SpellInfo* spell) override
         {
             if (spell->Id == 98628)
             {
@@ -3738,12 +3738,10 @@ public:
                     i->GetSource()->KilledMonsterCredit(53251);
                     me->DespawnOrUnsummon();
                 }
-
-
             }
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -3814,7 +3812,7 @@ class npc_cinderweb_cocoon : public CreatureScript
 public:
     npc_cinderweb_cocoon() : CreatureScript("npc_cinderweb_cocoon") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_cinderweb_cocoonAI(pCreature);
     }
@@ -3854,7 +3852,7 @@ public:
             //events.ScheduleEvent(EVENT_ONE, 100);
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             events.Update(diff);
 
@@ -3879,7 +3877,7 @@ class npc_molten_front_vendor : public CreatureScript
 public:
     npc_molten_front_vendor() : CreatureScript("npc_molten_front_vendor") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_molten_front_vendorAI(pCreature);
     }
@@ -3926,11 +3924,11 @@ public:
             events.Reset();
         }
 
-        void EnterCombat(Unit* who) override
+        void EnterCombat(Unit* /*who*/) override
         {
         }
 
-        void UpdateAI(uint32 const diff) override
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -3966,7 +3964,7 @@ class npc_fireland_teleporter : public CreatureScript
 public:
     npc_fireland_teleporter() : CreatureScript("npc_fireland_teleporter") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_fireland_teleporterAI(pCreature);
     }

@@ -282,8 +282,7 @@ public:
 
         InstanceScript* instance;
 
-        void UpdateAI(uint32 diff) override
-
+        void UpdateAI(uint32 /*diff*/) override
         {
             std::list<Player*> targets;
             me->GetPlayerListInGrid(targets, 15.0f);
@@ -367,7 +366,7 @@ public:
             events.ScheduleEvent(PHASE_1, 1000);
         }
 
-        void IsSummonedBy(Unit* summoner)
+        void IsSummonedBy(Unit* /*summoner*/) override
         {
             Talk(SAY_AGGRO);
             me->HandleEmoteCommand(EMOTE_ONESHOT_EMERGE);
@@ -409,7 +408,7 @@ public:
                 (*iter)->DespawnOrUnsummon();
         }
 
-        void DoAction(int32 action)
+        void DoAction(int32 action) override
         {
             switch (action)
             {
@@ -712,7 +711,7 @@ public:
                 }
             }
 
-            if (me->HealthAbovePct(1.5f) && (me->GetMaxHealth() *0.015f) > (me->GetHealth() - damage))
+            if (me->HealthAbovePct(1) && (me->GetMaxHealth() * 0.015f) > (me->GetHealth() - damage))
             {
                 if (encounterEnd == false)
                 {
@@ -792,7 +791,7 @@ public:
             me->SetByteFlag(UNIT_FIELD_BYTES_1, 3, UNIT_BYTE1_FLAG_ALWAYS_STAND | UNIT_BYTE1_FLAG_HOVER);
         }
 
-        void SpellHitTarget(Unit* /*target*/, SpellInfo const* spell)
+        void SpellHitTarget(Unit* /*target*/, SpellInfo const* spell) override
         {
             if (spell->Id == SPELL_ASTRAL_RECALL)
             {
@@ -810,7 +809,7 @@ public:
             }
         }
 
-        void DoAction(int32 action)
+        void DoAction(int32 action) override
         {
             switch (action)
             {
@@ -841,7 +840,7 @@ public:
                 case EVENT_CAUTERIZE:
                     if (Creature* alexs = me->FindNearestCreature(NPC_ALEXSTRASZA_DRAGON, 500.0f, true))
                     {
-                        if (Creature* wing = alexs->FindNearestCreature(NPC_WING_TENTACLE, 100.0f, true))
+                        if (alexs->FindNearestCreature(NPC_WING_TENTACLE, 100.0f, true))
                         {
                             if (Creature* blistering = me->FindNearestCreature(NPC_BLISTERING_TENTACLES, 500.0f, true))
                             {
@@ -872,7 +871,7 @@ public:
         return true;
     }
 
-    bool OnGossipSelect(Player *player, Creature *creature, uint32 sender, uint32 uiAction)
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 sender, uint32 uiAction) override
     {
         if (sender == GOSSIP_SENDER_MAIN)
         {
@@ -940,7 +939,7 @@ public:
             secondBlistering = false;
         }
 
-        void IsSummonedBy(Unit* summoner)
+        void IsSummonedBy(Unit* /*summoner*/) override
         {
             me->HandleEmoteCommand(EMOTE_ONESHOT_EMERGE);
         }
@@ -956,7 +955,7 @@ public:
             me->setActive(true);
         }
 
-        void DoAction(int32 action)
+        void DoAction(int32 action) override
         {
             switch (action)
             {
@@ -970,7 +969,7 @@ public:
             }
         }
 
-        void DamageTaken(Unit* who, uint32&damage) override
+        void DamageTaken(Unit* /*who*/, uint32& damage) override
         {
             if (!me || !me->IsAlive())
                 return;
@@ -1090,7 +1089,7 @@ public:
             secondBlistering = false;
         }
 
-        void IsSummonedBy(Unit* summoner)
+        void IsSummonedBy(Unit* /*summoner*/) override
         {
             me->HandleEmoteCommand(EMOTE_ONESHOT_EMERGE);
         }
@@ -1106,7 +1105,7 @@ public:
             me->setActive(true);
         }
 
-        void DoAction(int32 action)
+        void DoAction(int32 action) override
         {
             switch (action)
             {
@@ -1120,7 +1119,7 @@ public:
             }
         }
 
-        void DamageTaken(Unit* who, uint32&damage) override
+        void DamageTaken(Unit* /*who*/, uint32& damage) override
         {
             if (!me || !me->IsAlive())
                 return;
@@ -1252,7 +1251,7 @@ public:
             secondBlistering = false;
         }
 
-        void IsSummonedBy(Unit* summoner)
+        void IsSummonedBy(Unit* /*summoner*/) override
         {
             me->HandleEmoteCommand(EMOTE_ONESHOT_EMERGE);
         }
@@ -1268,7 +1267,7 @@ public:
             me->setActive(true);
         }
 
-        void DoAction(int32 action)
+        void DoAction(int32 action) override
         {
             switch (action)
             {
@@ -1281,7 +1280,7 @@ public:
             }
         }
 
-        void DamageTaken(Unit* who, uint32&damage) override
+        void DamageTaken(Unit* /*who*/, uint32&damage) override
         {
             if (!me || !me->IsAlive())
                 return;
@@ -1362,7 +1361,7 @@ public:
                     alex->RemoveAura(SPELL_CAUTERIZE_PHASE_1);
                 }
 
-                if (Creature* kalec = me->FindNearestCreature(NPC_KALECGOS_DRAGON, 200.0f, true))
+                if (me->FindNearestCreature(NPC_KALECGOS_DRAGON, 200.0f, true))
                 {
                     thrall->RemoveAura(SPELL_KALECGOS_PRESENCE);
                     thrall->RemoveAura(SPELL_SPELLWEAVER);
@@ -1414,8 +1413,7 @@ public:
             reachedPos = false;
         }
 
-        void UpdateAI(uint32 diff) override
-
+        void UpdateAI(uint32 /*diff*/) override
         {
             if (Creature* platform = me->FindNearestCreature(NPC_PLATFORM, 500.0f, true))
             {
@@ -1433,6 +1431,7 @@ public:
             }
 
             if (Creature* tzone = me->FindNearestCreature(NPC_TIME_ZONE, 30.0f, true))
+            {
                 if (tzone->GetExactDist2d(me) <= 11.0f)
                 {
                     me->SetSpeed(MOVE_WALK, 0.4f);
@@ -1445,6 +1444,7 @@ public:
                     me->SetSpeed(MOVE_RUN, 2.85f);
                     me->SetSpeed(MOVE_FLIGHT, 2.85f);
                 }
+            }
         }
 
         void JustDied(Unit* /*kller*/) override
@@ -1562,7 +1562,7 @@ public:
         void InitializeAI() override
         {
             me->setRegeneratingHealth(false);
-            me->setPowerType(POWER_ENERGY);
+            me->SetPowerType(POWER_ENERGY);
             me->SetMaxPower(POWER_ENERGY, 100);
             me->SetPower(POWER_ENERGY, 0);
             EnterCombat(me);
@@ -1679,7 +1679,7 @@ public:
 
         }
 
-        void DoAction(int32 action)
+        void DoAction(int32 action) override
         {
             switch (action)
             {
@@ -1724,12 +1724,12 @@ public:
             me->SetReactState(REACT_PASSIVE);
         }
 
-        void DoAction(int32 action)
+        void DoAction(int32 action) override
         {
             switch (action)
             {
             case ACTION_TIME_ZONE:
-                if (Creature* tentacle = me->FindNearestCreature(NPC_ARM_TENTACLE_1, 500.0f, true))
+                if (me->FindNearestCreature(NPC_ARM_TENTACLE_1, 500.0f, true))
                 {
                     DoCast(SPELL_TIME_ZONE_SUMMON_TARGET);
 
@@ -1812,7 +1812,7 @@ public:
             me->SetByteFlag(UNIT_FIELD_BYTES_1, 3, UNIT_BYTE1_FLAG_ALWAYS_STAND | UNIT_BYTE1_FLAG_HOVER);
         }
 
-        void DoAction(int32 action)
+        void DoAction(int32 action) override
         {
             switch (action)
             {
@@ -1858,7 +1858,7 @@ public:
             DoCast(SPELL_SPELLWEAVER);
         }
 
-        void DoAction(int32 action)
+        void DoAction(int32 action) override
         {
             switch (action)
             {
@@ -1901,12 +1901,12 @@ public:
             me->SetReactState(REACT_PASSIVE);
         }
 
-        void IsSummonedBy(Unit* summoner)
+        void IsSummonedBy(Unit* /*summoner*/) override
         {
             DoCast(me, SPELL_UNSTABLE_CORRUPTION);
         }
 
-        void SpellHitTarget(Unit* /*target*/, SpellInfo const* spell)
+        void SpellHitTarget(Unit* /*target*/, SpellInfo const* spell) override
         {
             if (spell->Id == SPELL_UNSTABLE_CORRUPTION)
             {
@@ -1954,14 +1954,13 @@ public:
             DoZoneInCombat(me);
         }
 
-        void JustReachedHome()
+        void JustReachedHome() override
         {
             DoCast(me, SPELL_CONGEALING_BLOOD_HEAL);
             me->DespawnOrUnsummon();
         }
 
         void UpdateAI(uint32 diff) override
-
         {
             events.Update(diff);
 
@@ -1983,7 +1982,7 @@ public:
 
         uint32 spell;
 
-        bool Load()
+        bool Load() override
         {
             spell = GetSpellInfo()->GetEffect(EFFECT_0)->CalcValue();
             return GetCaster()->GetTypeId() == TYPEID_PLAYER;
@@ -2021,7 +2020,7 @@ public:
     {
         PrepareSpellScript(spell_assault_aspects_SpellScript);
 
-        void FilterTarget(std::list<WorldObject*>& targets)
+        void FilterTarget(std::list<WorldObject*>& /*targets*/)
         {
             if (Unit* caster = GetCaster())
             {
@@ -2090,13 +2089,13 @@ public:
 
         int32 triggerSpell;
 
-        bool Load()
+        bool Load() override
         {
             triggerSpell = GetSpellInfo()->GetEffect(EFFECT_0)->CalcValue();
             return GetCaster()->GetTypeId() == TYPEID_UNIT;
         }
 
-        void HandleScriptEffect(SpellEffIndex effIndex)
+        void HandleScriptEffect(SpellEffIndex /*effIndex*/)
         {
             if (Unit* caster = GetCaster())
             {
@@ -2156,13 +2155,13 @@ public:
 
         int32 triggerSpell;
 
-        bool Load()
+        bool Load() override
         {
             triggerSpell = GetSpellInfo()->GetEffect(EFFECT_0)->CalcValue();
             return GetCaster()->GetTypeId() == TYPEID_UNIT;
         }
 
-        void HandleScriptEffect(SpellEffIndex effIndex)
+        void HandleScriptEffect(SpellEffIndex /*effIndex*/)
         {
             if (Unit* caster = GetCaster())
             {
@@ -2195,18 +2194,18 @@ public:
 
         int32 triggerSpell;
 
-        bool Load()
+        bool Load() override
         {
             triggerSpell = GetSpellInfo()->GetEffect(EFFECT_0)->CalcValue();
             return GetCaster()->GetTypeId() == TYPEID_UNIT;
         }
 
-        void HandleScriptEffect(SpellEffIndex effIndex)
+        void HandleScriptEffect(SpellEffIndex /*effIndex*/)
         {
             int32 num;
 
-            if (GetCaster()->GetMap() && GetCaster()->GetMap()->GetDifficultyID() == DIFFICULTY_25_N ||
-                GetCaster()->GetMap() && GetCaster()->GetMap()->GetDifficultyID() == DIFFICULTY_25_HC)
+            if ((GetCaster()->GetMap() && GetCaster()->GetMap()->GetDifficultyID() == DIFFICULTY_25_N) ||
+                (GetCaster()->GetMap() && GetCaster()->GetMap()->GetDifficultyID() == DIFFICULTY_25_HC))
                 num = 7;
             else
                 num = 2;
@@ -2354,7 +2353,7 @@ public:
         int32 damageAmount;
         uint32 distance;
 
-        bool Load()
+        bool Load() override
         {
             initialDamage = GetSpellInfo()->GetEffect(EFFECT_0)->CalcValue();
             return GetCaster()->GetTypeId() == TYPEID_UNIT;
@@ -2432,7 +2431,7 @@ public:
     {
         PrepareAuraScript(spell_corrupting_parasite_aura_AuraScript);
 
-        void HandleRemove(AuraEffect const* aurEff, AuraEffectHandleModes /*mode*/)
+        void HandleRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
         {
             if (Unit* owner = GetUnitOwner())
                 owner->SummonCreature(NPC_CORRUPTING_PARASITE, owner->GetPositionX(), owner->GetPositionY(), owner->GetPositionZ(), owner->GetOrientation(), TEMPSUMMON_MANUAL_DESPAWN);
@@ -2467,13 +2466,10 @@ public:
         {
             if (Unit* caster = GetCaster())
             {
-                if (Unit* target = GetHitUnit())
-                {
-                    amount = 0.1f * (caster->GetHealth());
-                    bp0 = amount;
+                amount = 0.1f * (caster->GetHealth());
+                bp0 = amount;
 
-                    SetHitDamage(amount);
-                }
+                SetHitDamage(amount);
             }
         }
 

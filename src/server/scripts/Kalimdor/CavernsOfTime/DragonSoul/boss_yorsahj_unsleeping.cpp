@@ -183,7 +183,7 @@ class boss_yorsahj_the_unsleeping : public CreatureScript
 public:
     boss_yorsahj_the_unsleeping() : CreatureScript("boss_yorsahj_the_unsleeping") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new boss_yorsahj_the_unsleepingAI(pCreature);
     }
@@ -242,7 +242,7 @@ public:
             me->SetReactState(REACT_AGGRESSIVE);
         }
 
-        void EnterCombat(Unit* who) override
+        void EnterCombat(Unit* /*who*/) override
         {
             Talk(SAY_AGGRO);
             DoCastAOE(SPELL_YORSAHJ_WHISPER_AGGRO, true);
@@ -282,7 +282,7 @@ public:
             }
         }
 
-        void DoAction(int32 action)
+        void DoAction(int32 action) override
         {
             if (action == ACTION_CONTINUE && !bContinue)
             {
@@ -577,7 +577,7 @@ class npc_yorsahj_the_unsleeping_globule : public CreatureScript
 public:
     npc_yorsahj_the_unsleeping_globule() : CreatureScript("npc_yorsahj_the_unsleeping_globule") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_yorsahj_the_unsleeping_globuleAI(pCreature);
     }
@@ -608,7 +608,7 @@ public:
             events.Reset();
         }
 
-        void IsSummonedBy(Unit* /*owner*/)
+        void IsSummonedBy(Unit* /*owner*/) override
         {
             switch (me->GetEntry())
             {
@@ -622,7 +622,7 @@ public:
             }
         }
 
-        void SpellHit(Unit* /*who*/, const SpellInfo* spellInfo)
+        void SpellHit(Unit* /*who*/, const SpellInfo* spellInfo) override
         {
             if (spellInfo->Id == SPELL_COLOR_COMBINATION_1 ||
                 spellInfo->Id == SPELL_COLOR_COMBINATION_2 ||
@@ -692,7 +692,7 @@ class npc_yorsahj_the_unsleeping_forgotten_one : public CreatureScript
 public:
     npc_yorsahj_the_unsleeping_forgotten_one() : CreatureScript("npc_yorsahj_the_unsleeping_forgotten_one") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_yorsahj_the_unsleeping_forgotten_oneAI(pCreature);
     }
@@ -724,7 +724,7 @@ public:
             events.Reset();
         }
 
-        void IsSummonedBy(Unit* /*owner*/)
+        void IsSummonedBy(Unit* /*owner*/) override
         {
             events.ScheduleEvent(EVENT_CONTINUE, 1000);
         }
@@ -776,7 +776,7 @@ class npc_yorsahj_the_unsleeping_mana_void : public CreatureScript
 public:
     npc_yorsahj_the_unsleeping_mana_void() : CreatureScript("npc_yorsahj_the_unsleeping_mana_void") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* pCreature) const override
     {
         return new npc_yorsahj_the_unsleeping_mana_voidAI(pCreature);
     }
@@ -861,7 +861,7 @@ public:
     {
         PrepareAuraScript(spell_yorsahj_the_unsleeping_deep_corruption_AuraScript);
 
-        void HandlePeriodicTick(AuraEffect const* aurEff)
+        void HandlePeriodicTick(AuraEffect const* /*aurEff*/)
         {
             if (!GetTarget())
                 return;
@@ -968,7 +968,7 @@ public:
 
             bool operator()(WorldObject* unit)
             {
-                return (!unit->ToUnit() || unit->ToUnit()->getPowerType() != POWER_MANA);
+                return (!unit->ToUnit() || unit->ToUnit()->GetPowerType() != POWER_MANA);
             }
         };
 
@@ -987,7 +987,7 @@ class achievement_taste_the_rainbow : public AchievementCriteriaScript
 public:
     achievement_taste_the_rainbow(char const* scriptName, uint32 Id) : AchievementCriteriaScript(scriptName), _Id(Id) { }
 
-    bool OnCheck(Player* source, Unit* target) override
+    bool OnCheck(Player* /*source*/, Unit* target) override
     {
         if (!target)
             return false;
