@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 The Black Empire <https://gitlab.com/The_Black_Empire/TBE/tree/zgn_dev_stable/>
+ * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -14,18 +14,10 @@
  * You should have received a copy of the GNU General Public License along
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
- 
+
 #include "BattlegroundTTP.h"
-#include "Creature.h"
-#include "CreatureAI.h"
-#include "DB2Stores.h"
-#include "GameObject.h"
-#include "Language.h"
-#include "Log.h"
-#include "MotionMaster.h"
-#include "ObjectMgr.h"
 #include "Player.h"
-#include "WorldSession.h"
+#include "WorldPacket.h"
 #include "WorldStatePackets.h"
 
 BattlegroundTTP::BattlegroundTTP()
@@ -79,7 +71,7 @@ bool BattlegroundTTP::SetupBattleground()
         || !AddObject(BG_TTP_OBJECT_BUFF_1, BG_TTP_OBJECT_TYPE_BUFF_1, 566.788f, 602.743f, 383.68f, 1.5724f, 0.0f, 0.0f, 0.707673f, 0.70654f, 120)
         || !AddObject(BG_TTP_OBJECT_BUFF_2, BG_TTP_OBJECT_TYPE_BUFF_2, 566.661f, 664.311f, 383.681f, 4.66374f, 0.0f, 0.0f, 0.724097f, -0.689698f, 120))
     {
-        TC_LOG_ERROR("sql.sql", "BattlegroundTTP: Failed to spawn some object!");
+        TC_LOG_ERROR("sql.sql", "BattleGroundTTP: Failed to spawn some object!");
         return false;
     }
 

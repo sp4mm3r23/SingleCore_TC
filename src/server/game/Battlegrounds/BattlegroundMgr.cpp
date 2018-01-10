@@ -360,6 +360,12 @@ Battleground* BattlegroundMgr::CreateNewBattleground(BattlegroundTypeId original
         case BATTLEGROUND_BFG:
             bg = new BattlegroundBFG(*(BattlegroundBFG*)bg_template);
             break;
+        case BATTLEGROUND_TTP:
+            bg = new BattlegroundTTP(*(BattlegroundTTP*)bg_template);
+            break;
+        case BATTLEGROUND_TVA:
+            bg = new BattlegroundTVA(*(BattlegroundTVA*)bg_template);
+            break;
         case BATTLEGROUND_RB:
         case BATTLEGROUND_AA:
         default:
@@ -464,6 +470,12 @@ bool BattlegroundMgr::CreateBattleground(BattlegroundTemplate const* bgTemplate)
                 break;
             case BATTLEGROUND_BFG:
                 bg = new BattlegroundBFG;
+                break;
+            case BATTLEGROUND_TTP:
+                bg = new BattlegroundTTP;
+                break;
+            case BATTLEGROUND_TVA:
+                bg = new BattlegroundTVA;
                 break;
             default:
                 return false;
