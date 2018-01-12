@@ -3088,41 +3088,28 @@ void WorldObject::UpdateAreaAndZonePhase()
 {
     bool updateNeeded = false;
     PhaseInfo const& allAreasPhases = sObjectMgr->GetAreaAndZonePhases();
-
-    // currentAreaPhases will contain all phases infos for current Area + Zone
-    std::vector<PhaseInfoStruct> currentAreaOrZonePhases;
-
-    if (std::vector<PhaseInfoStruct> const* currentAreaPhases = sObjectMgr->GetPhasesForArea(GetAreaId()))
-        currentAreaOrZonePhases.insert(currentAreaOrZonePhases.end(), currentAreaPhases->begin(), currentAreaPhases->end());
-
-    if (std::vector<PhaseInfoStruct> const* currentZonePhases = sObjectMgr->GetPhasesForArea(GetZoneId()))
-        currentAreaOrZonePhases.insert(currentAreaOrZonePhases.end(), currentZonePhases->begin(), currentZonePhases->end());
+    uint32 zoneAndArea[] = { GetZoneId(), GetAreaId() };
 
     // We first remove all phases from other areas & zones
-    for (PhaseInfo::const_iterator itr = allAreasPhases.begin(); itr != allAreasPhases.end(); ++itr)
-    {
-        uint32 areaOrZoneId = itr->first;
+    for (auto itr = allAreasPhases.begin(); itr != allAreasPhases.end(); ++itr)
         for (PhaseInfoStruct const& phase : itr->second)
-        {
-            if (areaOrZoneId != GetAreaId() && areaOrZoneId != GetZoneId())
-            {
-                // not in area, remove phase, true if there was something removed
-                bool up = SetInPhase(phase.Id, false, false);
-                if (!updateNeeded && up)
-                    updateNeeded = true;
-            }
-        }
-    }
+            if (!DB2Manager::IsInArea(GetAreaId(), itr->first))
+                updateNeeded = SetInPhase(phase.Id, false, false) || updateNeeded; // not in area, remove phase, true if there was something removed
 
     // Then we add the phases from this area and zone if conditions are met
-    for (PhaseInfoStruct phaseInfoStruct : currentAreaOrZonePhases)
+    // Zone is done before Area, so if Area does not meet condition, the phase will be removed
+    for (uint32 area : zoneAndArea)
     {
-        bool apply = sConditionMgr->IsObjectMeetToConditions(this, phaseInfoStruct.Conditions);
+        if (std::vector<PhaseInfoStruct> const* currentPhases = sObjectMgr->GetPhasesForArea(area))
+        {
+            for (PhaseInfoStruct const& phaseInfoStruct : *currentPhases)
+            {
+                bool apply = sConditionMgr->IsObjectMeetToConditions(this, phaseInfoStruct.Conditions);
 
-        // add or remove phase depending of condition
-        bool up = SetInPhase(phaseInfoStruct.Id, false, apply);
-        if (!updateNeeded && up)
-            updateNeeded = true;
+                // add or remove phase depending of condition
+                updateNeeded = SetInPhase(phaseInfoStruct.Id, false, apply) || updateNeeded;
+            }
+        }
     }
 
     // do not remove a phase if it would be removed by an area but we have the same phase from an aura
