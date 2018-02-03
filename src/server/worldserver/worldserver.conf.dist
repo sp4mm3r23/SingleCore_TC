@@ -38,6 +38,7 @@
 #    BLACK MARKET SETTINGS
 #    LOGGING SYSTEM SETTINGS
 #    CURRENCIES SETTINGS
+#    BATTLE PAY SETTINGS 
 #    PACKET SPOOF PROTECTION SETTINGS
 #    METRIC SETTINGS
 #
@@ -3997,6 +3998,37 @@ Currency.StartJusticePoints = 0
 #
 
 Currency.MaxJusticePoints = 4000
+
+#
+###################################################################################################
+
+###################################################################################################
+# BATTLE PAY SETTINGS
+#
+#   BattlePay.StoreEnabled
+#       Description: Determines if the store is enabled to players
+#       Default:     1 - Enabled
+#                    0 - Disabled ("The Shop is temporarily unavailable.")
+#
+
+BattlePay.StoreEnabled = 1
+
+#
+# 	BattlePat.StoreAvailable
+#		Description: Sets the availability of the Battle.net Store
+#		Default:	 1 - Enabled
+#					 0 - Disabled
+
+BattlePay.StoreAvailable = 1
+
+#
+#   BattlePay.StoreCurrency
+#       Description: Sets the default store currency
+#       Note:        For a complete list of values see BattlePayCurrency enum
+#       Default:     16 (BATTLE_PAY_CURRENCY_TEST)
+#
+
+BattlePay.StoreCurrency = 16
 
 #
 ###################################################################################################

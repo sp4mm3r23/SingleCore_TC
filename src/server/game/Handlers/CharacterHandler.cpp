@@ -23,6 +23,7 @@
 #include "AuthenticationPackets.h"
 #include "Battleground.h"
 #include "BattlegroundPackets.h"
+#include "BattlepayMgr.h"
 #include "BattlePetPackets.h"
 #include "CalendarMgr.h"
 #include "CharacterPackets.h"
@@ -1115,10 +1116,12 @@ void WorldSession::SendFeatureSystemStatus()
     features.CfgRealmID = 2;
     features.CfgRealmRecID = 0;
     features.TokenPollTimeSeconds = 300;
-    features.TokenRedeemIndex = 0;
+    features.TokenRedeemIndex = sBattlePayMgr->GetTokenIndex();
     features.VoiceEnabled = false;
     features.BrowserEnabled = false; // Has to be false, otherwise client will crash if "Customer Support" is opened
-
+    features.BpayStoreEnabled = true; //sBattlePayMgr->IsStoreEnabled();
+    features.BpayStoreAvailable = true; //sBattlePayMgr->IsStoreAvailable();
+    features.BpayStoreDisabledByParentalControls = false; //sBattlePayMgr->IsStoreDisabled();
     features.EuropaTicketSystemStatus = boost::in_place();
     features.EuropaTicketSystemStatus->ThrottleState.MaxTries = 10;
     features.EuropaTicketSystemStatus->ThrottleState.PerMilliseconds = 60000;

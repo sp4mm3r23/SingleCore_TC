@@ -31,6 +31,7 @@
 #include "BattlefieldMgr.h"
 #include "BattlegroundMgr.h"
 #include "BattlenetRpcErrorCodes.h"
+#include "BattlePayMgr.h"
 #include "BattlePetMgr.h"
 #include "BlackMarketMgr.h"
 #include "CalendarMgr.h"
@@ -1228,6 +1229,11 @@ void World::LoadConfigSettings(bool reload)
     if (m_int_configs[CONFIG_GUILD_BANK_EVENT_LOG_COUNT] > GUILD_BANKLOG_MAX_RECORDS)
         m_int_configs[CONFIG_GUILD_BANK_EVENT_LOG_COUNT] = GUILD_BANKLOG_MAX_RECORDS;
 
+    // BattlePay
+    sBattlePayMgr->SetEnableState(sConfigMgr->GetIntDefault("BattlePay.StoreEnabled", 1) ? true : false);
+    sBattlePayMgr->SetAvailableState(sConfigMgr->GetIntDefault("BattlePay.StoreAvailable", 1) ? true : false);
+    sBattlePayMgr->SetStoreCurrency(sConfigMgr->GetIntDefault("BattlePay.StoreEnabled", BATTLE_PAY_CURRENCY_DOLLAR));
+
     //visibility on continents
     m_MaxVisibleDistanceOnContinents = sConfigMgr->GetFloatDefault("Visibility.Distance.Continents", DEFAULT_VISIBILITY_DISTANCE);
     if (m_MaxVisibleDistanceOnContinents < 45*sWorld->getRate(RATE_CREATURE_AGGRO))
@@ -2078,6 +2084,9 @@ void World::SetInitialWorldSettings()
 
     TC_LOG_INFO("server.loading", "Loading Calendar data...");
     sCalendarMgr->LoadFromDB();
+
+    TC_LOG_INFO("server.loading", "Loading Battle Pay store data...");
+    sBattlePayMgr->LoadFromDb();
 
     TC_LOG_INFO("server.loading", "Loading Quest task...");
     sObjectMgr->LoadQuestTasks();

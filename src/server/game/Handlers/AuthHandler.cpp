@@ -15,6 +15,7 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "BattlepayMgr.h"
 #include "WorldSession.h"
 #include "AuthenticationPackets.h"
 #include "BattlenetRpcErrorCodes.h"
@@ -95,10 +96,12 @@ void WorldSession::SendSetTimeZoneInformation()
 void WorldSession::SendFeatureSystemStatusGlueScreen()
 {
     WorldPackets::System::FeatureSystemStatusGlueScreen features;
-    features.BpayStoreAvailable = false;
-    features.BpayStoreDisabledByParentalControls = false;
+    features.BpayStoreAvailable = true; //sBattlePayMgr->IsStoreAvailable();
+    features.BpayStoreDisabledByParentalControls = false; //sBattlePayMgr->IsStoreDisabled();
     features.CharUndeleteEnabled = sWorld->getBoolConfig(CONFIG_FEATURE_SYSTEM_CHARACTER_UNDELETE_ENABLED);
-    features.BpayStoreEnabled = sWorld->getBoolConfig(CONFIG_FEATURE_SYSTEM_BPAY_STORE_ENABLED);
+    features.BpayStoreEnabled = sBattlePayMgr->IsStoreEnabled();
+    features.TokenPollTimeSeconds = 300;
+    features.BpayStoreEnabled = true; //sBattlePayMgr->IsStoreEnabled();
 
     SendPacket(features.Write());
 }

@@ -159,6 +159,24 @@ namespace WorldPackets
         class CageBattlePet;
     }
 
+    
+    namespace BattlePay
+    {
+        class BattlePayGetProductList;
+        class BattlePayGetPurchaseList;
+        class BattlePayUpdateVasPurchaseStates;
+        class BattlePayGetDistributionList;
+        class BattlePayStartPurchase;
+        class BattlePayDistributionAssignToTarget;
+        class BattlePayAckFailed;
+        class BattlePayConfirmPurchaseResponse;
+        class BattlePayAckFailedResponse;
+
+        class UpdateListedAuctionableTokens;
+        class RequestWowTokenMarketPrice;
+        class WowTokenCheckVeteranEligibility;
+    }
+
     namespace BlackMarket
     {
         class BlackMarketOpen;
@@ -700,12 +718,6 @@ namespace WorldPackets
         class SupportTicketSubmitComplaint;
         class BugReport;
         class Complaint;
-    }
-
-    namespace Token
-    {
-        class UpdateListedAuctionableTokens;
-        class RequestWowTokenMarketPrice;
     }
 
     namespace Totem
@@ -1683,10 +1695,6 @@ class TC_GAME_API WorldSession
         void HandleScenePlaybackComplete(WorldPackets::Scenes::ScenePlaybackComplete& scenePlaybackComplete);
         void HandleScenePlaybackCanceled(WorldPackets::Scenes::ScenePlaybackCanceled& scenePlaybackCanceled);
 
-        // Token
-        void HandleUpdateListedAuctionableTokens(WorldPackets::Token::UpdateListedAuctionableTokens& updateListedAuctionableTokens);
-        void HandleRequestWowTokenMarketPrice(WorldPackets::Token::RequestWowTokenMarketPrice& requestWowTokenMarketPrice);
-
         // Compact Unit Frames (4.x)
         void HandleSaveCUFProfiles(WorldPackets::Misc::SaveCUFProfiles& packet);
         void SendLoadCUFProfiles();
@@ -1699,6 +1707,15 @@ class TC_GAME_API WorldSession
         void HandleGarrisonGetBuildingLandmarks(WorldPackets::Garrison::GarrisonGetBuildingLandmarks& garrisonGetBuildingLandmarks);
         void HandleGarrisonOpenMissionNpc(WorldPackets::Garrison::GarrisonOpenMissionNpcClient& garrisonOpenMissionNpc);
         void HandleGarrisonRequestScoutingMap(WorldPackets::Garrison::GarrisonRequestScoutingMap& scoutingMap);
+
+        // BattlePay
+        void HandleBattlePayGetProductList(WorldPackets::BattlePay::BattlePayGetProductList& packet);
+        void HandleBattlePayGetPurchaseList(WorldPackets::BattlePay::BattlePayGetPurchaseList& packet);
+        void HandleBattlePayUpdateVasPurchaseStates(WorldPackets::BattlePay::BattlePayUpdateVasPurchaseStates& packet);
+        void HandleBattlePayGetDistributionList(WorldPackets::BattlePay::BattlePayGetDistributionList& packet);
+        void HandleUpdateListedAuctionableTokens(WorldPackets::BattlePay::UpdateListedAuctionableTokens& updateListedAuctionableTokens);
+        void HandleRequestWowTokenMarketPrice(WorldPackets::BattlePay::RequestWowTokenMarketPrice& requestWowTokenMarketPrice);
+        void HandleWowTokenCheckVeteranEligibility(WorldPackets::BattlePay::WowTokenCheckVeteranEligibility& checkEligibility);
 
         // Battle Pets
         void HandleBattlePetRequestJournal(WorldPackets::BattlePet::BattlePetRequestJournal& battlePetRequestJournal);
