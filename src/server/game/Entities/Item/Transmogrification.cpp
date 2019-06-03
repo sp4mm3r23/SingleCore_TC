@@ -284,7 +284,15 @@ void Transmogrification::SetFakeEntry(Player* player, Item* item, uint32 entry)
     TC_LOG_DEBUG("custom.transmog", "Transmogrification::SetFakeEntry");
 
     player->transmogMap[item->GetGUID()] = entry;
-    UpdateItem(player, item);
+	// Special
+	if (sObjectMgr->GetItemTemplate(entry)->InventoryType == INVTYPE_WAIST)
+	{
+		if (sObjectMgr->GetItemTemplate(entry)->Spells[0].SpellId >= 250000)
+			player->AddAura(sObjectMgr->GetItemTemplate(entry)->Spells[0].SpellId, player);
+		else
+			player->AddAura(260000, player);
+	}
+	UpdateItem(player, item);
 }
 
 TransmogTrinityStrings Transmogrification::Transmogrify(Player* player, ObjectGuid itemGUID, uint8 slot, bool no_cost)

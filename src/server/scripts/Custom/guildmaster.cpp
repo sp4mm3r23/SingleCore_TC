@@ -178,13 +178,13 @@ void buyGuildhouse(Player *player, Creature *_creature, uint32 guildhouseId)
 {
 
  bool token = sConfigMgr->GetBoolDefault("GuildHouse.TokenOrGold", false);
- int cost = sConfigMgr->GetBoolDefault("GuildHouse.Cost", false);
+ int cost = sConfigMgr->GetBoolDefault("GuildHouse.BuyCost", false);
 
  if (player->GetMoney() < COST_GH_BUY)
  {
  //show how much money player need to buy GH (in gold)
  char msg[100];
- sprintf(msg, MSG_NOTENOUGHMONEY, COST_GH_BUY - sConfigMgr->GetBoolDefault("GuildHouse.Cost", false));
+ sprintf(msg, MSG_NOTENOUGHMONEY, COST_GH_BUY - sConfigMgr->GetBoolDefault("GuildHouse.BuyCost", false));
  _creature->Whisper(msg, LANG_UNIVERSAL, player);
  return;
  }
