@@ -16684,7 +16684,7 @@ uint32 Unit::GetCombatRatingDamageReduction(CombatRating cr, float rate, float c
     return CalculatePct(damage, percent);
 }
 
-uint32 Unit::GetModelForForm(ShapeshiftForm form) const
+int32 Unit::GetModelForForm(ShapeshiftForm form) const
 {
 	if (GetTypeId() == TYPEID_PLAYER)
 	{
@@ -16717,7 +16717,7 @@ uint32 Unit::GetModelForForm(ShapeshiftForm form) const
 			else if (getRace() == RACE_HUMAN)
 			{
 				uint8 hairColor = GetByteValue(PLAYER_BYTES, PLAYER_BYTES_OFFSET_HAIR_COLOR_ID);
-				switch (hairColor)
+				/ switch (hairColor)
 				{
 				case 0: // Black
 					return 33661;
@@ -16741,7 +16741,7 @@ uint32 Unit::GetModelForForm(ShapeshiftForm form) const
 			else if (getRace() == RACE_DWARF)
 			{
 				uint8 hairColor = GetByteValue(PLAYER_BYTES, PLAYER_BYTES_OFFSET_HAIR_COLOR_ID);
-				switch (hairColor)
+				/ switch (hairColor)
 				{
 				case 5: // Blue/Black
 				case 9: // Black
@@ -16790,7 +16790,7 @@ uint32 Unit::GetModelForForm(ShapeshiftForm form) const
 			else if (getRace() == RACE_DRAENEI)
 			{
 				uint8 hairColor = GetByteValue(PLAYER_BYTES, PLAYER_BYTES_OFFSET_HAIR_COLOR_ID);
-				switch (hairColor)
+				/ switch (hairColor)
 				{
 				case 1: // Purple
 				case 4: // Black
@@ -16811,7 +16811,7 @@ uint32 Unit::GetModelForForm(ShapeshiftForm form) const
 			else if (getRace() == RACE_TROLL)
 			{
 				uint8 hairColor = GetByteValue(PLAYER_BYTES, PLAYER_BYTES_OFFSET_HAIR_COLOR_ID);
-				switch (hairColor)
+				/ switch (hairColor)
 				{
 				case 0: // Pink
 				case 1: // Red
@@ -16835,7 +16835,7 @@ uint32 Unit::GetModelForForm(ShapeshiftForm form) const
 			else if (getRace() == RACE_ORC)
 			{
 				uint8 hairColor = GetByteValue(PLAYER_BYTES, PLAYER_BYTES_OFFSET_HAIR_COLOR_ID);
-				switch (hairColor)
+				/ switch (hairColor)
 				{
 				case 0: // Blue/Black
 				case 5: // Black
@@ -16857,7 +16857,7 @@ uint32 Unit::GetModelForForm(ShapeshiftForm form) const
 			else if (getRace() == RACE_BLOODELF)
 			{
 				uint8 hairColor = GetByteValue(PLAYER_BYTES, PLAYER_BYTES_OFFSET_HAIR_COLOR_ID);
-				switch (hairColor)
+				/ switch (hairColor)
 				{
 				case 8: // Black
 					return 33661;
@@ -16881,7 +16881,7 @@ uint32 Unit::GetModelForForm(ShapeshiftForm form) const
 			else if (getRace() == RACE_UNDEAD_PLAYER)
 			{
 				uint8 hairColor = GetByteValue(PLAYER_BYTES, PLAYER_BYTES_OFFSET_HAIR_COLOR_ID);
-				switch (hairColor)
+				/ switch (hairColor)
 				{
 				case 9: // Black
 				case 1: // Dark Purple
@@ -16988,7 +16988,7 @@ uint32 Unit::GetModelForForm(ShapeshiftForm form) const
 			else if (getRace() == RACE_HUMAN)
 			{
 				uint8 hairColor = GetByteValue(PLAYER_BYTES, PLAYER_BYTES_OFFSET_HAIR_COLOR_ID);
-				switch (hairColor)
+				/ switch (hairColor)
 				{
 				case 0: // Black
 					return 33651;
@@ -16999,12 +16999,12 @@ uint32 Unit::GetModelForForm(ShapeshiftForm form) const
 				case 4: // Dark Blonde
 				case 5: // Blonde
 				case 6: // Light Blonde
-					return 33653;
+					return 33654;
 				case 7: // Brown/Grey
 				case 8: // Grey
 					return 33650;
 				case 9: // White
-					return 33654;
+					return 33653;
 				default: // Original - Grey
 					return 33650;
 				}
@@ -17012,7 +17012,7 @@ uint32 Unit::GetModelForForm(ShapeshiftForm form) const
 			else if (getRace() == RACE_DWARF)
 			{
 				uint8 hairColor = GetByteValue(PLAYER_BYTES, PLAYER_BYTES_OFFSET_HAIR_COLOR_ID);
-				switch (hairColor)
+				/ switch (hairColor)
 				{
 				case 5: // Blue/Black
 				case 9: // Black
@@ -17025,11 +17025,11 @@ uint32 Unit::GetModelForForm(ShapeshiftForm form) const
 				case 1: // Light Brown
 				case 3: // Brown/Grey
 				case 6: // Dark Blonde
-					return 33653;
+					return 33654;
 				case 8: // Grey
 					return 33650;
 				case 7: // White
-					return 33654;
+					return 33653;
 				default: // Original - Grey
 					return 33650;
 				}
@@ -17047,13 +17047,13 @@ uint32 Unit::GetModelForForm(ShapeshiftForm form) const
 					return 33652;
 				case 3: // Yellow/Grey
 				case 7: // Green
-					return 33653;
+					return 33654;
 				case 2: // Grey
 					return 33650;
 				case 4: // Silver/Grey
 				case 6: // Blue/Grey
 				case 9: // White
-					return 33654;
+					return 33653;
 				default: // Original - Grey
 					return 33650;
 				}
@@ -17061,7 +17061,7 @@ uint32 Unit::GetModelForForm(ShapeshiftForm form) const
 			else if (getRace() == RACE_DRAENEI)
 			{
 				uint8 hairColor = GetByteValue(PLAYER_BYTES, PLAYER_BYTES_OFFSET_HAIR_COLOR_ID);
-				switch (hairColor)
+				/ switch (hairColor)
 				{
 				case 1: // Purple
 				case 4: // Black
@@ -17069,12 +17069,12 @@ uint32 Unit::GetModelForForm(ShapeshiftForm form) const
 				case 0: // Brown
 					return 33652;
 				case 5: // Green/Grey
-					return 33653;
+					return 33654;
 				case 2: // Brown/Grey
 					return 33650;
 				case 6: // Blue
 				case 3: // White
-					return 33654;
+					return 33653;
 				default: // Original - Grey
 					return 33650;
 				}
@@ -17106,7 +17106,7 @@ uint32 Unit::GetModelForForm(ShapeshiftForm form) const
 			else if (getRace() == RACE_ORC)
 			{
 				uint8 hairColor = GetByteValue(PLAYER_BYTES, PLAYER_BYTES_OFFSET_HAIR_COLOR_ID);
-				switch (hairColor)
+				/ switch (hairColor)
 				{
 				case 0: // Blue/Black
 				case 5: // Black
@@ -17116,11 +17116,11 @@ uint32 Unit::GetModelForForm(ShapeshiftForm form) const
 					return 33652;
 				case 3: // Purple
 				case 4: // Dark Purple
-					return 33653;
+					return 33654;
 				case 6: // Grey
 					return 33650;
 				case 7: // White
-					return 33654;
+					return 33653;
 				default: // Original - Grey
 					return 33650;
 				}
@@ -17128,7 +17128,7 @@ uint32 Unit::GetModelForForm(ShapeshiftForm form) const
 			else if (getRace() == RACE_BLOODELF)
 			{
 				uint8 hairColor = GetByteValue(PLAYER_BYTES, PLAYER_BYTES_OFFSET_HAIR_COLOR_ID);
-				switch (hairColor)
+				/ switch (hairColor)
 				{
 				case 8: // Black
 					return 33651;
@@ -17140,11 +17140,11 @@ uint32 Unit::GetModelForForm(ShapeshiftForm form) const
 				case 0: // Blonde
 				case 7: // Dark Blonde
 				case 9: // Orange
-					return 33653;
+					return 33654;
 				case 1: // Grey
 					return 33650;
 				case 5: // White
-					return 33654;
+					return 33653;
 				default: // Original - Grey
 					return 33650;
 				}
@@ -17152,7 +17152,7 @@ uint32 Unit::GetModelForForm(ShapeshiftForm form) const
 			else if (getRace() == RACE_UNDEAD_PLAYER)
 			{
 				uint8 hairColor = GetByteValue(PLAYER_BYTES, PLAYER_BYTES_OFFSET_HAIR_COLOR_ID);
-				switch (hairColor)
+				/ switch (hairColor)
 				{
 				case 9: // Black
 				case 1: // Dark Purple
@@ -17164,11 +17164,11 @@ uint32 Unit::GetModelForForm(ShapeshiftForm form) const
 				case 4: // Blonde
 				case 5: // Green
 				case 6: // Dark Blonde
-					return 33653;
+					return 33654;
 				case 2: // Grey
 					return 33650;
 				case 7: // Blue
-					return 33654;
+					return 33653;
 				default: // Original - Grey
 					return 33650;
 				}
